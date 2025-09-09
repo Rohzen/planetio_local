@@ -23,7 +23,7 @@
     <record id="planetio_form_view_inh" model="ir.ui.view">
         <field name="name">eudr.declaration.form.inh</field>
         <field name="model">eudr.declaration</field>
-        <field name="inherit_id" ref="caffe_crudo_todo.view_coffee_batch_todo_form"/>
+        <field name="inherit_id" ref="view_eudr_declaration_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position ="after">
                 <field name="warning_planetio_days_left" invisible="1" />    
