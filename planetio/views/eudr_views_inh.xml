@@ -25,30 +25,31 @@
         <field name="model">eudr.declaration</field>
         <field name="inherit_id" ref="view_eudr_declaration_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='name']" position ="after">
-                <field name="warning_planetio_days_left" invisible="1" />    
-                <field name="questionnaire_validated" invisible="1" />       
-                <field name="eudr_company_type" invisible="1"/>
-                <field name="eudr_type_override" invisible="1"/>
-                <field name="eudr_third_party_client_id" invisible="1"/>       
-            </xpath>  
-            <xpath expr="//div[@class='oe_title']" position="before">
-                <div role="alert" class="alert alert-warning" 
-                    attrs="{'invisible': ['|', ('warning_planetio_days_left', '=', False), ('questionnaire_validated', '=', True)]}">
-                    <field name="warning_text_planetio_days_left" nolabel="1"/>
-                </div>
-                <div role="alert" class="alert" 
-                   attrs="{'invisible': [('questionnaire_validated', '=', False)]}">
-                    <div style="font-weight: bold; font-size: 1.2em;">
+            <data>
+                <xpath expr="//field[@name='name']" position ="after">
+                    <field name="warning_planetio_days_left" invisible="1" />
+                    <field name="questionnaire_validated" invisible="1" />
+                    <field name="eudr_company_type" invisible="1"/>
+                    <field name="eudr_type_override" invisible="1"/>
+                    <field name="eudr_third_party_client_id" invisible="1"/>
+                </xpath>
+                <xpath expr="//div[@class='oe_title']" position="before">
+                    <div role="alert" class="alert alert-warning"
+                        attrs="{'invisible': ['|', ('warning_planetio_days_left', '=', False), ('questionnaire_validated', '=', True)]}">
                         <field name="warning_text_planetio_days_left" nolabel="1"/>
                     </div>
-                    <field name="progress_html" widget="html"/>
-                    <div style="font-size: 0.85em; margin-top: 4px;">
-                        <field name="legend_planetio_score" nolabel="1"/>
+                    <div role="alert" class="alert"
+                       attrs="{'invisible': [('questionnaire_validated', '=', False)]}">
+                        <div style="font-weight: bold; font-size: 1.2em;">
+                            <field name="warning_text_planetio_days_left" nolabel="1"/>
+                        </div>
+                        <field name="progress_html" widget="html"/>
+                        <div style="font-size: 0.85em; margin-top: 4px;">
+                            <field name="legend_planetio_score" nolabel="1"/>
+                        </div>
                     </div>
-                </div>
-            </xpath>
-            <notebook position="inside">
+                </xpath>
+                <notebook position="inside">
                 <page string="EUDR" attrs="{'invisible': [('state', 'in', ['draft', 'pre_draft'])]}" >
                     <header>
                         <field name="status_planetio" widget="statusbar" statusbar_visible="not_started,completed"/>
@@ -295,7 +296,8 @@
                         </page>
                     </notebook>
                 </page>
-            </notebook>
+                </notebook>
+            </data>
         </field>
     </record>
 </odoo>
