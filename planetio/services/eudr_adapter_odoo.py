@@ -110,7 +110,8 @@ def submit_dds_for_batch(record):
         operator_type = 'OPERATOR',
         country_of_activity = company_country,
         border_cross_country = company_country,
-        comment = _('Questionnaire completed on %s') % (record.questionnaire_date and record.questionnaire_date.strftime('%Y-%m-%d') or 'N/A'),
+        qdate = getattr(record, 'questionnaire_date', False)
+        # comment = _('Questionnaire completed on %s') % (qdate and qdate.strftime('%Y-%m-%d') or 'N/A'),
     )
 
     envelope = client.build_envelope(submit_xml)

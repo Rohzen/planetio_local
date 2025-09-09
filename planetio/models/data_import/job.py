@@ -6,6 +6,7 @@ class ExcelImportJob(models.Model):
     _name = "excel.import.job"
     _description = "Excel Import Job"
 
+    declaration_id = fields.Many2one("eudr.declaration", readonly=True)
     attachment_id = fields.Many2one("ir.attachment", required=True)
     template_id = fields.Many2one("excel.import.template", required=True)
     status = fields.Selection(

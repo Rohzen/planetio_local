@@ -3,4 +3,3 @@ from . import job
 from . import template
 from . import excel_import_service
 
-from . import job_inh

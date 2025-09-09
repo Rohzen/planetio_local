@@ -1,12 +1,13 @@
 
 from odoo import models, fields, api
+from odoo.exceptions import UserError, ValidationError
 import json
 
 class EUDRDeclaration(models.Model):
     _name = "eudr.declaration"
     _description = "EUDR Declaration"
 
-    # campi esistenti (lasciati per retrocompatibilità)
+    datestamp = fields.Datetime(string="Datestamp", default=lambda self: fields.Datetime.now())
     name = fields.Char() #required=True
     farmer_name = fields.Char()
     farmer_id_code = fields.Char()
@@ -22,6 +23,15 @@ class EUDRDeclaration(models.Model):
 
     # nuovo: righe figlie
     line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
+
+    def action_analyze_external(self):
+        self.ensure_one()
+        Job = self.env["excel.import.job"].sudo()
+        job = Job.search([("declaration_id", "=", self.id)], order="id desc", limit=1)
+        if not job:
+            raise UserError(_("No import job found for this declaration. Please run the Excel Import Wizard first."))
+        self.env["planetio.tracer.api"].analyze_job_and_update(job)
+        return {"type": "ir.actions.act_window", "res_model": "eudr.declaration", "view_mode": "form", "res_id": self.id, "target": "current"}
 
     def action_open_excel_import_wizard(self):
         self.ensure_one()
@@ -61,6 +71,30 @@ class EUDRDeclaration(models.Model):
             "url": "data:application/json," + json.dumps(payload),
             "target": "new",
         }
+
+    def open_otp_wizard(self):
+        self.ensure_one()
+
+        # Simula invio OTP
+        self.message_post(body=_("OTP sent to the phone number entered during certification."))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'otp.verification.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_batch_id': self.id
+            }
+        }
+
+    # messo in services per evitare dipendenze circolari e troppe modifiche al codice esistente
+    def action_transmit_dds(self):
+        from ...services.eudr_adapter_odoo import submit_dds_for_batch
+        for record in self:
+            if record.status_planetio != 'completed':
+                raise UserError(_("Puoi trasmettere la DDS solo se il questionario è completato."))
+            dds_id = submit_dds_for_batch(record)
 
 class EUDRDeclarationLine(models.Model):
     _name = "eudr.declaration.line"

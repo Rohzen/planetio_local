@@ -11,18 +11,19 @@
   <menuitem id="menu_eudr_declarations" name="Declarations"
             parent="menu_eudr_ai_root" action="action_eudr_declaration"/>
 
-  <record id="view_eudr_declaration_tree" model="ir.ui.view">
-    <field name="name">eudr.declaration.tree</field>
-    <field name="model">eudr.declaration</field>
-    <field name="arch" type="xml">
-      <tree>
-        <field name="name"/>
-        <field name="source_attachment_id"/>
-        <field name="area_ha"/>
-        <field name="geo_type"/>
-      </tree>
-    </field>
-  </record>
+    <record id="view_eudr_declaration_tree" model="ir.ui.view">
+      <field name="name">eudr.declaration.tree</field>
+      <field name="model">eudr.declaration</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="create_date"/>
+          <field name="source_attachment_id"/>
+          <field name="area_ha"/>
+          <field name="geo_type"/>
+        </tree>
+      </field>
+    </record>
 
   <record id="view_eudr_declaration_form" model="ir.ui.view">
     <field name="name">eudr.declaration.form</field>
@@ -30,33 +31,33 @@
     <field name="arch" type="xml">
       <form string="EUDR Declaration">
         <header>
-          <button name="action_open_excel_import_wizard"
-                  type="object"
-                  string="Import Excel"
-                  class="btn-secondary"/>
           <button name="action_export_geojson" type="object"
                   string="Export GeoJSON" class="oe_highlight"/>
-          <button name="action_transmit_dds" type="object"
-                  string="Transmit DDS" class="oe_highlight"/>
-
+            <button name="action_analyze_external" type="object" string="Analyze with Tracer" class="btn-secondary"/>
         </header>
         <sheet>
           <group>
             <field name="name"/>
+            <field name="datestamp"/>
             <field name="source_attachment_id" readonly="1"/>
           </group>
           <notebook>
-            <page string="Lines">
+            <page string="Details">
               <field name="line_ids">
                 <tree string="Lines"
                       decoration-success="external_status in ('pass','ok')"
                       decoration-danger="external_status in ('fail','error')">
                     <field name="name"/>
+                    <field name="farmer_id_code"/>
                     <field name="farmer_name"/>
                     <field name="farm_name"/>
+                    <field name="country"/>
+                    <field name="region"/>
+                    <field name="municipality"/>
                     <field name="area_ha"/>
                     <field name="external_status"/>
                     <field name="external_message"/>
+                    <field name="geometry"/>
                 </tree>
                 <form>
                   <group>

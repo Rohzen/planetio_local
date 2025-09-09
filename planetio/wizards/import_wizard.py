@@ -23,19 +23,6 @@ class ExcelImportWizard(models.TransientModel):
     result_json = fields.Text(readonly=True)
     analysis_json = fields.Text(readonly=True)
 
-    def action_analyze_external(self):
-        self.ensure_one()
-        data = self.env["planetio.tracer.api"].analyze_job_and_update(self.job_id)
-        self.analysis_json = json.dumps(data, ensure_ascii=False, indent=2)
-        self.step = "validate"
-        return {
-            "type": "ir.actions.act_window",
-            "res_model": "excel.import.wizard",
-            "view_mode": "form",
-            "res_id": self.id,
-            "target": "new",
-        }
-
     def _create_attachment(self):
         self.ensure_one()
         return self.env["ir.attachment"].create({
@@ -101,3 +88,17 @@ class ExcelImportWizard(models.TransientModel):
         self.job_id.status = "done"
         self.step = "confirm"
         return {"type":"ir.actions.act_window_close"}
+
+    def action_analyze_external(self):
+        self.ensure_one()
+        data = self.env["planetio.tracer.api"].analyze_job_and_update(self.job_id)
+        import json as _json
+        self.analysis_json = _json.dumps(data, ensure_ascii=False, indent=2)
+        self.step = "validate"
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "excel.import.wizard",
+            "view_mode": "form",
+            "res_id": self.id,
+            "target": "new",
+        }
