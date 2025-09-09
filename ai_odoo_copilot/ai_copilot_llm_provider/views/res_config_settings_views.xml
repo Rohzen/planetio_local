@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="res_config_settings_view_form_ai_copilot" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.ai.copilot</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//form" position="inside">
+        <div class="app_settings_block" data-string="AI Copilot" string="AI Copilot" data-key="ai_copilot">
+          <h2>AI Copilot – LLM Provider</h2>
+          <div class="row mt16 o_settings_container">
+            <div class="col-12 col-lg-6">
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="ai_provider_url" placeholder="http://localhost:8081/nl2domain"/>
+                  <field name="ai_api_key" password="True"/>
+                  <field name="ai_model" placeholder="gemini-1.5-flash"/>
+                  <field name="ai_temperature"/>
+                  <field name="ai_timeout"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="ai_provider_url"/>
+                  <p class="text-muted">Configura l'endpoint che traduce prompt NL in un dominio Odoo sicuro. L'API deve restituire JSON con campi: model, domain, description oppure candidates[].</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </xpath>
+    </field>
+  </record>
+</odoo>

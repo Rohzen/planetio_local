@@ -1,0 +1,12 @@
+
+<odoo>
+  <record id="action_excel_import_wizard" model="ir.actions.act_window">
+    <field name="name">Excel Import Wizard</field>
+    <field name="res_model">excel.import.wizard</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+  </record>
+
+  <menuitem id="menu_excel_import_wizard" name="Import Wizard"
+            parent="menu_eudr_ai_root" action="action_excel_import_wizard"/>
+</odoo>

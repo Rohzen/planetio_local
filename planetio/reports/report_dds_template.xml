@@ -1,0 +1,152 @@
+<?xml version="1.0"?>
+<odoo>
+    <template id="report_dds_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page" name="page_report">
+                        <h1 name="report_title" style="text-align: center;">DDS Document</h1>
+                        <!-- Informazioni Generali -->
+                        <h3 style="text-decoration: underline;">Coffee batch information</h3>
+                        <p><strong>Protocol number:</strong> <span t-esc="doc.protocol_number"/></p>
+                        <p><strong>Compiler:</strong> <span t-esc="doc.questionnaire_compiler.name"/></p>
+                        <p><strong>Compilation date:</strong> <span t-esc="doc.questionnaire_date"/></p>
+
+                        <!-- Identificazione dell’operatore / trader -->
+                        <h3 style="text-decoration: underline;">Operator / trader identification</h3>
+                        <p><strong>Company name:</strong> <t t-esc="doc.supplier_id.name or 'N/A'"/></p>
+                        <p><strong>VAT Number:</strong> <t t-esc="doc.supplier_id.vat or 'N/A'"/></p>
+                        <p><strong>Address:</strong> 
+                            <t t-esc="(doc.supplier_id.street or '') + ', ' + (doc.supplier_id.zip or '') + ' ' + (doc.supplier_id.city or '') + ' (' + (doc.supplier_id.country_id.name or '') + ')'"/>
+                        </p>
+                        <p><strong>Responsible person:</strong> 
+                            <t t-esc="doc.supplier_id.user_id.name or 'N/A'"/>
+                        </p>
+
+                        <!-- Prodotti coperti dalla DDS -->
+                        <h3 style="text-decoration: underline;">Products insured by the DDS</h3>
+                        <p><strong>CN/TARIC code:</strong> 
+                            <t t-esc="doc.coffee_article_code.default_code or 'N/A'"/>
+                        </p>
+                        <p><strong>Product description:</strong> 
+                            <t t-esc="doc.description or 'N/A'"/>
+                        </p>
+                        <p><strong>Main Commodity:</strong> coffee</p>
+                        <p><strong>Amount:</strong> 
+                            <t t-esc="doc.total_kg"/> KG
+                        </p>
+                        <p><strong>Value:</strong> 
+                            <t t-esc="doc.amount_in_currency"/> 
+                            <t t-esc="doc.price_currency_id.name"/>
+                        </p>
+                        
+                        <!-- Domande e Risposte del Questionario -->
+                        <h3 style="text-decoration: underline;">Questionnaire</h3>
+                        
+                        <t t-set="sections" t-value="[
+                            ('1', 'Supplier information'),
+                            ('2', 'Traceability and geolocation'),
+                            ('3', 'EUDR Compliance'),
+                            ('4', 'Supply Chain'),
+                            ('5', 'Certifications and sustainability'),
+                            ('6', 'Indigenous peoples rights'),
+                            ('7', 'Risk Management')
+                        ]"/>
+                        
+                        <t t-foreach="sections" t-as="section">
+                            <t t-if="section[0] == '1'">
+                                <h4>Supplier information</h4>
+                            </t>
+                            <t t-elif="section[0] == '2'">
+                                <h4>Traceability and geolocation</h4>
+                            </t>
+                            <t t-elif="section[0] == '3'">
+                                <h4>EUDR Compliance</h4>
+                            </t>
+                            <t t-elif="section[0] == '4'">
+                                <h4>Supply Chain</h4>
+                            </t>
+                            <t t-elif="section[0] == '5'">
+                                <h4>Certifications and sustainability</h4>
+                            </t>
+                            <t t-elif="section[0] == '6'">
+                                <h4>Indigenous peoples rights</h4>
+                            </t>
+                            <t t-elif="section[0] == '7'">
+                                <h4>Risk Management</h4>
+                            </t>
+                            <ul>
+                                <t t-foreach="doc['questionnaire_answer_ids_section_' + section[0]]" t-as="answer">
+                                    <li>
+                                        <strong><t t-esc="answer.question_id.name"/></strong>: 
+                                        <t t-if="answer.answer == 'yes'">Yes</t>
+                                        <t t-if="answer.answer == 'no'">No</t>
+                                        <t t-if="not answer.answer">N/A</t>
+                                        <t t-if="answer.additional_info">
+                                            <br/><i>Note:</i> <t t-esc="answer.additional_info"/>
+                                        </t>
+                                    </li>
+                                </t>
+                            </ul>
+                        </t>
+                        <!-- Geolocation Analysis -->
+                        <t t-if="doc.geo_analysis_id">
+                            <h3 style="text-decoration: underline;">Geolocation Analysis</h3>
+                            <ul>
+                                <li><strong>Area Analyzed:</strong> <t t-esc="doc.geo_analysis_id.area_analyzed or 'N/A'"/></li>
+                                <li><strong>Farm Area:</strong> <t t-esc="doc.geo_analysis_id.farm_area or 'N/A'"/></li>
+                                <li><strong>Country:</strong> <t t-esc="doc.geo_analysis_id.country_name"/> (<t t-esc="doc.geo_analysis_id.country_code"/>)</li>
+                                <li><strong>Country Risk:</strong> <t t-esc="doc.geo_analysis_id.country_risk"/></li>
+                                <li><strong>Country Value:</strong> <t t-esc="doc.geo_analysis_id.country_value"/></li>
+                                <li><strong>Analyzed At:</strong> <t t-esc="doc.geo_analysis_id.analyzed_at"/></li>
+                                <li><strong>Deforestation Area:</strong> <t t-esc="doc.geo_analysis_id.deforestation_area"/></li>
+                                <li><strong>Protected Area Overlap:</strong> <t t-esc="doc.geo_analysis_id.protected_area_overlap"/></li>
+                                <li><strong>Water Overlap:</strong> <t t-esc="doc.geo_analysis_id.water_overlap"/></li>
+                                <li><strong>Built Area Overlap:</strong> <t t-esc="doc.geo_analysis_id.built_area_overlap"/></li>
+                                <li><strong>Deforestation Free:</strong> <t t-esc="doc.geo_analysis_id.deforestation_free"/></li>
+                                <li><strong>Protected Free:</strong> <t t-esc="doc.geo_analysis_id.protected_free"/></li>
+                                <li><strong>Data Integrity:</strong> <t t-esc="doc.geo_analysis_id.data_integrity"/></li>
+                                <li><strong>Reasonable Size:</strong> <t t-esc="doc.geo_analysis_id.reasonable_size"/></li>
+                                <li><strong>Is on Land:</strong> <t t-esc="doc.geo_analysis_id.is_on_land"/></li>
+                                <li><strong>Is Not Within Urban Area:</strong> <t t-esc="doc.geo_analysis_id.is_not_within_urban_area"/></li>
+                                <li><strong>Elevation Check:</strong> <t t-esc="doc.geo_analysis_id.elevation_check"/></li>
+                                <li><strong>Commodity Region Check:</strong> <t t-esc="doc.geo_analysis_id.commodity_region_check"/></li>
+                            </ul>
+                        </t>
+                        <t t-if="doc.geo_analysis_id.geojson_data">
+                            <div class="page">
+                                <h3 style="text-decoration: underline;">GeoJSON Data</h3>
+                                <pre style="font-size:10px; white-space: pre-wrap;">
+                                <t t-esc="doc.geo_analysis_id.geojson_data"/>
+                                </pre>
+                            </div>
+                        </t>
+                        <!-- Allegati -->
+                        <h3 style="text-decoration: underline;">Attachments</h3>
+                        <t t-foreach="doc['questionnaire_answer_ids_section_1'] + 
+                                    doc['questionnaire_answer_ids_section_2'] + 
+                                    doc['questionnaire_answer_ids_section_3'] + 
+                                    doc['questionnaire_answer_ids_section_4'] + 
+                                    doc['questionnaire_answer_ids_section_5'] + 
+                                    doc['questionnaire_answer_ids_section_6'] + 
+                                    doc['questionnaire_answer_ids_section_7']" t-as="answer">
+                            
+                            <t t-if="answer.attachment">
+                                <t t-set="filename" t-value="answer.attachment_filename or 'Attachment'"/>
+                                <!-- Se l'allegato è un'immagine, mostriamolo -->
+                                <t t-if="filename.endswith('.png') or filename.endswith('.jpg') or filename.endswith('.jpeg')">
+                                    <img t-att-src="'data:image/png;base64,' + answer.attachment.decode()" style="max-width:100%; height:auto;"/>
+                                </t>
+
+                                <!-- Se non è né immagine né PDF, mostra solo il nome -->
+                                <t t-if="not (filename.endswith('.png') or filename.endswith('.jpg') or filename.endswith('.jpeg') or filename.endswith('.pdf'))">
+                                    <p><strong>Allegato incluso nel report:</strong> <t t-esc="filename"/></p>
+                                </t>
+                            </t>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

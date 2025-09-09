@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<odoo>
+  <record id="view_ai_chat_wizard" model="ir.ui.view">
+    <field name="name">ai.chat.wizard.form</field>
+    <field name="model">ai.chat.wizard</field>
+    <field name="arch" type="xml">
+      <form string="AI Copilot NL→Domain">
+        <group>
+          <field name="prompt" placeholder="es: trovami le fatture di ACME luglio 2025 pagate"/>
+          <!-- Se vuoi, rimuovi pure questo campo perché non serve più -->
+          <!-- <field name="dry_run"/> -->
+          <field name="limit"/>
+        </group>
+
+        <notebook>
+          <page string="Anteprima">
+            <group>
+              <field name="description" readonly="1"/>
+              <field name="target_model" readonly="1"/>
+              <field name="preview_domain" readonly="1" widget="text"/>
+              <field name="result_count" readonly="1"/>
+            </group>
+          </page>
+          <page string="Candidati">
+            <field name="candidate_ids" context="{'default_wizard_id': active_id}">
+              <tree editable="bottom">
+                <field name="selected" widget="boolean_toggle"/>
+                <field name="model_name"/>
+                <field name="confidence"/>
+                <field name="result_count"/>
+                <field name="domain_text"/>
+              </tree>
+            </field>
+          </page>
+        </notebook>
+
+        <footer>
+          <!-- NON chiude il wizard: mostra solo la notifica con il dominio -->
+          <button string="Anteprima" type="object" name="action_preview" class="btn-secondary"/>
+
+          <!-- Apre la lista filtrata -->
+          <button string="Apri risultati" type="object" name="action_execute" class="btn-primary"/>
+
+          <button string="Chiudi" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+</odoo>
+
+    <record id="action_ai_chat_wizard" model="ir.actions.act_window">
+        <field name="name">AI Copilot</field>
+        <field name="res_model">ai.chat.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_ai_root" name="AI" sequence="10" web_icon="ai_copilot_nl_domain,static/description/icon.png"/>
+    <menuitem id="menu_ai_copilot" name="Copilot NL→Domain" parent="menu_ai_root" action="action_ai_chat_wizard"/>
+</odoo>

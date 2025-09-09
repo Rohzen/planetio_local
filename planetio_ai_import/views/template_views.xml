@@ -1,0 +1,68 @@
+
+<odoo>
+  <record id="action_excel_import_template" model="ir.actions.act_window">
+    <field name="name">Import Templates</field>
+    <field name="res_model">excel.import.template</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <menuitem id="menu_templates" name="Templates"
+            parent="menu_eudr_ai_root" action="action_excel_import_template"/>
+
+  <record id="view_excel_import_template_tree" model="ir.ui.view">
+    <field name="name">excel.import.template.tree</field>
+    <field name="model">excel.import.template</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+        <field name="model_id"/>
+        <field name="strictness_level"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_excel_import_template_form" model="ir.ui.view">
+    <field name="name">excel.import.template.form</field>
+    <field name="model">excel.import.template</field>
+    <field name="arch" type="xml">
+      <form string="Import Template">
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="model_id"/>
+            <field name="strictness_level"/>
+          </group>
+          <notebook>
+            <page string="Fields">
+              <field name="field_ids">
+                <tree editable="bottom">
+                  <field name="field_id"/>
+                  <field name="required"/>
+                  <field name="transformer"/>
+                  <field name="selector_policy"/>
+                </tree>
+                <form>
+                  <group>
+                    <field name="field_id"/>
+                    <field name="required"/>
+                    <field name="transformer"/>
+                    <field name="selector_policy"/>
+                  </group>
+                  <group string="Aliases">
+                    <field name="alias_ids">
+                      <tree editable="bottom">
+                        <field name="alias"/>
+                        <field name="language"/>
+                        <field name="weight"/>
+                      </tree>
+                    </field>
+                  </group>
+                </form>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+</odoo>

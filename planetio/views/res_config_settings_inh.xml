@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_planetio" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.planetio</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="Planetio" string="Planetio" data-key="planetio">     
+                    <h2>Planetio Behavior Settings</h2>
+                    <div class="row mt16 o_settings_container" name="planetio_behavior_container">
+                        <div class="col-12 col-lg-12 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">EUDR Company Type</span>
+                                <div class="text-muted">
+                                    <field name="eudr_company_type"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>               
+                    <h2>Geolocation API</h2>
+                    <div class="row mt16 o_settings_container" name="general_setting_container">                        
+                        <div class="col-12 col-lg-12 o_setting_box" id="path">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">API Access Key for web-service connection to Plant for the Planet (geolocation)</span>
+                                <div class="text-muted">
+                                    <field name="pftp_api_key" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <h2>TRACES EUDR API</h2>
+                    <div class="row mt16 o_settings_container" name="eudr_tracer_settings_container">  
+                        <div class="col-12 col-lg-12 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">User TRACES EUDR</span>
+                                <div class="text-muted">
+                                    <field name="eudr_tracer_user"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-12 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Authentication Key TRACES EUDR</span>
+                                <div class="text-muted">
+                                    <field name="eudr_tracer_authentication_key"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-12 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Webservice access identifier TRACES EUDR</span>
+                                <div class="text-muted">
+                                    <field name="eudr_tracer_webservice_access_identifier"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-12 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Endpoint URL TRACES EUDR</span>
+                                <div class="text-muted">
+                                    <field name="eudr_tracer_endpoint_url"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-12 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">DDS submission WSDL Method TRACES EUDR</span>
+                                <div class="text-muted">
+                                    <field name="eudr_tracer_dds_submission_wsdl"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

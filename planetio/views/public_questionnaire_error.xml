@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="public_questionnaire_error" model="ir.ui.view">
+        <field name="name">public_questionnaire_error</field>
+        <field name="type">qweb</field>
+        <field name="key">planetio_todo.public_questionnaire_error</field>
+        <field name="arch" type="xml">
+            <template id="public_questionnaire_error" name="Questionnaire error">
+                <t t-name="planetio_todo.public_questionnaire_error">
+                    <html>
+                        <head>
+                            <title>Error - EUDR Questionnaire</title>
+                            <style>
+                                body {
+                                    background-color: #fef4f4;
+                                    font-family: 'Poppins', sans-serif;
+                                    text-align: center;
+                                    padding: 80px 20px;
+                                }
+                                .error-box {
+                                    background-color: #fff0f0;
+                                    border: 1px solid #ffbcbc;
+                                    border-radius: 10px;
+                                    display: inline-block;
+                                    padding: 40px;
+                                    box-shadow: 0 0 20px rgba(255, 0, 0, 0.05);
+                                }
+                                h1 {
+                                    color: #d9534f;
+                                    font-size: 32px;
+                                    margin-bottom: 20px;
+                                }
+                                p {
+                                    font-size: 18px;
+                                    color: #555;
+                                }
+                                a.button {
+                                    margin-top: 30px;
+                                    display: inline-block;
+                                    padding: 12px 24px;
+                                    background-color: #d9534f;
+                                    color: white;
+                                    border-radius: 8px;
+                                    text-decoration: none;
+                                    font-weight: bold;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="error-box">
+                                <h1>Invalid or expired link</h1>
+                                <p>The link to the EUDR questionnaire is no longer valid or has already been used.</p>
+                                <p>Please contact your contact person to receive a new one.</p>
+                            </div>
+                        </body>
+                    </html>
+                </t>
+            </template>
+        </field>
+    </record>
+</odoo>

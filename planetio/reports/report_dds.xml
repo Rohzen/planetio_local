@@ -1,0 +1,12 @@
+<odoo>
+    <report 
+        id="report_dds" 
+        model="caffe.crudo.todo.batch"
+        string="Report DDS"
+        print_report_name="'DDS_%s' % (object.protocol_number or 'Senza_Protocollo')"
+        report_type="qweb-pdf"
+        file="planetio_todo.report_dds_template"
+        name="planetio_todo.report_dds_template"
+        menu="False"
+    />
+</odoo>

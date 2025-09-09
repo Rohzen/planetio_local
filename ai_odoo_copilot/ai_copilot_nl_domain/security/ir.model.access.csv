@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ai_chat_wizard,access_ai_chat_wizard,model_ai_chat_wizard,base.group_user,1,1,1,1
+access_ai_chat_candidate,access_ai_chat_candidate,model_ai_chat_candidate,base.group_user,1,1,1,1

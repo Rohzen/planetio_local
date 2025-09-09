@@ -1,0 +1,39 @@
+<odoo>
+    <record id="action_planetio_questions" model="ir.actions.act_window">
+        <field name="name">Questions questionnaire</field>
+        <field name="res_model">planetio.question</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    
+    <record id="view_planetio_question_form" model="ir.ui.view">
+        <field name="name">planetio.question.form</field>
+        <field name="model">planetio.question</field>
+        <field name="arch" type="xml">
+            <form string="Question questionnaire">
+                <sheet>
+                    <group>
+                        <field name="section"/>
+                        <field name="name"/>
+                        <field name="score"/>
+                        <field name="weight"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="view_planetio_question_tree" model="ir.ui.view">
+        <field name="name">planetio.question.tree</field>
+        <field name="model">planetio.question</field>
+        <field name="arch" type="xml">
+            <tree string="Questions questionnaire">
+                <field name="section"/>
+                <field name="name"/>
+                <field name="score"/>
+                <field name="weight"/>
+            </tree>
+        </field>
+    </record>
+    
+    <menuitem id="menu_planetio_questions" name="EUDR questionnaire questions" parent="caffe_crudo_todo.menu_caffe_crudo_todo_root" sequence="10" action="action_planetio_questions"/>
+</odoo>

@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_planetio_question,access_planetio_question,model_planetio_question,base.group_system,1,1,1,1
+access_planetio_questionnaire_answer,access_planetio_questionnaire_answer,model_planetio_questionnaire_answer,,1,1,1,1
+access_caffe_crudo_geo_analysis_user,access_caffe_crudo_geo_analysis_user,model_caffe_crudo_geo_analysis,,1,1,1,1
+access_otp_verification_wizard,access_otp_verification_wizard,model_otp_verification_wizard,,1,1,1,1
+access_planetio_attachment_user,access.planetio.attachment.user,model_planetio_attachment,,1,1,1,1

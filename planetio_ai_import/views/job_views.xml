@@ -1,0 +1,54 @@
+
+<odoo>
+  <record id="action_excel_import_job" model="ir.actions.act_window">
+    <field name="name">Import Jobs</field>
+    <field name="res_model">excel.import.job</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <menuitem id="menu_jobs" name="Jobs" parent="menu_eudr_ai_root" action="action_excel_import_job"/>
+
+  <record id="view_excel_import_job_tree" model="ir.ui.view">
+    <field name="name">excel.import.job.tree</field>
+    <field name="model">excel.import.job</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="attachment_id"/>
+        <field name="template_id"/>
+        <field name="sheet_name"/>
+        <field name="status"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_excel_import_job_form" model="ir.ui.view">
+    <field name="name">excel.import.job.form</field>
+    <field name="model">excel.import.job</field>
+    <field name="arch" type="xml">
+      <form string="Import Job">
+        <sheet>
+          <group>
+            <field name="attachment_id"/>
+            <field name="template_id"/>
+            <field name="sheet_name"/>
+            <field name="status"/>
+          </group>
+          <notebook>
+            <page string="Mapping JSON">
+              <field name="mapping_json" widget="text"/>
+            </page>
+            <page string="Preview JSON">
+              <field name="preview_json" widget="text"/>
+            </page>
+            <page string="Result JSON">
+              <field name="result_json" widget="text"/>
+            </page>
+            <page string="Log">
+              <field name="log" widget="text"/>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+</odoo>
