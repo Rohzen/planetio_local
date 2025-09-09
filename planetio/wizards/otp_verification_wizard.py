@@ -19,3 +19,4 @@ class OTPVerificationWizard(models.TransientModel):
         batch.action_transmit_dds()
 
         return {'type': 'ir.actions.act_window_close'}
+
