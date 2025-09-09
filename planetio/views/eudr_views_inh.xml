@@ -1,10 +1,10 @@
 <odoo>
-    <record id="pt_caffe_crudo_todo_tree_view" model="ir.ui.view">
-        <field name="name">pt.caffe.crudo.todo.tree</field>
-        <field name="model">caffe.crudo.todo.batch</field>
-        <field name="inherit_id" ref="caffe_crudo_todo.view_coffee_batch_todo_tree"/>
+    <record id="planetio_tree_view_inh" model="ir.ui.view">
+        <field name="name">eudr.declaration.tree.inh</field>
+        <field name="model">eudr.declaration</field>
+        <field name="inherit_id" ref="view_eudr_declaration_tree"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='state']" position="after">
+            <xpath expr="//field[@name='name']" position="after">
                 <field name="questionnaire_score_status" invisible="1"/>
                 <field name="questionnaire_validated" string="Validated questionnaire"/>
                 <field name="questionnaire_score_display" string="Score obtained"
@@ -20,12 +20,12 @@
         </field>
     </record>
 
-    <record id="pt_caffe_crudo_todo_form_view" model="ir.ui.view">
-        <field name="name">pt.caffe.crudo.todo.form</field>
-        <field name="model">caffe.crudo.todo.batch</field>
+    <record id="planetio_form_view_inh" model="ir.ui.view">
+        <field name="name">eudr.declaration.form.inh</field>
+        <field name="model">eudr.declaration</field>
         <field name="inherit_id" ref="caffe_crudo_todo.view_coffee_batch_todo_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='protocol_number']" position ="after">
+            <xpath expr="//field[@name='name']" position ="after">
                 <field name="warning_planetio_days_left" invisible="1" />    
                 <field name="questionnaire_validated" invisible="1" />       
                 <field name="eudr_company_type" invisible="1"/>
