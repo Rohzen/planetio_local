@@ -6,4 +6,5 @@ class PlanetioAttachment(models.Model):
 
     name = fields.Char("Nome")
     file = fields.Binary("File", required=True)
-    batch_id = fields.Many2one("caffe.crudo.todo.batch", string="Batch collegato", required=True, ondelete='cascade')
+    batch_id = fields.Integer()  # fields.Many2one('caffe.crudo.todo.batch', required=True)
+    # batch_id = fields.Many2one("caffe.crudo.todo.batch", string="Batch collegato", required=True, ondelete='cascade')

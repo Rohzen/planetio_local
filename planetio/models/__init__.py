@@ -1,8 +1,8 @@
 from . import (
+    eudr_models,
+    eudr_inh,
     alias,
     eudr_geo_analysis,
-    eudr_inh,
-    eudr_models,
     job,
     planetio_attachment,
     planetio_question,

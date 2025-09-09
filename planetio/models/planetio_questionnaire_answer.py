@@ -6,7 +6,8 @@ class PlanetioQuestionnaireAnswer(models.Model):
     _name = "planetio.questionnaire.answer"
     _description = "Answers to the EUDR Questionnaire"
 
-    batch_id = fields.Many2one("caffe.crudo.todo.batch", string="Coffee batch", required=True, ondelete="cascade")
+    # batch_id = fields.Many2one("caffe.crudo.todo.batch", string="Coffee batch", required=True, ondelete="cascade")
+    batch_id = fields.Integer()  # fields.Many2one('caffe.crudo.todo.batch', required=True)
     question_id = fields.Many2one("planetio.question", string="Question", required=True, ondelete="cascade")
     answer = fields.Selection([("yes", "Yes"), ("no", "No")], string="Answer", required=True, default="no")
     additional_info = fields.Char(string="Additional information")  

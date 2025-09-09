@@ -6,7 +6,7 @@ class PlanetioTokenAccess(models.Model):
     _description = 'Public access to the Planetio questionnaire'
 
     name = fields.Char(string='Token', default=lambda self: str(uuid.uuid4()), readonly=True)
-    batch_id = fields.Many2one('caffe.crudo.todo.batch', required=True)
+    batch_id = fields.Integer() #fields.Many2one('caffe.crudo.todo.batch', required=True)
     active = fields.Boolean(default=True)
     expiration_date = fields.Date()
 

@@ -4,8 +4,8 @@ class CaffeCrudoGeoAnalysis(models.Model):
     _name = 'caffe.crudo.geo.analysis'
     _description = 'Geo Analysis Results from EUDR Tracer'
 
-    batch_id = fields.Many2one('caffe.crudo.todo.batch', string="Coffee Batch", required=True, ondelete='cascade', unique=True)
-
+    # batch_id = fields.Many2one('caffe.crudo.todo.batch', string="Coffee Batch", required=True, ondelete='cascade', unique=True)
+    batch_id = fields.Integer()  # fields.Many2one('caffe.crudo.todo.batch', required=True)
     # INFO GENERALI
     name = fields.Char(string="Name")
     latitude = fields.Float(string="Latitude")

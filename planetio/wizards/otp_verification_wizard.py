@@ -6,7 +6,7 @@ class OTPVerificationWizard(models.TransientModel):
     _description = 'OTP Verification Wizard'
 
     otp_code = fields.Char(string="OTP Code", required=True)
-    batch_id = fields.Many2one('caffe.crudo.todo.batch', string="Coffee Batch")
+    batch_id = fields.Integer() #fields.Many2one('caffe.crudo.todo.batch', string="Coffee Batch")
 
     def confirm_otp(self):
         self.ensure_one()
