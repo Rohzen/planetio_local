@@ -6,3 +6,4 @@ access_planetio_questionnaire_answer,access_planetio_questionnaire_answer,model_
 access_caffe_crudo_geo_analysis_user,access_caffe_crudo_geo_analysis_user,model_caffe_crudo_geo_analysis,,1,1,1,1
 access_otp_verification_wizard,access_otp_verification_wizard,model_otp_verification_wizard,,1,1,1,1
 access_planetio_attachment_user,access.planetio.attachment.user,model_planetio_attachment,,1,1,1,1
+
