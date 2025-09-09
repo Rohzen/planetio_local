@@ -21,7 +21,7 @@ class LoggingPlugin(Plugin):
         return envelope, http_headers
 
 class CoffeeBatch(models.Model):
-    _inherit = 'caffe.crudo.todo.batch'
+    _inherit = 'eudr.declaration'
     _order = 'questionnaire_date desc, planetio_days_left asc'
 
     status_planetio = fields.Selection([
@@ -81,13 +81,13 @@ class CoffeeBatch(models.Model):
     # GeoJSON raw
     geojson_data = fields.Text(related='geo_analysis_id.geojson_data', store=True)
 
-    cumulative_dds_ids = fields.Many2many(
-        'caffe.crudo.todo.batch',
-        'batch_cumulative_dds_rel',
-        'source_batch_id',
-        'linked_dds_id',
-        string="Linked DDS"
-    )
+    # cumulative_dds_ids = fields.Many2many(
+    #     'caffe.crudo.todo.batch',
+    #     'batch_cumulative_dds_rel',
+    #     'source_batch_id',
+    #     'linked_dds_id',
+    #     string="Linked DDS"
+    # )
 
     eudr_type_override = fields.Selection([
         ('trader', 'Trader'),
@@ -412,156 +412,6 @@ class CoffeeBatch(models.Model):
             if record.status_planetio != 'completed':
                 raise UserError(_("Puoi trasmettere la DDS solo se il questionario è completato."))
             dds_id = submit_dds_for_batch(record)
-
-    # def action_transmit_dds(self):
-    #     for record in self:
-    #         if record.status_planetio != 'completed':
-    #             raise UserError(_("Puoi trasmettere la DDS solo se il questionario è completato."))
-    #
-    #         record.status_planetio = 'transmitted'
-    #         record.message_post(body=f"DDS trasmessa con successo.")
-    #
-    #         # Recupero parametri
-    #         # endpoint_url = self.env['ir.config_parameter'].sudo().get_param('planetio.eudr_tracer_endpoint_url')
-    #         # wsdl_method = self.env['ir.config_parameter'].sudo().get_param('planetio.eudr_tracer_dds_submission_wsdl')
-    #         # auth_key = self.env['ir.config_parameter'].sudo().get_param('planetio.eudr_tracer_authentication_key')
-    #         # username = self.env['ir.config_parameter'].sudo().get_param('planetio.eudr_tracer_user')
-    #         # webservice_identifier = self.env['ir.config_parameter'].sudo().get_param('planetio.eudr_tracer_webservice_access_identifier')
-    #
-    #         # if not all([endpoint_url, wsdl_method, auth_key, username, webservice_identifier]):
-    #         #     raise UserError(_("Parametri TRACES EUDR mancanti. Verifica le impostazioni."))
-    #
-    #         # wsdl_url = f"{endpoint_url}{wsdl_method}?wsdl"
-    #
-    #         # try:
-    #         #     # Genera Nonce, Created e PasswordDigest
-    #         #     created = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-    #         #     nonce_bytes = secrets.token_bytes(16)
-    #         #     nonce = base64.b64encode(nonce_bytes).decode()
-    #         #     digest_input = nonce_bytes + created.encode('utf-8') + auth_key.encode('utf-8')
-    #         #     password_digest = base64.b64encode(hashlib.sha1(digest_input).digest()).decode()
-    #
-    #         #     print("auth_key: " + repr(auth_key))
-    #         #     print(f"username: '{username}' -> {len(username)} chars")
-    #         #     print("created:", created)
-    #         #     print("nonce_bytes (hex):", nonce_bytes.hex())
-    #         #     print("nonce (base64):", nonce)
-    #         #     print("digest_input (hex):", digest_input.hex())
-    #         #     print("password_digest (base64):", password_digest)
-    #
-    #         #     # Costruzione dell'header WSSE manuale
-    #         #     nsmap = {
-    #         #         'wsse': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
-    #         #         'wsu': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
-    #         #     }
-    #         #     security = etree.Element(
-    #         #         '{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Security',
-    #         #         nsmap=nsmap
-    #         #     )
-    #
-    #         #     username_token = etree.SubElement(
-    #         #         security,
-    #         #         '{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}UsernameToken'
-    #         #     )
-    #         #     etree.SubElement(
-    #         #         username_token,
-    #         #         '{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Username'
-    #         #     ).text = username
-    #
-    #         #     password_el = etree.SubElement(
-    #         #         username_token,
-    #         #         '{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Password'
-    #         #     )
-    #         #     password_el.set(
-    #         #         'Type',
-    #         #         'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest'
-    #         #     )
-    #         #     password_el.text = password_digest
-    #
-    #         #     nonce_el = etree.SubElement(
-    #         #         username_token,
-    #         #         '{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Nonce'
-    #         #     )
-    #         #     nonce_el.set(
-    #         #         'EncodingType',
-    #         #         'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary'
-    #         #     )
-    #         #     nonce_el.text = nonce
-    #
-    #         #     etree.SubElement(
-    #         #         username_token,
-    #         #         '{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Created'
-    #         #     ).text = created
-    #
-    #         #     # Header WebServiceClientId
-    #         #     header_element = etree.Element(
-    #         #         "{http://ec.europa.eu/sanco/tracesnt/base/v4}WebServiceClientId", nsmap={"base": "http://ec.europa.eu/sanco/tracesnt/base/v4"}
-    #         #     )
-    #         #     header_element.text = webservice_identifier
-    #
-    #         #     # Sessione custom con timeout
-    #         #     session = Session()
-    #         #     transport = Transport(session=session, timeout=60)
-    #
-    #         #     # Inizializza il client Zeep
-    #         #     client = Client(wsdl_url, transport=transport, plugins=[LoggingPlugin()])
-    #
-    #         #     # Prepara il DDS XML come dizionario da passare al metodo SOAP
-    #         #     dds_dict = record._generate_dds_xml_as_dict()
-    #
-    #         #     print("=== DDS XML DICT ===")
-    #         #     print(dds_dict)
-    #
-    #         #     # Esegue la chiamata SOAP con UsernameToken + header personalizzato
-    #         #     response = client.service.submitDds(
-    #         #         operatorType='OPERATOR',
-    #         #         statement=dds_dict,
-    #         #         _soapheaders=[security, header_element]
-    #         #     )
-    #
-    #         #     # Gestione risposta
-    #         #     dds_id = getattr(response, 'ddsIdentifier', None)
-    #         #     record.status_planetio = 'transmitted'
-    #         #     record.message_post(body=f"DDS trasmessa con successo. ID: {dds_id if dds_id else 'N/A'}")
-    #
-    #         # except Exception as e:
-    #         #     raise UserError(_(f"Errore durante la trasmissione: {str(e)}"))
-        
-    def _generate_dds_xml_as_dict(self):
-        self.ensure_one()
-        return {
-            'internalReferenceNumber': self.protocol_number or f'Batch-{self.id}',
-            'activityType': 'IMPORT',
-            'countryOfActivity': (self.country_code or 'UG').upper(),
-            'borderCrossCountry': (self.country_code or 'UG').upper(),
-            'comment': f"Questionnaire completed on {self.questionnaire_date.strftime('%Y-%m-%d') if self.questionnaire_date else 'N/A'}",
-            'geoLocationConfidential': False,
-            'commodities': [
-                {
-                    'descriptors': {
-                        'descriptionOfGoods': 'Coffee beans',
-                        'goodsMeasure': {
-                            'volume': round(self.area_analyzed, 3) if self.area_analyzed else None,
-                            'netWeight': round(self.farm_area, 3) if self.farm_area else None,
-                            'supplementaryUnit': 1,
-                            'supplementaryUnitQualifier': 'MTQ'
-                        }
-                    },
-                    'hsHeading': '0901',
-                    'speciesInfo': {
-                        'scientificName': 'Coffea arabica',
-                        'commonName': 'Arabica Coffee'
-                    },
-                    'producers': [
-                        {
-                            'country': (self.country_code or 'UG').upper(),
-                            'name': self.name or 'Unknown Producer',
-                            'geometryGeojson': base64.b64encode((self.geojson_data or '').encode('utf-8'))
-                        }
-                    ]
-                }
-            ]
-        }
 
     @api.depends('questionnaire_score', 'questionnaire_max_score')
     def _compute_legend_planetio_score(self):

@@ -1,18 +1,19 @@
+
 {
-    'name': 'Planetio Todo',
-    'version': '14.0.8.18.0',
-    'category': 'Custom',
-    'author': "Alessandro Vasi / Encodata S.r.l.",
+    "name": "Planetio",
+    "version": "14.0.1.0.0",
+    'author': "Alessandro Vasi / Roberto Zanardo / Encodata S.r.l.",
     'summary': 'Modulo per la compilazione della due-diligence sulla normativa della deforestazione',
     'depends': [
-        'base', 
+        'base',
         'mail',
-        'caffe_crudo_todo',
         'web'
         ],
-    'data': [
+    "data": [
         "security/ir.model.access.csv",
-        'views/caffe_crudo_todo_views_inh.xml',
+        "views/eudr_views.xml",
+        "views/template_views.xml",
+        "views/wizard_views.xml",
         'views/planetio_question_views.xml',
         'views/public_questionnaire_template.xml',
         'views/public_questionnaire_success.xml',
@@ -23,7 +24,6 @@
         'reports/report_dds_template.xml',
         'data/planetio_eudr_params.xml',
     ],
-    'post_init_hook': 'populate_questions',
-    'installable': True,
-    'application': False,
+    "installable": True,
+    "application": True,
 }
