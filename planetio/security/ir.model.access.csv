@@ -1,3 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_eudr_declaration,eudr.declaration,model_eudr_declaration,base.group_user,1,1,1,1
 access_eudr_declaration_line,eudr.declaration.line,model_eudr_declaration_line,base.group_user,1,1,1,1
+access_planetio_question,planetio.question,model_planetio_question,base.group_user,1,1,1,1
+access_planetio_questionnaire_answer,planetio.questionnaire.answer,model_planetio_questionnaire_answer,base.group_user,1,1,1,1
+access_caffe_crudo_geo_analysis,caffe.crudo.geo.analysis,model_caffe_crudo_geo_analysis,base.group_user,1,1,1,1
+access_planetio_attachment,planetio.attachment,model_planetio_attachment,base.group_user,1,1,1,1
+access_otp_verification_wizard,otp.verification.wizard,model_otp_verification_wizard,base.group_user,1,1,1,1
