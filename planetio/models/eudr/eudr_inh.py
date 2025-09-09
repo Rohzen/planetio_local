@@ -407,7 +407,7 @@ class CoffeeBatch(models.Model):
 
     # messo in services per evitare dipendenze circolari e troppe modifiche al codice esistente
     def action_transmit_dds(self):
-        from ..services.eudr_adapter_odoo import submit_dds_for_batch
+        from ...services.eudr_adapter_odoo import submit_dds_for_batch
         for record in self:
             if record.status_planetio != 'completed':
                 raise UserError(_("Puoi trasmettere la DDS solo se il questionario è completato."))
