@@ -111,11 +111,19 @@ class CoffeeBatch(models.Model):
         for record in self:
             record.eudr_company_type = config_type
 
+    from odoo import api
+    from odoo.exceptions import ValidationError
+
     @api.constrains('eudr_company_type', 'eudr_type_override', 'eudr_third_party_client_id')
     def _check_eudr_fields(self):
         for rec in self:
-            # Applichiamo i controlli solo quando la partita è confermata
-            if rec.state != 'confirmed':
+            # Run checks only when the declaration is effectively confirmed/completed
+            if hasattr(rec, 'state'):
+                confirmed = rec.state in ('confirmed', 'done')
+            else:
+                confirmed = getattr(rec, 'status_planetio', False) in ('completed', 'done', 'confirmed')
+
+            if not confirmed:
                 continue
 
             if rec.eudr_company_type == 'mixed' and not rec.eudr_type_override:

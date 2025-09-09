@@ -1,5 +1,5 @@
-
 <odoo>
+  <!-- Action + Menu -->
   <record id="action_excel_import_wizard" model="ir.actions.act_window">
     <field name="name">Excel Import Wizard</field>
     <field name="res_model">excel.import.wizard</field>
@@ -7,6 +7,90 @@
     <field name="target">new</field>
   </record>
 
-  <menuitem id="menu_excel_import_wizard" name="Import Wizard"
-            parent="menu_eudr_ai_root" action="action_excel_import_wizard"/>
+  <menuitem id="menu_excel_import_wizard"
+            name="Import Wizard"
+            parent="menu_eudr_ai_root"
+            action="action_excel_import_wizard"
+            sequence="20"/>
+
+  <!-- Wizard Form (single top-level group + single footer) -->
+  <record id="view_excel_import_wizard_form" model="ir.ui.view">
+    <field name="name">excel.import.wizard.form</field>
+    <field name="model">excel.import.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Excel Import">
+        <sheet>
+          <group>
+            <!-- STEP: UPLOAD -->
+            <field name="step" invisible="1"/>
+            <group attrs="{'invisible':[('step','!=','upload')]}">
+              <field name="template_id" required="1"/>
+              <field name="file_name" readonly="1"/>
+              <field name="file_data" filename="file_name"/>
+            </group>
+
+            <!-- STEP: MAP -->
+            <group attrs="{'invisible':[('step','!=','map')]}">
+              <field name="job_id" readonly="1"/>
+              <field name="mapping_json" widget="text" string="Proposed Mapping" readonly="1"/>
+              <field name="preview_json" widget="text" string="Preview (first rows)" readonly="1"/>
+            </group>
+
+            <!-- STEP: VALIDATE -->
+            <group attrs="{'invisible':[('step','!=','validate')]}">
+              <field name="result_json" widget="text" string="Validation Result" readonly="1"/>
+            </group>
+
+            <!-- STEP: CONFIRM -->
+<!--            <group attrs="{'invisible':[('step','!=','confirm')]}">-->
+<!--              <label string="Import completed successfully."/>-->
+<!--            </group>-->
+          </group>
+        </sheet>
+
+        <!-- Single footer with step-controlled buttons -->
+        <footer>
+          <button name="action_detect_and_map"
+                  string="Analyze &amp; Map"
+                  type="object"
+                  class="btn-primary"
+                  attrs="{'invisible':[('step','!=','upload')]}"/>
+
+          <button name="action_validate"
+                  string="Validate"
+                  type="object"
+                  class="btn-primary"
+                  attrs="{'invisible':[('step','!=','map')]}"/>
+
+          <button name="action_confirm"
+                  string="Create Records"
+                  type="object"
+                  class="btn-primary"
+                  attrs="{'invisible':[('step','!=','validate')]}"/>
+
+          <!-- Cancel during steps upload/map/validate -->
+          <button string="Cancel"
+                  class="btn-secondary"
+                  special="cancel"
+                  attrs="{'invisible':[('step','=','confirm')]}"/>
+
+          <!-- Nel gruppo dello step VALIDATE: mostra output -->
+          <field name="analysis_json" widget="text" string="External Analysis (per row)" readonly="1"/>
+
+          <!-- Nel footer: bottone per lanciare l’analisi -->
+          <button name="action_analyze_external"
+                  string="Analyze with Tracer"
+                  type="object"
+                  class="btn-secondary"
+                  attrs="{'invisible':[('step','!=','validate')]}"/>
+
+          <!-- Close on confirm -->
+          <button string="Close"
+                  class="btn-primary"
+                  special="cancel"
+                  attrs="{'invisible':[('step','!=','confirm')]}"/>
+        </footer>
+      </form>
+    </field>
+  </record>
 </odoo>

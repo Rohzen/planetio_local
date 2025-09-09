@@ -7,7 +7,7 @@ class EUDRDeclaration(models.Model):
     _description = "EUDR Declaration"
 
     # campi esistenti (lasciati per retrocompatibilità)
-    name = fields.Char(required=True)
+    name = fields.Char() #required=True
     farmer_name = fields.Char()
     farmer_id_code = fields.Char()
     tax_code = fields.Char()
@@ -22,6 +22,19 @@ class EUDRDeclaration(models.Model):
 
     # nuovo: righe figlie
     line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
+
+    def action_open_excel_import_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Excel Import Wizard',
+            'res_model': 'excel.import.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_template_id': self.env.ref('planetio.tmpl_eudr_declaration').id,
+            },
+        }
 
     def action_export_geojson(self):
         """Esporta una FeatureCollection con tutte le geometrie delle linee."""
@@ -65,3 +78,11 @@ class EUDRDeclarationLine(models.Model):
     area_ha = fields.Float()
     geo_type = fields.Selection([("point","Point"),("polygon","Polygon")])
     geometry = fields.Text()  # GeoJSON string
+
+    external_uid = fields.Char(index=True)
+    external_status = fields.Selection(
+        selection=[("pass", "Pass"), ("ok", "OK"), ("fail", "Fail"), ("error", "Error")],
+        index=True,
+    )
+    external_message = fields.Char()
+    external_properties_json = fields.Text()

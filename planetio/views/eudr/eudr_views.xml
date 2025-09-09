@@ -30,8 +30,15 @@
     <field name="arch" type="xml">
       <form string="EUDR Declaration">
         <header>
+          <button name="action_open_excel_import_wizard"
+                  type="object"
+                  string="Import Excel"
+                  class="btn-secondary"/>
           <button name="action_export_geojson" type="object"
                   string="Export GeoJSON" class="oe_highlight"/>
+          <button name="action_transmit_dds" type="object"
+                  string="Transmit DDS" class="oe_highlight"/>
+
         </header>
         <sheet>
           <group>
@@ -41,12 +48,15 @@
           <notebook>
             <page string="Lines">
               <field name="line_ids">
-                <tree editable="bottom">
-                  <field name="name"/>
-                  <field name="farmer_name"/>
-                  <field name="farm_name"/>
-                  <field name="area_ha"/>
-                  <field name="geo_type"/>
+                <tree string="Lines"
+                      decoration-success="external_status in ('pass','ok')"
+                      decoration-danger="external_status in ('fail','error')">
+                    <field name="name"/>
+                    <field name="farmer_name"/>
+                    <field name="farm_name"/>
+                    <field name="area_ha"/>
+                    <field name="external_status"/>
+                    <field name="external_message"/>
                 </tree>
                 <form>
                   <group>

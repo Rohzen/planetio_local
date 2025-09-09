@@ -1,0 +1,211 @@
+<odoo>
+    <record id="planetio_tree_view_inh" model="ir.ui.view">
+        <field name="name">eudr.declaration.tree.inh</field>
+        <field name="model">eudr.declaration</field>
+        <field name="inherit_id" ref="view_eudr_declaration_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="questionnaire_score_status" invisible="1"/>
+                <field name="questionnaire_validated" string="Validated questionnaire"/>
+                <field name="questionnaire_score_display" string="Score obtained"
+                    decoration-danger="questionnaire_score_status == 'red'"
+                    decoration-warning="questionnaire_score_status == 'yellow'"
+                    decoration-success="questionnaire_score_status == 'green'"/>
+                <field name="planetio_days_left" string="Questionnaire deadline days"
+                    decoration-success="planetio_days_left &gt;= 10"
+                    decoration-warning="planetio_days_left &gt;= 5 and planetio_days_left &lt;= 9"
+                    decoration-danger="planetio_days_left &lt;= 4"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="planetio_form_view_inh" model="ir.ui.view">
+        <field name="name">eudr.declaration.form.inh</field>
+        <field name="model">eudr.declaration</field>
+        <field name="inherit_id" ref="view_eudr_declaration_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="warning_planetio_days_left" invisible="1"/>
+                <field name="questionnaire_validated" invisible="1"/>
+                <field name="eudr_company_type" invisible="1"/>
+                <field name="eudr_type_override" invisible="1"/>
+                <field name="eudr_third_party_client_id" invisible="1"/>
+            </xpath>
+<!--            <xpath expr="//div[@class='oe_title']" position="before">-->
+<!--                <div role="alert" class="alert alert-warning" attrs="{'invisible': ['|', ('warning_planetio_days_left', '=', False), ('questionnaire_validated', '=', True)]}">-->
+<!--                    <field name="warning_text_planetio_days_left" nolabel="1"/>-->
+<!--                </div>-->
+<!--                <div role="alert" class="alert" attrs="{'invisible': [('questionnaire_validated', '=', False)]}">-->
+<!--                    <div style="font-weight: bold; font-size: 1.2em;">-->
+<!--                        <field name="warning_text_planetio_days_left" nolabel="1"/>-->
+<!--                    </div>-->
+<!--                    <field name="progress_html" widget="html"/>-->
+<!--                    <div style="font-size: 0.85em; margin-top: 4px;">-->
+<!--                        <field name="legend_planetio_score" nolabel="1"/>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </xpath>-->
+<!--            <xpath expr="//sheet/notebook" position="inside">-->
+<!--                <page string="EUDR" attrs="{'invisible': [('state', 'in', ['draft', 'pre_draft'])]}">-->
+<!--                    <header>-->
+<!--                        <field name="status_planetio" widget="statusbar" statusbar_visible="not_started,completed"/>-->
+<!--                        <button name="action_validate_questionnaire" string="Validate Questionnaire" type="object" class="btn-primary" confirm="Are you sure you want to validate the questionnaire? Once validated, it will no longer be possible to make changes to it." attrs="{'invisible': [('questionnaire_validated', '=', True)]}"/>-->
+<!--                        <button name="action_print_dds" string="Print DDS" type="object" class="btn-primary" attrs="{'invisible': [('questionnaire_validated', '=', False)]}"/>-->
+<!--                        <button name="open_otp_wizard" type="object" class="btn-primary" string="Trasmetti DDS" confirm="Are you sure you want to transmit the DDS?" attrs="{'invisible': [('status_planetio', '!=', 'completed')]}"/>-->
+<!--                    </header>-->
+<!--                    <group col="4" name="eudr_context_group">-->
+<!--                        <group col="1">-->
+<!--                            <field name="eudr_type_override" attrs="{'invisible': [('eudr_company_type', '!=', 'mixed')]}"/>-->
+<!--                            <field name="eudr_third_party_client_id" attrs="{'invisible': [('eudr_company_type', '!=', 'third_party_trader')]}"/>-->
+<!--                        </group>-->
+<!--                    </group>-->
+<!--                    <notebook>-->
+<!--                        <page string="Questionnaire" attrs="{'invisible': ['|', ('eudr_company_type', '=', 'operator'), '&amp;', ('eudr_company_type', '=', 'mixed'), ('eudr_type_override', '=', 'operator')]}">-->
+<!--                            <group col="5">-->
+<!--                                <field name="questionnaire_compiler" attrs="{'readonly': [('questionnaire_validated', '=', True)]}"/>-->
+<!--                                <button name="action_send_questionnaire_reminder" type="object" string="Send mail" class="btn-secondary" icon="fa-envelope" attrs="{'invisible': ['|', ('questionnaire_compiler', '=', False), ('questionnaire_validated', '=', True)]}" context="{}" help="Send email reminder to fill out the questionnaire"/>-->
+<!--                                <field name="questionnaire_date"/>-->
+<!--                                <field name="questionnaire_validated" invisible="1"/>-->
+<!--                            </group>-->
+<!--                            <separator string="Questionnaire Data"/>-->
+<!--                            <notebook>-->
+<!--                                <page string="GENERAL INFORMATION ABOUT THE SUPPLIER">-->
+<!--                                    <field name="questionnaire_answer_ids_section_1" attrs="{'readonly': [('questionnaire_validated', '=', True)]}">-->
+<!--                                        <tree editable="bottom" create="false" delete="false" decoration-danger="answer == 'no'" decoration-success="answer == 'yes'">-->
+<!--                                            <field name="question_id" readonly="1"/>-->
+<!--                                            <field name="answer"/>-->
+<!--                                            <field name="additional_info"/>-->
+<!--                                            <field name="attachment" filename="attachment_filename" widget="binary"/>-->
+<!--                                        </tree>-->
+<!--                                    </field>-->
+<!--                                </page>-->
+<!--                                <page string="TRACEABILITY AND GEOLOCATION">-->
+<!--                                    <field name="questionnaire_answer_ids_section_2" attrs="{'readonly': [('questionnaire_validated', '=', True)]}">-->
+<!--                                        <tree editable="bottom" create="false" delete="false" decoration-danger="answer == 'no'" decoration-success="answer == 'yes'">-->
+<!--                                            <field name="question_id" readonly="1"/>-->
+<!--                                            <field name="answer"/>-->
+<!--                                            <field name="additional_info"/>-->
+<!--                                            <field name="attachment" filename="attachment_filename" widget="binary"/>-->
+<!--                                        </tree>-->
+<!--                                    </field>-->
+<!--                                </page>-->
+<!--                                <page string="EUDR COMPLIANCE AND LOCAL LEGISLATION">-->
+<!--                                    <field name="questionnaire_answer_ids_section_3" attrs="{'readonly': [('questionnaire_validated', '=', True)]}">-->
+<!--                                        <tree editable="bottom" create="false" delete="false" decoration-danger="answer == 'no'" decoration-success="answer == 'yes'">-->
+<!--                                            <field name="question_id" readonly="1"/>-->
+<!--                                            <field name="answer"/>-->
+<!--                                            <field name="additional_info"/>-->
+<!--                                            <field name="attachment" filename="attachment_filename" widget="binary"/>-->
+<!--                                        </tree>-->
+<!--                                    </field>-->
+<!--                                </page>-->
+<!--                                <page string="SUPPLY CHAIN AND INTERMEDIARIES">-->
+<!--                                    <field name="questionnaire_answer_ids_section_4" attrs="{'readonly': [('questionnaire_validated', '=', True)]}">-->
+<!--                                        <tree editable="bottom" create="false" delete="false" decoration-danger="answer == 'no'" decoration-success="answer == 'yes'">-->
+<!--                                            <field name="question_id" readonly="1"/>-->
+<!--                                            <field name="answer"/>-->
+<!--                                            <field name="additional_info"/>-->
+<!--                                            <field name="attachment" filename="attachment_filename" widget="binary"/>-->
+<!--                                        </tree>-->
+<!--                                    </field>-->
+<!--                                </page>-->
+<!--                                <page string="CERTIFICATIONS AND SUSTAINABILITY">-->
+<!--                                    <field name="questionnaire_answer_ids_section_5" attrs="{'readonly': [('questionnaire_validated', '=', True)]}">-->
+<!--                                        <tree editable="bottom" create="false" delete="false" decoration-danger="answer == 'no'" decoration-success="answer == 'yes'">-->
+<!--                                            <field name="question_id" readonly="1"/>-->
+<!--                                            <field name="answer"/>-->
+<!--                                            <field name="additional_info"/>-->
+<!--                                            <field name="attachment" filename="attachment_filename" widget="binary"/>-->
+<!--                                        </tree>-->
+<!--                                    </field>-->
+<!--                                </page>-->
+<!--                                <page string="RESPECT FOR INDIGENOUS PEOPLES' RIGHTS">-->
+<!--                                    <field name="questionnaire_answer_ids_section_6" attrs="{'readonly': [('questionnaire_validated', '=', True)]}">-->
+<!--                                        <tree editable="bottom" create="false" delete="false" decoration-danger="answer == 'no'" decoration-success="answer == 'yes'">-->
+<!--                                            <field name="question_id" readonly="1"/>-->
+<!--                                            <field name="answer"/>-->
+<!--                                            <field name="additional_info"/>-->
+<!--                                            <field name="attachment" filename="attachment_filename" widget="binary"/>-->
+<!--                                        </tree>-->
+<!--                                    </field>-->
+<!--                                </page>-->
+<!--                                <page string="RISK MANAGEMENT AND DOCUMENTATION">-->
+<!--                                    <field name="questionnaire_answer_ids_section_7" attrs="{'readonly': [('questionnaire_validated', '=', True)]}">-->
+<!--                                        <tree editable="bottom" create="false" delete="false" decoration-danger="answer == 'no'" decoration-success="answer == 'yes'">-->
+<!--                                            <field name="question_id" readonly="1"/>-->
+<!--                                            <field name="answer"/>-->
+<!--                                            <field name="additional_info"/>-->
+<!--                                            <field name="attachment" filename="attachment_filename" widget="binary"/>-->
+<!--                                        </tree>-->
+<!--                                    </field>-->
+<!--                                </page>-->
+<!--                            </notebook>-->
+<!--                        </page>-->
+<!--                        <page string="Geolocation" attrs="{'invisible': ['|', ('eudr_company_type', '=', 'operator'), '&amp;', ('eudr_company_type', '=', 'mixed'), ('eudr_type_override', '=', 'operator')]}">-->
+<!--                            <button name="action_download_farm_geojson" string="Download GeoJSON from Tracer" type="object" class="btn-primary"/>-->
+<!--                            <group attrs="{'readonly': [('state', '!=', 'confirmed')]}" name="container_row_2">-->
+<!--                                <group name="button_upload" priority="1">-->
+<!--                                    <field name="geojson_upload_file" filename="geojson_upload_filename"/>-->
+<!--                                    <button name="action_upload_farm_geojson" string="Upload GeoJSON to Tracer" type="object" class="btn-primary" attrs="{'invisible': [('geojson_upload_file', '=', False)]}"/>-->
+<!--                                </group>-->
+<!--                            </group>-->
+<!--                            <group name="container_row_2">-->
+<!--                                <group string="Area and General Data" name="general_info" priority="1">-->
+<!--                                    <field name="area_analyzed" readonly="1"/>-->
+<!--                                    <field name="farm_area" readonly="1"/>-->
+<!--                                    <field name="country_name" readonly="1"/>-->
+<!--                                    <field name="country_code" readonly="1"/>-->
+<!--                                    <field name="country_risk" readonly="1"/>-->
+<!--                                    <field name="country_value" readonly="1"/>-->
+<!--                                    <field name="analyzed_at" readonly="1"/>-->
+<!--                                </group>-->
+<!--                                <group string="Deforestation and Protected Areas Analysis" name="deforestation_protected_areas_analysis" priority="1">-->
+<!--                                    <field name="deforestation_area" readonly="1"/>-->
+<!--                                    <field name="protected_area_overlap" readonly="1"/>-->
+<!--                                    <field name="water_overlap" readonly="1"/>-->
+<!--                                    <field name="built_area_overlap" readonly="1"/>-->
+<!--                                    <field name="deforestation_free" readonly="1"/>-->
+<!--                                    <field name="protected_free" readonly="1"/>-->
+<!--                                </group>-->
+<!--                                <group string="Compliance Check" name="compliance_check" priority="1">-->
+<!--                                    <field name="data_integrity" readonly="1"/>-->
+<!--                                    <field name="reasonable_size" readonly="1"/>-->
+<!--                                    <field name="is_on_land" readonly="1"/>-->
+<!--                                    <field name="is_not_within_urban_area" readonly="1"/>-->
+<!--                                    <field name="elevation_check" readonly="1"/>-->
+<!--                                    <field name="commodity_region_check" readonly="1"/>-->
+<!--                                </group>-->
+<!--                                <group string="" name="empty_group" priority="1"/>-->
+<!--                                <group name="button_map" priority="1">-->
+<!--                                    <field name="geo_analysis_id" invisible="1"/>-->
+<!--                                    <button name="action_open_map_on_geojson" type="object" string="Open map to geojson.io" class="btn-primary" attrs="{'invisible': [('geo_analysis_id', '=', False)]}"/>-->
+<!--                                </group>-->
+<!--                            </group>-->
+<!--                        </page>-->
+<!--                        <page string="Documentation">-->
+<!--                            <group attrs="{'readonly': [('state', '!=', 'confirmed')]}" name="container_row_2" colspan="2">-->
+<!--                                <separator string="GeoJSON" colspan="2"/>-->
+<!--                                <field name="attach_geojson_upload_file" filename="attach_geojson_upload_filename" nolabel="1"/>-->
+<!--                                <separator string="Documenti" colspan="2"/>-->
+<!--                                <field name="attachments_ids" nolabel="1">-->
+<!--                                    <tree editable="bottom">-->
+<!--                                        <field name="name"/>-->
+<!--                                        <field name="file"/>-->
+<!--                                    </tree>-->
+<!--                                </field>-->
+<!--                                <newline/>-->
+<!--                                <button name="action_analyze_documentation" type="object" string="Analyze documentation" class="btn-primary" attrs="{'invisible': [('attachments_ids', '=', [])]}"/>-->
+<!--                            </group>-->
+<!--                        </page>-->
+<!--                        <page string="Cumulative DDS">-->
+<!--                            <group>-->
+<!--                                <field name="cumulative_dds_ids" widget="many2many_tags" options="{'no_create': True}"/>-->
+<!--                            </group>-->
+<!--                            <button name="action_load_cumulative_dds" type="object" string="Load cumulative DDS" class="btn-primary" attrs="{'invisible': [('cumulative_dds_ids', '=', [])]}"/>-->
+<!--                        </page>-->
+<!--                    </notebook>-->
+<!--                </page>-->
+<!--            </xpath>-->
+        </field>
+    </record>
+</odoo>
