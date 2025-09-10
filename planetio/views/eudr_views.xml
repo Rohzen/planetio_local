@@ -45,21 +45,33 @@
             <page string="Details">
               <field name="line_ids">
                 <tree string="Lines"
-                      decoration-success="external_status in ('pass','ok')"
-                      decoration-danger="external_status in ('fail','error')">
-                    <field name="name"/>
-                    <field name="farmer_id_code"/>
-                    <field name="farmer_name"/>
-                    <field name="farm_name"/>
-                    <field name="country"/>
-                    <field name="region"/>
-                    <field name="municipality"/>
-                    <field name="area_ha"/>
-                    <field name="external_status"/>
-                    <field name="external_message"/>
-                    <field name="geometry"/>
+                      decoration-success="external_ok"
+                      decoration-danger="not external_ok and external_message">
+                  <field name="external_ok" widget="boolean_toggle" readonly="1" string=""/>
+                  <field name="external_message"/>
+                  <field name="name"/>
+                  <field name="farmer_id_code"/>
+                  <field name="farmer_name"/>
+                  <field name="farm_name"/>
+                  <field name="country"/>
+                  <field name="region"/>
+                  <field name="municipality"/>
+                  <field name="area_ha"/>
+                  <field name="external_status"/>
+                  <field name="external_message_short" string="Message"/>
+                  <field name="geometry"/>
                 </tree>
                 <form>
+                  <group>
+                    <field name="external_ok" widget="boolean_toggle" readonly="1"/>
+                    <field name="external_status"/>
+                    <field name="external_http_code"/>
+                    <field name="external_uid"/>
+                  </group>
+                  <group>
+                    <field name="external_message" widget="text" string="External Message (full)"/>
+                    <field name="external_properties_json" widget="text"/>
+                  </group>
                   <group>
                     <field name="name"/>
                     <field name="farmer_name"/>

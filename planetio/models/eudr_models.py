@@ -21,8 +21,8 @@ class EUDRDeclaration(models.Model):
     geometry = fields.Text()  # GeoJSON string
     source_attachment_id = fields.Many2one("ir.attachment")
 
-    # nuovo: righe figlie
     line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
+
 
     def action_analyze_external(self):
         self.ensure_one()
@@ -120,3 +120,26 @@ class EUDRDeclarationLine(models.Model):
     )
     external_message = fields.Char()
     external_properties_json = fields.Text()
+
+    external_status = fields.Selection([
+        ('ok', 'OK'),
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('error', 'Error'),
+    ], readonly=True)
+
+    external_http_code = fields.Integer(readonly=True)
+    external_message_short = fields.Char(readonly=True)
+
+    external_ok = fields.Boolean(
+        string="OK",
+        compute="_compute_external_ok",
+        store=True,
+        readonly=True,
+    )
+
+    @api.depends('external_status')
+    def _compute_external_ok(self):
+        for rec in self:
+            status = (rec.external_status or '').lower()
+            rec.external_ok = status in ('ok', 'pass', 'success')
