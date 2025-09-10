@@ -21,8 +21,18 @@ class EUDRDeclaration(models.Model):
     geometry = fields.Text()  # GeoJSON string
     source_attachment_id = fields.Many2one("ir.attachment")
 
-    line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
+    line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Areas")
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Ensure every declaration gets a sequence-generated name
+        for vals in (vals_list or []):
+            if not vals.get('name'):
+                seq = (self.env['ir.sequence'].next_by_code('eudr.declaration')
+                       or self.env['ir.sequence'].next_by_code('planetio.eudr.declaration')
+                       or 'EUDR-SEQ')
+                vals['name'] = seq
+        return super(EUDRDeclaration, self).create(vals_list)
 
     def action_analyze_external(self):
         self.ensure_one()
@@ -96,11 +106,23 @@ class EUDRDeclaration(models.Model):
                 raise UserError(_("Puoi trasmettere la DDS solo se il questionario è completato."))
             dds_id = submit_dds_for_batch(record)
 
+
+    def action_open_import_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'excel.import.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_model': 'eudr.declaration',
+                'active_id': self.id,
+            }
+        }
 class EUDRDeclarationLine(models.Model):
     _name = "eudr.declaration.line"
     _description = "EUDR Declaration Line"
-
-    declaration_id = fields.Many2one("eudr.declaration", ondelete="cascade", required=True)
+    declaration_id = fields.Many2one("eudr.declaration", ondelete="cascade")
     name = fields.Char()
     farmer_name = fields.Char()
     farmer_id_code = fields.Char()
@@ -109,37 +131,23 @@ class EUDRDeclarationLine(models.Model):
     region = fields.Char()
     municipality = fields.Char()
     farm_name = fields.Char()
-    area_ha = fields.Float()
+    area_ha = fields.Char()
     geo_type = fields.Selection([("point","Point"),("polygon","Polygon")])
     geometry = fields.Text()  # GeoJSON string
 
     external_uid = fields.Char(index=True)
-    external_status = fields.Selection(
-        selection=[("pass", "Pass"), ("ok", "OK"), ("fail", "Fail"), ("error", "Error")],
-        index=True,
-    )
-    external_message = fields.Char()
-    external_properties_json = fields.Text()
-
     external_status = fields.Selection([
         ('ok', 'OK'),
         ('pass', 'Pass'),
         ('fail', 'Fail'),
         ('error', 'Error'),
     ], readonly=True)
-
+    external_message = fields.Char()
+    external_properties_json = fields.Text()
     external_http_code = fields.Integer(readonly=True)
     external_message_short = fields.Char(readonly=True)
-
     external_ok = fields.Boolean(
         string="OK",
-        compute="_compute_external_ok",
-        store=True,
         readonly=True,
     )
 
-    @api.depends('external_status')
-    def _compute_external_ok(self):
-        for rec in self:
-            status = (rec.external_status or '').lower()
-            rec.external_ok = status in ('ok', 'pass', 'success')

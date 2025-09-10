@@ -33,8 +33,7 @@
         <header>
           <button name="action_export_geojson" type="object"
                   string="Export GeoJSON" class="oe_highlight"/>
-            <button name="action_analyze_external" type="object" string="Analyze with Tracer" class="btn-secondary"/>
-        </header>
+          <button name="action_analyze_deforestation" type="object" class="oe_highlight" string="Deforestation analysis"/>        </header>
         <sheet>
           <group>
             <field name="name"/>
@@ -46,7 +45,7 @@
               <field name="line_ids">
                 <tree string="Lines"
                       decoration-success="external_ok"
-                      decoration-danger="not external_ok and external_message">
+                      decoration-danger="not external_ok">
                   <field name="external_ok" widget="boolean_toggle" readonly="1" string=""/>
                   <field name="external_message"/>
                   <field name="name"/>

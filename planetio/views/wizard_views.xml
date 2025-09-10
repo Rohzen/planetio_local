@@ -78,11 +78,11 @@
           <field name="analysis_json" widget="text" string="External Analysis (per row)" readonly="1"/>
 
           <!-- Nel footer: bottone per lanciare l’analisi -->
-          <button name="action_analyze_external"
-                  string="Analyze with Tracer"
-                  type="object"
-                  class="btn-secondary"
-                  attrs="{'invisible':[('step','!=','validate')]}"/>
+<!--          <button name="action_analyze_external"-->
+<!--                  string="Analyze with Tracer"-->
+<!--                  type="object"-->
+<!--                  class="btn-secondary"-->
+<!--                  attrs="{'invisible':[('step','!=','validate')]}"/>-->
 
           <!-- Close on confirm -->
           <button string="Close"

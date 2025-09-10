@@ -6,6 +6,7 @@ try:
 except Exception:
     pd = None
 
+
 class ExcelImportService(models.AbstractModel):
     _name = "excel.import.service"
     _description = "Excel Import Service (EUDR-aware)"
@@ -16,8 +17,8 @@ class ExcelImportService(models.AbstractModel):
             raise ValueError("pandas is required to import Excel files")
         content = base64.b64decode(job.attachment_id.datas)
         xls = pd.ExcelFile(io.BytesIO(content))
-        tokens = ["latitude","longitude","coordinates","farmer","farmer's name","id","tax code",
-                  "country","region","municipality","name of farm","ha total","area","type","x","y"]
+        tokens = ["latitude", "longitude", "coordinates", "farmer", "farmer's name", "id", "tax code",
+                  "country", "region", "municipality", "name of farm", "ha total", "area", "type", "x", "y"]
         best = (None, -1)
         for s in xls.sheet_names:
             try:
@@ -59,7 +60,6 @@ class ExcelImportService(models.AbstractModel):
         preview = df.head(20).to_dict(orient='records')
         return mapping, preview
 
-    
     @api.model
     def transform_and_validate(self, job):
         """
@@ -67,6 +67,7 @@ class ExcelImportService(models.AbstractModel):
         """
         result = self.validate_rows(job)
         return json.dumps(result, ensure_ascii=False, indent=2)
+
     @api.model
     def validate_rows(self, job):
         df, _ = self._load_normalized_dataframe(job.attachment_id, getattr(job, 'sheet_name', None))
@@ -79,18 +80,22 @@ class ExcelImportService(models.AbstractModel):
                     raise ValueError('Missing geometry')
                 ok_rows.append(normalized)
             except Exception as e:
-                errors.append({'row': i+1, 'error': str(e)})
+                errors.append({'row': i + 1, 'error': str(e)})
         return {'valid': ok_rows, 'errors': errors}
 
-    @api.model
-    def create_records(self, job):
-        payload = json.loads(job.preview_json or '[]')
-        rows = payload or self.validate_rows(job)['valid']
-        created = 0
-        for vals in rows:
-            self.env['eudr.declaration.line'].create(vals)
-            created += 1
-        return created
+    def _sanitize_vals(self, model_name, vals, store_extras_field='external_properties_json'):
+        """Keep only valid model fields; stash unknown keys into JSON field if present."""
+        model = self.env[model_name]
+        allowed = set(model._fields.keys())
+        vals = vals or {}
+        cleaned = {k: v for k, v in vals.items() if k in allowed}
+        extras = {k: v for k, v in vals.items() if k not in allowed}
+        if extras and store_extras_field in allowed and not cleaned.get(store_extras_field):
+            try:
+                cleaned[store_extras_field] = json.dumps(extras, ensure_ascii=False)
+            except Exception:
+                pass
+        return cleaned, extras
 
     def _load_normalized_dataframe(self, attachment, preferred_sheet=None):
         if pd is None:
@@ -113,7 +118,8 @@ class ExcelImportService(models.AbstractModel):
 
         unnamed_ratio = sum(str(c).startswith('Unnamed') for c in df.columns) / max(1, len(df.columns))
         first_row = [str(x) for x in list(df.iloc[0].astype(str).fillna(''))] if len(df.index) else []
-        header_tokens = ['FARMER', 'LATITUDE', 'LONGITUDE', 'TYPE', 'COUNTRY', 'REGION', 'MUNICIPALITY', 'NAME OF FARM', 'HA', 'COORDINATES', 'X', 'Y']
+        header_tokens = ['FARMER', 'LATITUDE', 'LONGITUDE', 'TYPE', 'COUNTRY', 'REGION', 'MUNICIPALITY', 'NAME OF FARM',
+                         'HA', 'COORDINATES', 'X', 'Y']
         first_row_hits = sum(any(t in cell.upper() for t in header_tokens) for cell in first_row)
         if unnamed_ratio > 0.3 and first_row_hits >= 2:
             df.columns = [str(x).strip() for x in first_row]
@@ -187,7 +193,7 @@ class ExcelImportService(models.AbstractModel):
     def _ai_enabled(self):
         icp = self.env['ir.config_parameter'].sudo()
         enabled = icp.get_param('planetio.enable_ai_mapping', default='True')
-        return str(enabled).lower() in ('1','true','yes','y')
+        return str(enabled).lower() in ('1', 'true', 'yes', 'y')
 
     def _propose_mapping_with_ai(self, headers, sample_rows):
         try:
@@ -216,7 +222,8 @@ class ExcelImportService(models.AbstractModel):
 
     def _normalize_row(self, row, mapping):
         vals = {}
-        for k in ['name','farmer_name','farmer_id_code','tax_code','country','region','municipality','farm_name']:
+        for k in ['name', 'farmer_name', 'farmer_id_code', 'tax_code', 'country', 'region', 'municipality',
+                  'farm_name']:
             col = mapping.get(k)
             if col and col in row:
                 vals[k] = (row[col] or '').strip()
@@ -227,8 +234,8 @@ class ExcelImportService(models.AbstractModel):
             except Exception:
                 pass
 
-        lat_col = mapping.get('latitude') or self._guess_header(row.index, ['latitude','lat'])
-        lon_col = mapping.get('longitude') or self._guess_header(row.index, ['longitude','lon'])
+        lat_col = mapping.get('latitude') or self._guess_header(row.index, ['latitude', 'lat'])
+        lon_col = mapping.get('longitude') or self._guess_header(row.index, ['longitude', 'lon'])
         geo_type_raw = (row.get(mapping.get('geo_type_raw')) if mapping.get('geo_type_raw') else None) or ''
 
         coords_cols = [c for c in row.index if str(c).startswith('coordinates_')]
@@ -237,7 +244,7 @@ class ExcelImportService(models.AbstractModel):
             try:
                 lat_val = row[c]
                 idx = list(row.index).index(c)
-                lon_val = row[list(row.index)[idx+1]] if idx+1 < len(row.index) else None
+                lon_val = row[list(row.index)[idx + 1]] if idx + 1 < len(row.index) else None
                 if self._is_number(lat_val) and self._is_number(lon_val):
                     coords_pairs.append([float(lon_val), float(lat_val)])
             except Exception:
@@ -245,19 +252,20 @@ class ExcelImportService(models.AbstractModel):
 
         geometry, geo_type = None, None
         if self._is_number(row.get(lat_col)) and self._is_number(row.get(lon_col)):
-            lat = float(row.get(lat_col)); lon = float(row.get(lon_col))
-            geometry = json.dumps({'type':'Point','coordinates':[lon,lat]})
+            lat = float(row.get(lat_col));
+            lon = float(row.get(lon_col))
+            geometry = json.dumps({'type': 'Point', 'coordinates': [lon, lat]})
             geo_type = 'point'
         elif coords_pairs:
             if coords_pairs and coords_pairs[0] != coords_pairs[-1]:
                 coords_pairs.append(coords_pairs[0])
-            geometry = json.dumps({'type':'Polygon','coordinates':[coords_pairs]})
+            geometry = json.dumps({'type': 'Polygon', 'coordinates': [coords_pairs]})
             geo_type = 'polygon'
         else:
             x_col = self._guess_header(row.index, ['x'])
             y_col = self._guess_header(row.index, ['y'])
             if self._is_number(row.get(y_col)) and self._is_number(row.get(x_col)):
-                geometry = json.dumps({'type':'Point','coordinates':[float(row.get(x_col)), float(row.get(y_col))]})
+                geometry = json.dumps({'type': 'Point', 'coordinates': [float(row.get(x_col)), float(row.get(y_col))]})
                 geo_type = 'point'
 
         if not geo_type and geo_type_raw:
@@ -293,3 +301,33 @@ class ExcelImportService(models.AbstractModel):
             job.log_info(msg)
         except Exception:
             pass
+
+    @api.model
+    def create_records(self, job):
+        payload = json.loads(job.preview_json or '[]')
+        rows = payload or self.validate_rows(job)['valid']
+
+        ctx = (self.env.context or {})
+        Decl = self.env['eudr.declaration']
+
+        # If called inside a declaration form, append to that record
+        decl = getattr(job, 'declaration_id', False)
+        model_context = ctx.get('params', {}).get('model')
+        active_id = ctx.get('active_id')
+        if not decl and model_context == 'eudr.declaration' and active_id:
+            decl = Decl.browse(ctx['active_id'])
+
+        # If not inside a declaration, ALWAYS create a new declaration (sequence via model create())
+        if not decl:
+            decl = Decl.create({})  # name will be set by EUDRDeclaration.create()
+
+        created = 0
+        for vals in rows:
+            safe_vals, _extras = self._sanitize_vals('eudr.declaration.line', vals)
+            safe_vals['declaration_id'] = decl.id
+            self.env['eudr.declaration.line'].create(safe_vals)
+            created += 1
+
+        return {'declaration_id': decl.id, 'created': created}
+
+

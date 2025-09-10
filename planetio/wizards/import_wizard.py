@@ -83,11 +83,21 @@ class ExcelImportWizard(models.TransientModel):
 
     def action_confirm(self):
         self.ensure_one()
-        created = self.env["excel.import.service"].create_records(self.job_id)
+        result = self.env["excel.import.service"].create_records(self.job_id)
+        created = result['created'] if isinstance(result, dict) else int(result or 0)
+        decl_id = result.get('declaration_id') if isinstance(result, dict) else False
         self.job_id.log_info(f"Created/updated records: {created}")
         self.job_id.status = "done"
         self.step = "confirm"
-        return {"type":"ir.actions.act_window_close"}
+        if decl_id:
+            return {
+                "type": "ir.actions.act_window",
+                "res_model": "eudr.declaration",
+                "view_mode": "form",
+                "res_id": decl_id,
+                "target": "current",
+            }
+        return {"type": "ir.actions.act_window_close"}
 
     def action_analyze_external(self):
         self.ensure_one()
