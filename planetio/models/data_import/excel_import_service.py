@@ -172,6 +172,7 @@ class ExcelImportService(models.AbstractModel):
             'municipality': self._best_header(headers, ['municipality']),
             'farm_name': self._best_header(headers, ['farm_name']),
             'area_ha': self._best_header(headers, ['area_ha']),
+            'geo_type_raw': self._best_header(headers, ['geo_type_raw']),
         }
         return mapping
 
@@ -237,6 +238,8 @@ class ExcelImportService(models.AbstractModel):
         lat_col = mapping.get('latitude') or self._guess_header(row.index, ['latitude', 'lat'])
         lon_col = mapping.get('longitude') or self._guess_header(row.index, ['longitude', 'lon'])
         geo_type_raw = (row.get(mapping.get('geo_type_raw')) if mapping.get('geo_type_raw') else None) or ''
+        if geo_type_raw:
+            vals['geo_type_raw'] = str(geo_type_raw)
 
         coords_cols = [c for c in row.index if str(c).startswith('coordinates_')]
         coords_pairs = []

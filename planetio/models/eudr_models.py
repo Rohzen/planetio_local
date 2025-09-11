@@ -437,6 +437,7 @@ class EUDRDeclarationLine(models.Model):
     municipality = fields.Char()
     farm_name = fields.Char()
     area_ha = fields.Char()
+    geo_type_raw = fields.Char()
     geo_type = fields.Selection([("point","Point"),("polygon","Polygon")])
     geometry = fields.Text()  # GeoJSON string
 
