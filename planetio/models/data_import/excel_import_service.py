@@ -250,10 +250,23 @@ class ExcelImportService(models.AbstractModel):
             except Exception:
                 continue
 
+        # Attempt to detect polygons encoded in a single cell
+        polygon_pairs = None
+        for val in row.values:
+            parsed = self._parse_polygon_string(val)
+            if parsed:
+                polygon_pairs = parsed
+                break
+
         geometry, geo_type = None, None
-        if self._is_number(row.get(lat_col)) and self._is_number(row.get(lon_col)):
-            lat = float(row.get(lat_col));
-            lon = float(row.get(lon_col))
+        if polygon_pairs:
+            if polygon_pairs[0] != polygon_pairs[-1]:
+                polygon_pairs.append(polygon_pairs[0])
+            geometry = json.dumps({'type': 'Polygon', 'coordinates': [polygon_pairs]})
+            geo_type = 'polygon'
+        elif self._is_number(row.get(lat_col)) and self._is_number(row.get(lon_col)):
+            lat = float(str(row.get(lat_col)).replace(',', '.'))
+            lon = float(str(row.get(lon_col)).replace(',', '.'))
             geometry = json.dumps({'type': 'Point', 'coordinates': [lon, lat]})
             geo_type = 'point'
         elif coords_pairs:
@@ -295,6 +308,25 @@ class ExcelImportService(models.AbstractModel):
             return True
         except Exception:
             return False
+
+    def _parse_polygon_string(self, val):
+        """Extract polygon coordinates from a cell value.
+        The value may contain pairs like "(lat, lon)" repeated. Returns a list of
+        [lon, lat] pairs if at least three valid pairs are found, otherwise None."""
+        if not isinstance(val, str):
+            return None
+        pairs = re.findall(r'(-?\d+(?:[\.,]\d+)?)\s*[;,]\s*(-?\d+(?:[\.,]\d+)?)', val)
+        coords = []
+        for a, b in pairs:
+            try:
+                lat = float(a.replace(',', '.'))
+                lon = float(b.replace(',', '.'))
+                coords.append([lon, lat])
+            except Exception:
+                continue
+        if len(coords) >= 3:
+            return coords
+        return None
 
     def _log(self, job, msg):
         try:
