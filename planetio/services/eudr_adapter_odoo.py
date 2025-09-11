@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import base64, json
-from odoo import _
+from odoo import _, fields
 from odoo.exceptions import UserError
 from .eudr_client import EUDRClient, build_geojson_b64
 
@@ -93,13 +93,21 @@ def submit_dds_for_batch(record):
     net_weight_kg = str(max(1, int(round(peso))))
 
     client = EUDRClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
+    company_address = (record.partner_id._display_address(without_company=True) or '').replace('\n', ' ')
+
+    comment_text = ((getattr(record, 'x_eudr_comment', None) or getattr(record, 'note', None) or '').strip())
+
+    if not comment_text:
+        comment_text = _('Submission for %s on %s by %s') % (
+        (record.name or f'Batch-{record.id}'), fields.Date.today(),record.env.company.name,
+        )
 
     submit_xml = client.build_statement_xml(
         internal_ref = record.name or f'Batch-{record.id}',
         activity_type = 'IMPORT',
         company_name = record.partner_id.name or 'Company',
         company_country = record.partner_id.country_id.code or 'IT',
-        company_address = (record.partner_id.street> + ' ' + record.partner_id.city) or 'Unknown Address',
+        company_address = company_address or 'Unknown Address',
         eori_value = record.partner_id.vat,
         hs_heading = '090111',
         description_of_goods = 'Green coffee beans',
@@ -110,7 +118,7 @@ def submit_dds_for_batch(record):
         operator_type = 'OPERATOR',
         country_of_activity = company_country,
         border_cross_country = company_country,
-        qdate = record.datestamp
+        comment=comment_text,
     )
 
     envelope = client.build_envelope(submit_xml)
