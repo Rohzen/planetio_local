@@ -96,7 +96,7 @@
                 <field name="area_ha" invisible="1"/>
                 <field name="external_status" invisible="1"/>
                 <field name="external_message_short" string="Message" invisible="1"/>
-                <field name="geometry" invisible="1"/>
+                <field name="geometry" invisible="0"/>
               </tree>
               <form>
                 <header>
