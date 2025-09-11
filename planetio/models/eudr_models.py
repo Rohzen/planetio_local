@@ -459,13 +459,9 @@ class EUDRDeclarationLine(models.Model):
     def action_visualize_area_on_map(self):
         """
         Questo metodo viene chiamato quando si preme il pulsante.
-        Calcola un'area di 50mq attorno a un punto e la apre in geojson.io.
+        Calcola un'area di 50mq attorno a un punto oppure visualizza un poligono
+        esistente e lo apre in geojson.io.
         """
-        # if not Point:
-        #     raise UserError("Le librerie 'shapely' e 'pyproj' sono necessarie. "
-        #                     "Per favore, installale eseguendo: pip install shapely pyproj")
-
-        # Assicuriamoci che l'operazione venga eseguita per un solo record alla volta.
         self.ensure_one()
 
         if not self.geometry:
@@ -473,49 +469,54 @@ class EUDRDeclarationLine(models.Model):
 
         try:
             geo_data = json.loads(self.geometry)
-            if geo_data.get('type') != 'Point' or 'coordinates' not in geo_data:
-                raise ValueError()
+        except json.JSONDecodeError:
+            raise UserError("Il formato del GeoJSON nel campo 'Geometria' non è valido.")
 
+        geom_type = geo_data.get('type')
+
+        if geom_type == 'Point' and 'coordinates' in geo_data:
             lon, lat = geo_data['coordinates']
-        except (json.JSONDecodeError, ValueError):
+
+            # --- Calcolo Geospaziale ---
+            # 1. Calcoliamo il raggio di un cerchio con area di 50 mq.
+            #    Area = π * r^2  =>  r = sqrt(Area / π)
+            area_mq = 50.0
+            radius_in_meters = math.sqrt(area_mq / math.pi)
+
+            # 2. Le coordinate GeoJSON sono in WGS84 (gradi). Per creare un buffer in metri,
+            #    dobbiamo proiettare il punto in un sistema di coordinate che usi i metri,
+            #    come UTM (Universal Transverse Mercator).
+
+            # Definiamo il sistema di coordinate di partenza (WGS84)
+            wgs84 = CRS("EPSG:4326")
+
+            # Troviamo la zona UTM corretta per la longitudine del punto
+            utm_zone = int((lon + 180) / 6) + 1
+            utm_crs_str = f"EPSG:326{utm_zone}" if lat >= 0 else f"EPSG:327{utm_zone}"
+            utm = CRS(utm_crs_str)
+
+            # Creiamo i trasformatori per passare da WGS84 a UTM e viceversa
+            transformer_to_utm = Transformer.from_crs(wgs84, utm, always_xy=True)
+            transformer_to_wgs84 = Transformer.from_crs(utm, wgs84, always_xy=True)
+
+            # 3. Trasformiamo il punto in coordinate UTM (metri)
+            point_utm = transformer_to_utm.transform(lon, lat)
+
+            # 4. Creiamo il buffer (l'area circolare) in metri
+            shapely_point_utm = Point(point_utm)
+            buffered_area_utm = shapely_point_utm.buffer(radius_in_meters)
+
+            # 5. Riproiettiamo il poligono risultante di nuovo in WGS84 (gradi) per visualizzarlo
+            buffered_area_wgs84 = transform(transformer_to_wgs84.transform, buffered_area_utm)
+
+            # 6. Convertiamo il poligono di shapely in un dizionario GeoJSON
+            final_geojson = mapping(buffered_area_wgs84)
+
+        elif geom_type in ('Polygon', 'MultiPolygon'):
+            final_geojson = geo_data
+        else:
             raise UserError("Il formato del GeoJSON nel campo 'Geometria' non è valido. "
-                            "Assicurati che sia un punto valido, ad es: "
-                            '{"type": "Point", "coordinates": [9.19, 45.46]}')
-
-        # --- Calcolo Geospaziale ---
-        # 1. Calcoliamo il raggio di un cerchio con area di 50 mq.
-        #    Area = π * r^2  =>  r = sqrt(Area / π)
-        area_mq = 50.0
-        radius_in_meters = math.sqrt(area_mq / math.pi)
-
-        # 2. Le coordinate GeoJSON sono in WGS84 (gradi). Per creare un buffer in metri,
-        #    dobbiamo proiettare il punto in un sistema di coordinate che usi i metri,
-        #    come UTM (Universal Transverse Mercator).
-
-        # Definiamo il sistema di coordinate di partenza (WGS84)
-        wgs84 = CRS("EPSG:4326")
-
-        # Troviamo la zona UTM corretta per la longitudine del punto
-        utm_zone = int((lon + 180) / 6) + 1
-        utm_crs_str = f"EPSG:326{utm_zone}" if lat >= 0 else f"EPSG:327{utm_zone}"
-        utm = CRS(utm_crs_str)
-
-        # Creiamo i trasformatori per passare da WGS84 a UTM e viceversa
-        transformer_to_utm = Transformer.from_crs(wgs84, utm, always_xy=True)
-        transformer_to_wgs84 = Transformer.from_crs(utm, wgs84, always_xy=True)
-
-        # 3. Trasformiamo il punto in coordinate UTM (metri)
-        point_utm = transformer_to_utm.transform(lon, lat)
-
-        # 4. Creiamo il buffer (l'area circolare) in metri
-        shapely_point_utm = Point(point_utm)
-        buffered_area_utm = shapely_point_utm.buffer(radius_in_meters)
-
-        # 5. Riproiettiamo il poligono risultante di nuovo in WGS84 (gradi) per visualizzarlo
-        buffered_area_wgs84 = transform(transformer_to_wgs84.transform, buffered_area_utm)
-
-        # 6. Convertiamo il poligono di shapely in un dizionario GeoJSON
-        final_geojson = mapping(buffered_area_wgs84)
+                            "Assicurati che sia un punto o un poligono valido")
 
         # --- Costruzione dell'URL ---
         # Codifichiamo il GeoJSON per inserirlo nell'URL
