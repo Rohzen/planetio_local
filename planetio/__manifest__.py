@@ -7,17 +7,19 @@
     'data': [
         'security/ir.model.access.csv',
         'views/eudr_views.xml',
-        'views/declaration_import_button.xml',
         'views/job_views.xml',
         'views/template_views.xml',
         'views/wizard_views.xml',
-        'views/wizard_oauth.xml',
+        # 'views/wizard_oauth.xml',
         'data/gfw_api_params.xml',
         'data/eudr_params.xml',
         'data/seed_template.xml',
         'data/sequence.xml',
         'views/otp_verification_wizard.xml',
     ],
+    # 'external_dependencies': {
+    #     'python' : ['pandas', 'requests', 'google-generativeai'],
+    # },
     'installable': True,
     'application': True,
 }

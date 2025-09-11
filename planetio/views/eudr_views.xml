@@ -31,6 +31,8 @@
     <field name="arch" type="xml">
       <form string="EUDR Declaration">
         <header>
+          <button name="action_open_import_wizard" type="object"
+                string="Import Wizard" class="btn-secondary"/>
           <button name="action_export_geojson" type="object"
                   string="Export GeoJSON" class="oe_highlight"/>
           <button name="action_analyze_deforestation" type="object" class="oe_highlight" string="Deforestation analysis"/>        </header>
@@ -39,25 +41,27 @@
             <field name="name"/>
             <field name="datestamp"/>
             <field name="source_attachment_id" readonly="1"/>
+            <field name="area_ha" readonly="1"/>
           </group>
           <notebook>
             <page string="Details">
               <field name="line_ids">
                 <tree string="Lines"
                       decoration-success="external_ok"
-                      decoration-danger="not external_ok">
-                  <field name="external_ok" widget="boolean_toggle" readonly="1" string=""/>
-                  <field name="external_message"/>
-                  <field name="name"/>
+                      decoration-danger="not external_ok"
+                      editable="top">
+                  <field name="external_ok" widget="boolean_toggle" readonly="0" string=""/>
+                  <field name="external_message" invisible="1"/>
+                  <field name="name" invisible="1"/>
                   <field name="farmer_id_code"/>
                   <field name="farmer_name"/>
                   <field name="farm_name"/>
                   <field name="country"/>
                   <field name="region"/>
-                  <field name="municipality"/>
-                  <field name="area_ha"/>
-                  <field name="external_status"/>
-                  <field name="external_message_short" string="Message"/>
+                  <field name="municipality" invisible="1"/>
+                  <field name="area_ha" invisible="1"/>
+                  <field name="external_status" invisible="1"/>
+                  <field name="external_message_short" string="Message" invisible="1"/>
                   <field name="geometry"/>
                 </tree>
                 <form>
@@ -93,6 +97,10 @@
             </page>
           </notebook>
         </sheet>
+        <div class="oe_chatter">
+          <field name="message_follower_ids" widget="mail_followers"/>
+          <field name="message_ids" widget="mail_thread"/>
+        </div>
       </form>
     </field>
   </record>

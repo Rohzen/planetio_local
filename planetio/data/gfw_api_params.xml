@@ -22,4 +22,27 @@
     <field name="key">planetio.gfw_oauth_scope</field>
     <field name="value"></field>
   </record>
+  <data noupdate="1">
+  
+    <record id="param_gfw_api_key" model="ir.config_parameter">
+      <field name="key">planetio.gfw_api_key</field>
+      <field name="value">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4YzFlYWVjYmIzOWM1OThiNThkMGNjZCIsInJvbGUiOiJVU0VSIiwicHJvdmlkZXIiOiJsb2NhbCIsImVtYWlsIjoicm9oemVuMUBnbWFpbC5jb20iLCJleHRyYVVzZXJEYXRhIjp7ImFwcHMiOlsiZ2Z3Il19LCJjcmVhdGVkQXQiOjE3NTc1NDA3OTAyNzIsImlhdCI6MTc1NzU0MDc5MH0.gnIKgEpasaiMFA8wIm42WVWPjw2ugOqZrVudZgdV4SA
+      </field>
+    </record>
+  
+    <record id="param_gfw_api_origin" model="ir.config_parameter">
+      <field name="key">planetio.gfw_api_origin</field>
+      <field name="value">http://localhost</field>
+    </record>
+  
+    <record id="param_gfw_days_back" model="ir.config_parameter">
+      <field name="key">planetio.gfw_days_back</field>
+      <field name="value">365</field>
+    </record>
+  
+    <record id="param_gfw_force_bbox" model="ir.config_parameter">
+      <field name="key">planetio.gfw_force_bbox</field>
+      <field name="value">false</field>
+    </record>
+  </data>
 </odoo>
