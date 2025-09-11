@@ -10,13 +10,13 @@
     <!-- EUDR username (placeholder) -->
     <record id="planetio_param_eudr_user" model="ir.config_parameter">
       <field name="key">planetio.eudr_user</field>
-      <field name="value">n00igg11</field>
+      <field name="value"></field>
     </record>
 
     <!-- EUDR API key (leave empty or placeholder; override in Production) -->
     <record id="planetio_param_eudr_apikey" model="ir.config_parameter">
       <field name="key">planetio.eudr_apikey</field>
-      <field name="value">1k7yq0uwofIoxs688vHrDN2nqOSZhiJGHJ5iGK6u</field>
+      <field name="value"></field>
     </record>
 
     <!-- WS-Security mode: digest (default) | text -->
