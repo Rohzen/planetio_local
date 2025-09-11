@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="planetio_res_config_settings_view" model="ir.ui.view">
+    <field name="name">planetio.res.config.settings.view.form</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//div[hasclass('settings')]" position="inside">
+        <div class="app_settings_block" string="Planetio / GFW" data-string="Planetio / GFW" data-key="planetio_gfw">
+          <!-- L’icona qui (fa-leaf) verrà usata anche nel menu laterale -->
+          <div class="o_setting_left_pane">
+            <span class="fa fa-leaf o_app_icon"/>
+          </div>
+
+          <h2>Global Forest Watch</h2>
+
+          <!-- Box: modalità -->
+          <div class="o_setting_box">
+            <div class="o_setting_left_pane">
+              <span class="fa fa-cog"/>
+            </div>
+            <div class="o_setting_right_pane">
+              <label for="gfw_auth_mode"/>
+              <div class="text-muted">Modalità di autenticazione per le API GFW.</div>
+              <div class="row mt8">
+                <div class="col-12 col-lg-4">
+                  <field name="gfw_auth_mode" class="w-100"/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Box: API key -->
+          <div class="o_setting_box" attrs="{'invisible': [('gfw_auth_mode','!=','api_key')]}">
+            <div class="o_setting_left_pane">
+              <span class="fa fa-key"/>
+            </div>
+            <div class="o_setting_right_pane">
+              <label for="gfw_api_key">GFW API key</label>
+              <div class="row mt8">
+                <div class="col-12 col-lg-6">
+                  <field name="gfw_api_key" password="True" class="w-100"/>
+                </div>
+              </div>
+              <div class="text-muted mt4">Usa questa modalità se gestisci manualmente la key.</div>
+            </div>
+          </div>
+
+          <!-- Box: Email + Password -->
+          <div class="o_setting_box" attrs="{'invisible': [('gfw_auth_mode','!=','email_password')]}">
+            <div class="o_setting_left_pane">
+              <span class="fa fa-sign-in"/>
+            </div>
+            <div class="o_setting_right_pane">
+              <span class="o_subtitle">Login &amp; token</span>
+
+              <div class="row mt8">
+                <div class="col-12 col-lg-6">
+                  <label for="gfw_email" class="o_light_label">GFW email</label>
+                  <field name="gfw_email" class="w-100"/>
+                </div>
+                <div class="col-12 col-lg-6">
+                  <label for="gfw_password" class="o_light_label">GFW password</label>
+                  <field name="gfw_password" password="True" class="w-100"/>
+                </div>
+              </div>
+
+              <div class="row mt8">
+                <div class="col-12 col-lg-6">
+                  <label for="gfw_auth_url" class="o_light_label">Auth URL</label>
+                  <field name="gfw_auth_url" placeholder="https://api.globalforestwatch.org/auth/login" class="w-100"/>
+                </div>
+                <div class="col-6 col-lg-3">
+                  <label for="gfw_auth_method" class="o_light_label">HTTP method</label>
+                  <field name="gfw_auth_method" class="w-100"/>
+                </div>
+                <div class="col-6 col-lg-3">
+                  <label for="gfw_auth_header" class="o_light_label">Header auth</label>
+                  <field name="gfw_auth_header" class="w-100"/>
+                </div>
+              </div>
+
+              <div class="row mt8">
+                <div class="col-12 col-lg-4">
+                  <label for="gfw_token_field" class="o_light_label">JSON token field</label>
+                  <field name="gfw_token_field" placeholder="apiKey / access_token" class="w-100"/>
+                </div>
+                <div class="col-6 col-lg-4">
+                  <label for="gfw_expires_at_field" class="o_light_label">JSON expires_at field</label>
+                  <field name="gfw_expires_at_field" placeholder="ISO8601" class="w-100"/>
+                </div>
+                <div class="col-6 col-lg-4">
+                  <label for="gfw_expires_in_field" class="o_light_label">JSON expires_in field</label>
+                  <field name="gfw_expires_in_field" placeholder="seconds" class="w-100"/>
+                </div>
+              </div>
+
+              <div class="row mt8">
+                <div class="col-12 col-lg-6">
+                  <label for="gfw_key_expires_at" class="o_light_label">GFW key expires at (ISO8601)</label>
+                  <field name="gfw_key_expires_at" placeholder="2025-09-11T10:15:00+00:00" class="w-100"/>
+                </div>
+                <div class="col-12 col-lg-6">
+                  <label for="gfw_base_url" class="o_light_label">GFW base URL</label>
+                  <field name="gfw_base_url" placeholder="https://api.globalforestwatch.org" class="w-100"/>
+                </div>
+              </div>
+
+              <div class="row mt8">
+                <div class="col-12 col-lg-8">
+                  <label for="gfw_ping_url" class="o_light_label">GFW ping URL</label>
+                  <field name="gfw_ping_url" placeholder="/v1/glad-alerts" class="w-100"/>
+                </div>
+              </div>
+
+              <div class="mt8">
+                <button type="object" class="btn btn-secondary" name="action_test_gfw_connection">
+                  Test connessione GFW
+                </button>
+              </div>
+
+              <div class="text-muted mt8">
+                Il token verrà rinnovato automaticamente quando necessario.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </xpath>
+    </field>
+  </record>
+</odoo>
