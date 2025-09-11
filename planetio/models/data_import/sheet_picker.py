@@ -1,37 +1,11 @@
 # -*- coding: utf-8 -*-
 # planetio/services/sheet_picker.py
-from odoo import models, fields
+from odoo import models
 import json as _json
 
 class ExcelImportService(models.AbstractModel):
     _inherit = "excel.import.service"
     _description = "Excel Import Service patch"
-
-    def _next_declaration_name(self, job):
-        """
-        Return a guaranteed non-empty, unique declaration name.
-        """
-        seq_codes = [
-            "eudr.declaration",
-            "planetio.eudr.declaration",
-            "eudr.declaration.sequence",
-        ]
-        name = None
-        for code in seq_codes:
-            try:
-                name = self.env["ir.sequence"].sudo().next_by_code(code)
-            except Exception:
-                name = None
-            if name:
-                break
-
-        if not name:
-            ts = fields.Datetime.now().strftime("%Y%m%d-%H%M%S")
-            base = (getattr(job.attachment_id, "name", None) or "EUDR Import").rsplit(".", 1)[0]
-            name = f"{base} [{ts}-{job.id}]"
-
-        name = (name or "").strip() or f"EUDR {fields.Datetime.now().strftime('%Y%m%d-%H%M%S')}-{job.id}"
-        return name
 
     def _extract_rows_from_job(self, job):
         """
@@ -94,8 +68,8 @@ class ExcelImportService(models.AbstractModel):
         Decl = self.env["eudr.declaration"]
         Line = self.env["eudr.declaration.line"]
 
-        decl_name = self._next_declaration_name(job)
-        decl = Decl.create({"name": decl_name})
+        # Let the declaration model assign the name using its sequence
+        decl = Decl.create({})
 
         # Bind job to declaration (if the field exists)
         try:
