@@ -1,29 +1,29 @@
 <odoo>
-  <!-- Auth mode: 'token' (default) or 'oauth' -->
-  <record id="param_gfw_auth_mode" model="ir.config_parameter">
-    <field name="key">planetio.gfw_auth_mode</field>
-    <field name="value">token</field>
-  </record>
-
-  <!-- OAuth client-credentials settings -->
-  <record id="param_gfw_oauth_token_url" model="ir.config_parameter">
-    <field name="key">planetio.gfw_oauth_token_url</field>
-    <field name="value"></field>
-  </record>
-  <record id="param_gfw_oauth_client_id" model="ir.config_parameter">
-    <field name="key">planetio.gfw_oauth_client_id</field>
-    <field name="value">rohzen1@gmail.com-PlanetioDev</field>
-  </record>
-  <record id="param_gfw_oauth_client_secret" model="ir.config_parameter">
-    <field name="key">planetio.gfw_oauth_client_secret</field>
-    <field name="value">AXtFQYvOzLeFCIzGTjIEVrYhjTCjrmdr</field>
-  </record>
-  <record id="param_gfw_oauth_scope" model="ir.config_parameter">
-    <field name="key">planetio.gfw_oauth_scope</field>
-    <field name="value"></field>
-  </record>
   <data noupdate="1">
-  
+    <!-- Auth mode: 'token' (default) or 'oauth' -->
+    <record id="param_gfw_auth_mode" model="ir.config_parameter">
+      <field name="key">planetio.gfw_auth_mode</field>
+      <field name="value">token</field>
+    </record>
+
+    <!-- OAuth client-credentials settings -->
+    <record id="param_gfw_oauth_token_url" model="ir.config_parameter">
+      <field name="key">planetio.gfw_oauth_token_url</field>
+      <field name="value"></field>
+    </record>
+    <record id="param_gfw_oauth_client_id" model="ir.config_parameter">
+      <field name="key">planetio.gfw_oauth_client_id</field>
+      <field name="value">rohzen1@gmail.com-PlanetioDev</field>
+    </record>
+    <record id="param_gfw_oauth_client_secret" model="ir.config_parameter">
+      <field name="key">planetio.gfw_oauth_client_secret</field>
+      <field name="value">AXtFQYvOzLeFCIzGTjIEVrYhjTCjrmdr</field>
+    </record>
+    <record id="param_gfw_oauth_scope" model="ir.config_parameter">
+      <field name="key">planetio.gfw_oauth_scope</field>
+      <field name="value"></field>
+    </record>
+
     <record id="param_gfw_api_key" model="ir.config_parameter">
       <field name="key">planetio.gfw_api_key</field>
       <field name="value">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4YzFlYWVjYmIzOWM1OThiNThkMGNjZCIsInJvbGUiOiJVU0VSIiwicHJvdmlkZXIiOiJsb2NhbCIsImVtYWlsIjoicm9oemVuMUBnbWFpbC5jb20iLCJleHRyYVVzZXJEYXRhIjp7ImFwcHMiOlsiZ2Z3Il19LCJjcmVhdGVkQXQiOjE3NTc1NDA3OTAyNzIsImlhdCI6MTc1NzU0MDc5MH0.gnIKgEpasaiMFA8wIm42WVWPjw2ugOqZrVudZgdV4SA

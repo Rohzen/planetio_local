@@ -95,23 +95,22 @@ def submit_dds_for_batch(record):
     client = EUDRClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
 
     submit_xml = client.build_statement_xml(
-        internal_ref = record.protocol_number or f'Batch-{record.id}',
+        internal_ref = record.name or f'Batch-{record.id}',
         activity_type = 'IMPORT',
-        company_name = company.name or 'Company',
-        company_country = company_country,
-        company_address = company_address,
-        eori_value = eori_value,
+        company_name = record.partner_id.name or 'Company',
+        company_country = record.partner_id.country_id.code or 'IT',
+        company_address = (record.partner_id.street> + ' ' + record.partner_id.city) or 'Unknown Address',
+        eori_value = record.partner_id.vat,
         hs_heading = '090111',
         description_of_goods = 'Green coffee beans',
         net_weight_kg = net_weight_kg,
-        producer_country = (record.country_code or 'BR').upper(),
+        producer_country = (record.partner_id.country_id.code or 'BR').upper(),
         producer_name = record.name or 'Unknown Producer',
         geojson_b64 = geojson_b64,
         operator_type = 'OPERATOR',
         country_of_activity = company_country,
         border_cross_country = company_country,
-        qdate = getattr(record, 'questionnaire_date', False)
-        # comment = _('Questionnaire completed on %s') % (qdate and qdate.strftime('%Y-%m-%d') or 'N/A'),
+        qdate = record.datestamp
     )
 
     envelope = client.build_envelope(submit_xml)

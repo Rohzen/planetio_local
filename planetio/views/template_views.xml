@@ -6,8 +6,11 @@
     <field name="view_mode">tree,form</field>
   </record>
 
+  <menuitem id="menu_eudr_settings" name="Settings"
+            parent="menu_eudr_ai_root"/>
+
   <menuitem id="menu_templates" name="Templates"
-            parent="menu_eudr_ai_root" action="action_excel_import_template"/>
+            parent="menu_eudr_settings" action="action_excel_import_template"/>
 
   <record id="view_excel_import_template_tree" model="ir.ui.view">
     <field name="name">excel.import.template.tree</field>

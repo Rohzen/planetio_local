@@ -5,6 +5,9 @@ import requests
 import traceback
 from datetime import date, timedelta
 
+import traceback
+from collections import defaultdict
+
 from odoo import models, fields, api, _, tools
 from odoo.exceptions import UserError
 
@@ -189,7 +192,15 @@ class EUDRDeclarationLineDeforestation(models.Model):
 
     # ---------- Public: invoked by button on line ----------
     def action_analyze_deforestation(self):
-        for line in self:
+        # self can be either lines or declarations; normalize to lines
+        lines = self
+        if self._name == 'eudr.declaration':
+            lines = self.mapped('line_ids')
+
+        # run analyses and collect results grouped by declaration
+        grouped = defaultdict(list)
+
+        for line in lines:
             try:
                 svc = line.env.get('planetio.deforestation.service') or line.env.get('deforestation.service')
                 if svc and hasattr(svc, 'analyze_line'):
@@ -199,7 +210,7 @@ class EUDRDeclarationLineDeforestation(models.Model):
                 else:
                     status = line._gfw_analyze_fallback()
 
-                # Apply result on fields if present
+                # write computed fields if present
                 if isinstance(status, dict):
                     metrics = status.get('metrics') or {}
                     vals = {}
@@ -214,29 +225,62 @@ class EUDRDeclarationLineDeforestation(models.Model):
                             vals['defor_details_json'] = json.dumps(status, ensure_ascii=False)
                         except Exception:
                             vals['defor_details_json'] = tools.ustr(status)
+                    if 'external_ok' in line._fields and metrics.get('alert_count', 0) > 0:
+                        vals['external_ok'] = False
+                    else:
+                        vals['external_ok'] = True
                     if vals:
                         line.write(vals)
 
-                # Post success message
-                try:
-                    if isinstance(status, dict):
-                        msg = status.get('message') or tools.ustr(status)
-                    else:
-                        msg = tools.ustr(status)
-                    line.message_post(body=msg)
-                except Exception:
-                    pass
+                # friendly, short per-line snippet for later batching
+                if isinstance(status, dict):
+                    msg = status.get('message') or tools.ustr(status)
+                else:
+                    msg = tools.ustr(status)
+
+                grouped[line.declaration_id.id].append({
+                    'line': line,
+                    'ok': True,
+                    'msg': msg,
+                })
 
             except Exception as e:
                 last = ''.join(traceback.format_exception_only(type(e), e)).strip()
-                try:
-                    line.message_post(body=_("Analisi deforestazione fallita sulla riga %(name)s: %(err)s") % {
+                grouped[line.declaration_id.id].append({
+                    'line': line,
+                    'ok': False,
+                    'msg': _("Analisi deforestazione fallita sulla riga %(name)s: %(err)s") % {
                         'name': (getattr(line, 'display_name', None) or line.id),
                         'err': tools.ustr(last or e),
-                    })
-                except Exception:
-                    pass
-                # do not re-raise: continue with other lines
+                    }
+                })
+                # keep going
+
+        # post one message per declaration
+        Declaration = lines.env['eudr.declaration']
+        for decl_id, items in grouped.items():
+            decl = Declaration.browse(decl_id)
+            # build an HTML body with line links for easier navigation
+            lis = []
+            for it in items:
+                line = it['line']
+                anchor = "/web#id=%s&model=%s&view_type=form" % (line.id, line._name)
+                prefix = "OK" if it['ok'] else "ERRORE"
+                # escape user-facing text
+                line_name = tools.html_escape(getattr(line, 'display_name', str(line.id)))
+                msg_txt = tools.html_escape(it['msg'])
+                lis.append(
+                    '<li>[%s] <a href="%s">%s</a>: %s</li>' % (prefix, anchor, line_name, msg_txt)
+                )
+            body = "<p>Risultati analisi deforestazione</p><ul>%s</ul>" % ''.join(lis)
+
+            # one chatter message on the parent
+            decl.message_post(
+                body=body,
+                message_type='comment',
+                subtype_xmlid='mail.mt_note',
+            )
+
         return True
 
 

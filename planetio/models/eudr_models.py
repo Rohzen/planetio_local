@@ -3,6 +3,17 @@ from odoo import models, fields, api, _, _
 from odoo.exceptions import UserError, ValidationError
 import json
 import math
+import urllib.parse
+
+try:
+    from shapely.geometry import Point, mapping
+    from shapely.ops import transform
+    from pyproj import CRS, Transformer
+except ImportError:
+    # Se le librerie non sono installate, la funzionalità non sarà disponibile.
+    # In un ambiente di produzione, sarebbe meglio loggare un avviso.
+    Point = None
+
 
 try:
     from pyproj import Geod, Transformer, CRS  # optional but recommended
@@ -11,13 +22,23 @@ except Exception:
     Transformer = None
     CRS = None
 
+class EUDRStage(models.Model):
+    _name = "eudr.stage"
+    _description = "CRM Stages"
+    _rec_name = 'name'
+    _order = "sequence, name, id"
+
+    name = fields.Char('Stage Name', required=True, translate=True)
+    sequence = fields.Integer('Sequence', default=1, help="Used to order stages. Lower is better.")
+
 class EUDRDeclaration(models.Model):
     _name = "eudr.declaration"
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "EUDR Declaration"
 
     datestamp = fields.Datetime(string="Datestamp", default=lambda self: fields.Datetime.now())
-    name = fields.Char() #required=True
+    name = fields.Char(required=True)
+    stage_id = fields.Many2one('eudr.stage', string='Stage', index=True, tracking=True)
     farmer_name = fields.Char()
     farmer_id_code = fields.Char()
     tax_code = fields.Char()
@@ -30,8 +51,71 @@ class EUDRDeclaration(models.Model):
     geo_type = fields.Selection([("point","Point"),("polygon","Polygon")])
     geometry = fields.Text()  # optional: header-level geometry if you ever use it
     source_attachment_id = fields.Many2one("ir.attachment")
-
     line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
+
+    # DDS
+    # internal_ref = record.protocol_number or f'Batch-{record.id}',
+    # activity_type = 'IMPORT',
+    # company_name = company.name or 'Company',
+    # company_country = company_country,
+    # company_address = company_address,
+    # eori_value = eori_value,
+    # hs_heading = '090111',
+    # description_of_goods = 'Green coffee beans',
+    # net_weight_kg = net_weight_kg,
+    # producer_country = (record.country_code or 'BR').upper(),
+    # producer_name = record.name or 'Unknown Producer',
+    # geojson_b64 = geojson_b64,
+    # operator_type = 'OPERATOR',
+    # country_of_activity = company_country,
+    # border_cross_country = company_country,
+    # qdate = getattr(record, 'questionnaire_date', False)
+
+    attachment_ids = fields.One2many(
+        'ir.attachment', 'res_id',
+        string='Attachments',
+        domain=lambda self: [('res_model', '=', self._name)],
+        help="Files linked to this declaration."
+    )
+    eudr_type_override = fields.Selection([
+        ('trader', 'Trader'),
+        ('operator', 'Operator')
+    ], string="EUDR Role (Mixed)", default='trader', help="Specify whether you're acting as Trader or Operator for this batch.")
+    partner_id = fields.Many2one(
+        'res.partner', string="Partner"
+    )
+    eudr_third_party_client_id = fields.Many2one(
+        'res.partner', string="Client (3rd Party Trader)", help="Client on behalf of whom the DDS is being submitted."
+    )
+    eudr_company_type = fields.Selection([
+        ('trader', 'Trader'),
+        ('operator', 'Operator'),
+        ('mixed', 'Mixed'),
+        ('third_party_trader', 'Third-party Trader')
+    ], string="Company Type",)
+    # Dati generali (DDS TRACES)
+    activity_type = fields.Selection(
+        [
+            ('import', 'Import'),
+            ('export', 'Export'),
+            ('domestic', 'Domestic'),
+        ], string="Activity", default='import')
+    operator_name = fields.Char(string="Operator")
+    extra_info = fields.Text(string="Additional info")
+    hs_code = fields.Selection(
+        [
+            ('0901',    '0901 – Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes containing coffee'),
+            ('090111',  '0901 11 – non-decaffeinated'),
+            ('090112',  '0901 12 – decaffeinated'),
+            ('090121',  '0901 21 – non-decaffeinated'),
+            ('090122',  '0901 22 – decaffeinated'),
+            ('090190',  '0901 90 – others'),
+        ], string="HS Code")
+    product_id  = fields.Many2one('product.product', string="Prodotto")
+    product_description = fields.Char(string="Description of raw materials or products")
+    net_mass_kg = fields.Float(string="Net mass (kg)", digits=(16, 3))
+    common_name = fields.Char(string="Common name")
+    producer_name = fields.Char(string="Producer name")
 
     # ---------------------- helpers ----------------------
 
@@ -321,10 +405,8 @@ class EUDRDeclaration(models.Model):
 
     # messo in services per evitare dipendenze circolari e troppe modifiche al codice esistente
     def action_transmit_dds(self):
-        from ...services.eudr_adapter_odoo import submit_dds_for_batch
+        from ..services.eudr_adapter_odoo import submit_dds_for_batch
         for record in self:
-            if record.status_planetio != 'completed':
-                raise UserError(_("Puoi trasmettere la DDS solo se il questionario è completato."))
             dds_id = submit_dds_for_batch(record)
 
 
@@ -343,6 +425,8 @@ class EUDRDeclaration(models.Model):
 class EUDRDeclarationLine(models.Model):
     _name = "eudr.declaration.line"
     _description = "EUDR Declaration Line"
+    # _inherit = ['mail.thread', 'mail.activity.mixin']
+
     declaration_id = fields.Many2one("eudr.declaration", ondelete="cascade")
     name = fields.Char()
     farmer_name = fields.Char()
@@ -372,3 +456,111 @@ class EUDRDeclarationLine(models.Model):
         readonly=True,
     )
 
+    def action_visualize_area_on_map(self):
+        """
+        Questo metodo viene chiamato quando si preme il pulsante.
+        Calcola un'area di 50mq attorno a un punto e la apre in geojson.io.
+        """
+        # if not Point:
+        #     raise UserError("Le librerie 'shapely' e 'pyproj' sono necessarie. "
+        #                     "Per favore, installale eseguendo: pip install shapely pyproj")
+
+        # Assicuriamoci che l'operazione venga eseguita per un solo record alla volta.
+        self.ensure_one()
+
+        if not self.geometry:
+            raise UserError("Il campo 'Geometria' è vuoto. Inserisci le coordinate GeoJSON.")
+
+        try:
+            geo_data = json.loads(self.geometry)
+            if geo_data.get('type') != 'Point' or 'coordinates' not in geo_data:
+                raise ValueError()
+
+            lon, lat = geo_data['coordinates']
+        except (json.JSONDecodeError, ValueError):
+            raise UserError("Il formato del GeoJSON nel campo 'Geometria' non è valido. "
+                            "Assicurati che sia un punto valido, ad es: "
+                            '{"type": "Point", "coordinates": [9.19, 45.46]}')
+
+        # --- Calcolo Geospaziale ---
+        # 1. Calcoliamo il raggio di un cerchio con area di 50 mq.
+        #    Area = π * r^2  =>  r = sqrt(Area / π)
+        area_mq = 50.0
+        radius_in_meters = math.sqrt(area_mq / math.pi)
+
+        # 2. Le coordinate GeoJSON sono in WGS84 (gradi). Per creare un buffer in metri,
+        #    dobbiamo proiettare il punto in un sistema di coordinate che usi i metri,
+        #    come UTM (Universal Transverse Mercator).
+
+        # Definiamo il sistema di coordinate di partenza (WGS84)
+        wgs84 = CRS("EPSG:4326")
+
+        # Troviamo la zona UTM corretta per la longitudine del punto
+        utm_zone = int((lon + 180) / 6) + 1
+        utm_crs_str = f"EPSG:326{utm_zone}" if lat >= 0 else f"EPSG:327{utm_zone}"
+        utm = CRS(utm_crs_str)
+
+        # Creiamo i trasformatori per passare da WGS84 a UTM e viceversa
+        transformer_to_utm = Transformer.from_crs(wgs84, utm, always_xy=True)
+        transformer_to_wgs84 = Transformer.from_crs(utm, wgs84, always_xy=True)
+
+        # 3. Trasformiamo il punto in coordinate UTM (metri)
+        point_utm = transformer_to_utm.transform(lon, lat)
+
+        # 4. Creiamo il buffer (l'area circolare) in metri
+        shapely_point_utm = Point(point_utm)
+        buffered_area_utm = shapely_point_utm.buffer(radius_in_meters)
+
+        # 5. Riproiettiamo il poligono risultante di nuovo in WGS84 (gradi) per visualizzarlo
+        buffered_area_wgs84 = transform(transformer_to_wgs84.transform, buffered_area_utm)
+
+        # 6. Convertiamo il poligono di shapely in un dizionario GeoJSON
+        final_geojson = mapping(buffered_area_wgs84)
+
+        # --- Costruzione dell'URL ---
+        # Codifichiamo il GeoJSON per inserirlo nell'URL
+        encoded_geojson = urllib.parse.quote(json.dumps(final_geojson))
+
+        # Costruiamo l'URL finale per geojson.io
+        url = f"https://geojson.io/#data=data:application/json,{encoded_geojson}"
+
+        # Restituiamo un'azione di Odoo per aprire l'URL in una nuova scheda
+        return {
+            'type': 'ir.actions.act_url',
+            'url': url,
+            'target': 'new',
+        }
+
+    def action_visualize_point_on_map(self):
+        """
+        Questo metodo viene chiamato quando si preme il pulsante.
+        Visualizza il singolo punto GeoJSON su geojson.io.
+        """
+        self.ensure_one()
+
+        if not self.geometry:
+            raise UserError("Il campo 'Geometria' è vuoto. Inserisci le coordinate GeoJSON.")
+
+        try:
+            # Verifichiamo che il JSON sia valido e di tipo 'Point'
+            geo_data = json.loads(self.geometry)
+            if geo_data.get('type') != 'Point' or 'coordinates' not in geo_data:
+                raise ValueError()
+        except (json.JSONDecodeError, ValueError):
+            raise UserError("Il formato del GeoJSON nel campo 'Geometria' non è valido. "
+                            "Assicurati che sia un punto valido, ad es: "
+                            '{"type": "Point", "coordinates": [9.19, 45.46]}')
+
+        # --- Costruzione dell'URL ---
+        # Codifichiamo il GeoJSON originale (contenuto nel campo geometry) per inserirlo nell'URL
+        encoded_geojson = urllib.parse.quote(self.geometry)
+
+        # Costruiamo l'URL finale per geojson.io
+        url = f"https://geojson.io/#data=data:application/json,{encoded_geojson}"
+
+        # Restituiamo un'azione di Odoo per aprire l'URL in una nuova scheda
+        return {
+            'type': 'ir.actions.act_url',
+            'url': url,
+            'target': 'new',
+        }
