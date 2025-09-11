@@ -86,13 +86,13 @@
                     editable="top">
                 <field name="external_ok" widget="boolean_toggle" readonly="0" string=""/>
                 <field name="external_message" invisible="1"/>
-                <field name="name" invisible="1"/>
-                <field name="farmer_id_code" invisible="0"/>
-                <field name="farmer_name" invisible="1"/>
-                <field name="farm_name" invisible="1"/>
+                <field name="name" attrs="{'invisible': [('name', '=', False)]}"/>
+                <field name="farmer_id_code" attrs="{'invisible': [('farmer_id_code', '=', False)]}"/>
+                <field name="farmer_name" attrs="{'invisible': [('farmer_name', '=', False)]}"/>
+                <field name="farm_name" attrs="{'invisible': [('farm_name', '=', False)]}"/>
                 <field name="country"/>
                 <field name="region"/>
-                <field name="municipality" invisible="1"/>
+                <field name="municipality" attrs="{'invisible': [('municipality', '=', False)]}"/>
                 <field name="area_ha" invisible="1"/>
                 <field name="external_status" invisible="1"/>
                 <field name="external_message_short" string="Message" invisible="1"/>
