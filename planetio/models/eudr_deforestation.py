@@ -24,10 +24,10 @@ class EUDRDeclarationLineDeforestation(models.Model):
     def _line_geometry(self):
         """Return a GeoJSON geometry for this line.
         Priority: geometry_geojson -> geometry -> geojson -> geometry_json.
-        If a Point is provided (or only lat/lon), create a ~0.5km bbox polygon around it.
+        If a Point is provided it is returned as-is. If only lat/lon are available
+        a Point geometry is built.
         """
         self.ensure_one()
-        # Candidates in order
         field_candidates = ['geometry_geojson', 'geometry', 'geojson', 'geometry_json']
         for fname in field_candidates:
             if fname in self._fields:
@@ -38,45 +38,23 @@ class EUDRDeclarationLineDeforestation(models.Model):
                     except Exception:
                         g = None
                     if isinstance(g, dict) and g.get('type'):
-                        if g.get('type') == 'Point':
-                            coords = g.get('coordinates') or []
-                            if isinstance(coords, (list, tuple)) and len(coords) >= 2:
-                                lon, lat = coords[0], coords[1]
-                                dlat = 0.5 / 111.0
-                                dlon = 0.5 / (111.0 * max(0.1, abs(math.cos(math.radians(lat)))))
-                                return {
-                                    'type': 'Polygon',
-                                    'coordinates': [[
-                                        [lon - dlon, lat - dlat],
-                                        [lon + dlon, lat - dlat],
-                                        [lon + dlon, lat + dlat],
-                                        [lon - dlon, lat + dlat],
-                                        [lon - dlon, lat - dlat],
-                                    ]]
-                                }
-                        return g  # Polygon/MultiPolygon/LineString/etc.
+                        return g
 
         # Fallback to latitude/longitude aliases
         lat_keys = ['lat', 'latitude', 'lat_dd']
         lon_keys = ['lon', 'longitude', 'lng', 'long_dd']
-        lat = None; lon = None
+        lat = None
+        lon = None
         for k in lat_keys:
             if k in self._fields and getattr(self, k):
-                lat = getattr(self, k); break
+                lat = getattr(self, k)
+                break
         for k in lon_keys:
             if k in self._fields and getattr(self, k):
-                lon = getattr(self, k); break
+                lon = getattr(self, k)
+                break
         if lat is not None and lon is not None:
-            dlat = 0.5 / 111.0
-            dlon = 0.5 / (111.0 * max(0.1, abs(math.cos(math.radians(lat)))))
-            coords = [
-                [lon - dlon, lat - dlat],
-                [lon + dlon, lat - dlat],
-                [lon + dlon, lat + dlat],
-                [lon - dlon, lat + dlat],
-                [lon - dlon, lat - dlat],
-            ]
-            return {'type': 'Polygon', 'coordinates': [coords]}
+            return {'type': 'Point', 'coordinates': [lon, lat]}
         return None
 
     def _geom_bbox(self, geom):
