@@ -4,8 +4,6 @@ import math
 import requests
 import traceback
 from datetime import date, timedelta
-
-import traceback
 from collections import defaultdict
 
 from odoo import models, fields, api, _, tools
