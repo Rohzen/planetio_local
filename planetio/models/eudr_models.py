@@ -37,7 +37,15 @@ class EUDRDeclaration(models.Model):
     _description = "EUDR Declaration"
 
     datestamp = fields.Datetime(string="Datestamp", default=lambda self: fields.Datetime.now())
-    name = fields.Char(required=True)
+    # Name is generated from an ir.sequence during creation. Use a default
+    # placeholder so that the client-side "required" check does not prevent
+    # saving the record before the sequence is assigned.
+    name = fields.Char(
+        required=True,
+        copy=False,
+        readonly=True,
+        default="New",
+    )
     stage_id = fields.Many2one('eudr.stage', string='Stage', index=True, tracking=True)
     farmer_name = fields.Char()
     farmer_id_code = fields.Char()
@@ -337,12 +345,15 @@ class EUDRDeclaration(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         # Ensure every declaration gets a sequence-generated name
+        seq_model = self.env['ir.sequence']
         for vals in (vals_list or []):
-            if not vals.get('name'):
-                seq = (self.env['ir.sequence'].next_by_code('eudr.declaration')
-                       or self.env['ir.sequence'].next_by_code('planetio.eudr.declaration')
-                       or 'EUDR-SEQ')
-                vals['name'] = seq
+            name = vals.get('name')
+            if not name or name == _('New'):
+                vals['name'] = (
+                    seq_model.next_by_code('eudr.declaration')
+                    or seq_model.next_by_code('planetio.eudr.declaration')
+                    or 'EUDR-SEQ'
+                )
         return super(EUDRDeclaration, self).create(vals_list)
 
 
