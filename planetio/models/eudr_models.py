@@ -38,6 +38,7 @@ class EUDRDeclaration(models.Model):
 
     datestamp = fields.Datetime(string="Datestamp", default=lambda self: fields.Datetime.now())
     name = fields.Char(required=False)
+    eudr_id = fields.Char(required=False)
     stage_id = fields.Many2one('eudr.stage', string='Stage', index=True, tracking=True)
     farmer_name = fields.Char()
     farmer_id_code = fields.Char()
@@ -116,6 +117,7 @@ class EUDRDeclaration(models.Model):
     net_mass_kg = fields.Float(string="Net mass (kg)", digits=(16, 3))
     common_name = fields.Char(string="Common name")
     producer_name = fields.Char(string="Producer name")
+    coffee_species  = fields.Many2one('coffee.species', string="Coffee species")
 
     # ---------------------- helpers ----------------------
 
