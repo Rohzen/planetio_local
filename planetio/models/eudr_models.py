@@ -1,6 +1,6 @@
 
-from odoo import models, fields, api, _, _
-from odoo.exceptions import UserError, ValidationError
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 import json
 import math
 import urllib.parse
