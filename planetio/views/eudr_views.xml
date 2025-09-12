@@ -120,7 +120,7 @@
                       <field name="area_ha"/>
                       <field name="geo_type"/>
                       <field name="geo_type_raw"/>
-                      <field name="defor_detail_json"/>
+<!--                      <field name="defor_detail_json"/>-->
                       <field name="geometry" widget="text" invisible="0"/>
                     </group>
                     <group string="Additional api data">
