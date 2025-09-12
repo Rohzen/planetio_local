@@ -1,4 +1,4 @@
-from odoo import models, api
+from odoo import models, api, _
 import base64, io, json, re, os
 
 try:
@@ -352,14 +352,30 @@ class ExcelImportService(models.AbstractModel):
         if not decl and model_context == 'eudr.declaration' and active_id:
             decl = Decl.browse(ctx['active_id'])
 
-        # If not inside a declaration, ALWAYS create a new declaration (sequence via model create())
+        # If not inside a declaration, ALWAYS create a new one (sequence via model create())
         if not decl:
             decl = Decl.create({})  # name will be set by EUDRDeclaration.create()
 
+        # Link the job to the declaration so the relationship is persisted
+        try:
+            job.sudo().write({'declaration_id': decl.id})
+        except Exception:
+            pass
+
         created = 0
-        for vals in rows:
+        for idx, vals in enumerate(rows, start=1):
             safe_vals, _extras = self._sanitize_vals('eudr.declaration.line', vals)
             safe_vals['declaration_id'] = decl.id
+
+            # Provide a readable line name if missing
+            if not safe_vals.get('name'):
+                safe_vals['name'] = (
+                    vals.get('name')
+                    or vals.get('farm_name')
+                    or vals.get('farmer_name')
+                    or _('Line %s') % idx
+                )
+
             self.env['eudr.declaration.line'].create(safe_vals)
             created += 1
 

@@ -336,12 +336,21 @@ class EUDRDeclaration(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        # Ensure every declaration gets a sequence-generated name
-        for vals in (vals_list or []):
+        """Assign a sequence-generated name if missing.
+
+        The "name" field on ``eudr.declaration`` is required, therefore when a
+        record is created without explicitly providing one we pull the next
+        value from ``ir.sequence``.  If for some reason the sequence is missing
+        we still provide a placeholder to avoid a ``required`` error and let the
+        user fix it manually later.
+        """
+        for vals in vals_list:
             if not vals.get('name'):
-                seq = self.env['ir.sequence'].next_by_code('eudr.declaration')
+                seq = self.env['ir.sequence'].next_by_code('eudr.declaration') or _('New')
                 vals['name'] = seq
-        return super(EUDRDeclaration, self).create(vals_list)
+
+        records = super(EUDRDeclaration, self).create(vals_list)
+        return records
 
 
     def action_open_excel_import_wizard(self):
