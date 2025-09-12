@@ -93,7 +93,7 @@
                 <field name="country"/>
                 <field name="region"/>
                 <field name="municipality" attrs="{'invisible': [('municipality', '=', False)]}"/>
-                <field name="area_ha" invisible="1"/>
+                <field name="area_ha" invisible="0"/>
                 <field name="external_status" invisible="1"/>
                 <field name="external_message_short" string="Message" invisible="1"/>
                 <field name="geometry" invisible="0"/>
@@ -105,44 +105,33 @@
                   <button name="action_visualize_area_on_map" type="object" class="oe_highlight"
                   string="Show area on map" icon="fa-globe" help="Se presente un solo punto viene ipotizzata un'area di 50mq intorno allo stesso"/>
                 </header>
-                  <!-- inside the <form> of line_ids -->
-                  <group col="1">
-                    <!-- Map first, full width -->
-<!--                    <field name="geometry"-->
-<!--                           nolabel="1"-->
-<!--                           widget="geojson_map"-->
-<!--                           options="{'buffer': 50, 'units': 'meters', 'height': 420}"/>-->
-                  </group>
                   <group>
-                    <group>
-                      <field name="external_ok" widget="boolean_toggle" readonly="1"/>
-                      <field name="external_status"/>
-                      <field name="external_http_code"/>
-                      <field name="external_uid"/>
-                    </group>
-                    <group>
-                      <field name="external_message" widget="text" string="External Message (full)"/>
-                      <field name="external_properties_json" widget="text"/>
-                    </group>
-                    <group>
+                    <group string="Farm data">
                       <field name="name"/>
                       <field name="farmer_name"/>
                       <field name="farmer_id_code"/>
                       <field name="tax_code"/>
-                    </group>
-                    <group>
                       <field name="country"/>
                       <field name="region"/>
                       <field name="municipality"/>
                       <field name="farm_name"/>
                     </group>
-                    <group>
+                    <group string="Geo data">
                       <field name="area_ha"/>
                       <field name="geo_type"/>
+                      <field name="geo_type_raw"/>
+                      <field name="defor_detail_json"/>
                       <field name="geometry" widget="text" invisible="0"/>
                     </group>
+                    <group string="Additional api data">
+                      <field name="external_ok" widget="boolean_toggle" readonly="1"/>
+                      <field name="external_status"/>
+                      <field name="external_http_code"/>
+                      <field name="external_uid"/>
+                      <field name="external_message" widget="text" string="External Message (full)"/>
+                      <field name="external_properties_json" widget="text"/>
+                    </group>
                   </group>
-
               </form>
             </field>
           </page>
