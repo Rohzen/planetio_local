@@ -15,7 +15,6 @@
         'data/eudr_params.xml',
         'data/seed_template.xml',
         'data/sequence.xml',
-        # 'data/gfw_api_params.xml',
     ],
     'external_dependencies': {
         'python' : ['pandas', 'requests', 'google-generativeai', 'pyproj', 'shapely'],

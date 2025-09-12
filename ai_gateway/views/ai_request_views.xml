@@ -56,6 +56,6 @@
     <field name="view_mode">tree,form</field>
   </record>
 
-  <menuitem id="menu_ai_root" name="AI" sequence="10" web_icon="planetio,static/description/icon.png"/>
+  <menuitem id="menu_ai_root" name="AI" sequence="10" web_icon="ai_gateway,static/description/icon.png"/>
   <menuitem id="menu_ai_requests" name="Requests" parent="menu_ai_root" action="action_ai_request" sequence="10"/>
 </odoo>

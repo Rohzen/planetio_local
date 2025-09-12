@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="coffee_species_arabica" model="coffee.species">
+        <field name="name">Arabica coffee</field>
+        <field name="scientific_name">Coffea arabica</field>
+        <field name="synonyms"/>
+        <field name="is_commercial">True</field>
+        <field name="region">Ethiopia / Yemen (origins)</field>
+        <field name="notes">Most widely consumed; generally sweeter and more acidic.</field>
+    </record>
+
+    <record id="coffee_species_robusta" model="coffee.species">
+        <field name="name">Robusta coffee</field>
+        <field name="scientific_name">Coffea canephora</field>
+        <field name="synonyms">Coffea robusta</field>
+        <field name="is_commercial">True</field>
+        <field name="region">Central &amp; West Africa (origins)</field>
+        <field name="notes">Higher caffeine; stronger, more bitter profile.</field>
+    </record>
+
+    <record id="coffee_species_liberica" model="coffee.species">
+        <field name="name">Liberica coffee</field>
+        <field name="scientific_name">Coffea liberica</field>
+        <field name="synonyms"/>
+        <field name="is_commercial">True</field>
+        <field name="region">West &amp; Central Africa (origins)</field>
+        <field name="notes">Distinct fruity/woody notes; larger beans.</field>
+    </record>
+
+    <record id="coffee_species_excelsa" model="coffee.species">
+        <field name="name">Excelsa coffee</field>
+        <field name="scientific_name">Coffea liberica var. dewevrei</field>
+        <field name="synonyms">Coffea excelsa</field>
+        <field name="is_commercial">True</field>
+        <field name="region">Central Africa (origins)</field>
+        <field name="notes">Often classified under Liberica; tart, complex.</field>
+    </record>
+
+    <record id="coffee_species_stenophylla" model="coffee.species">
+        <field name="name">Stenophylla coffee</field>
+        <field name="scientific_name">Coffea stenophylla</field>
+        <field name="synonyms">Highland coffee</field>
+        <field name="is_commercial">False</field>
+        <field name="region">West Africa</field>
+        <field name="notes">Heat-tolerant; renewed interest for climate resilience.</field>
+    </record>
+
+    <record id="coffee_species_mauritiana" model="coffee.species">
+        <field name="name">Mauritius coffee</field>
+        <field name="scientific_name">Coffea mauritiana</field>
+        <field name="synonyms"/>
+        <field name="is_commercial">False</field>
+        <field name="region">Mascarenes</field>
+        <field name="notes">Wild/rare.</field>
+    </record>
+
+    <record id="coffee_species_congensis" model="coffee.species">
+        <field name="name">Congo coffee</field>
+        <field name="scientific_name">Coffea congensis</field>
+        <field name="synonyms"/>
+        <field name="is_commercial">False</field>
+        <field name="region">Congo Basin</field>
+        <field name="notes">Wild/limited cultivation.</field>
+    </record>
+
+    <record id="coffee_species_afrikana" model="coffee.species">
+        <field name="name">Sierra Leone coffee</field>
+        <field name="scientific_name">Coffea afrikana</field>
+        <field name="synonyms"/>
+        <field name="is_commercial">False</field>
+        <field name="region">Sierra Leone</field>
+        <field name="notes">Rare; sometimes treated under C. stenophylla in literature.</field>
+    </record>
+</odoo>

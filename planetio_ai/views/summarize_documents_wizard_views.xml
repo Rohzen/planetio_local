@@ -1,21 +1,16 @@
 <odoo>
-  <record id="view_planetio_summarize_wizard" model="ir.ui.view">
-    <field name="name">planetio.summarize.wizard.form</field>
-    <field name="model">planetio.summarize.wizard</field>
+  <record id="view_eudr_declaration_form_ai" model="ir.ui.view">
+    <field name="name">eudr.declaration.form.ai</field>
+    <field name="model">eudr.declaration</field>
+    <field name="inherit_id" ref="planetio.view_eudr_declaration_form"/>
     <field name="arch" type="xml">
-      <form string="Riassumi documenti con AI">
-        <group>
-          <field name="planetio_model" invisible="1"/>
-          <field name="planetio_res_id" invisible="1"/>
-          <field name="provider"/>
-          <field name="attachment_ids" widget="many2many_binary"/>
-          <field name="output_post_to_chatter"/>
-        </group>
-        <footer>
-          <button string="Esegui" type="object" name="action_run" class="btn-primary"/>
-          <button string="Annulla" class="btn-secondary" special="cancel"/>
-        </footer>
-      </form>
+    <xpath expr="//field[@name='attachment_ids']" position="before">
+        <button name="action_ai_analyze"
+                type="object"
+                string="AI Analyze"
+                class="oe_highlight btn-info"
+                icon="fa-magic"/>
+      </xpath>
     </field>
   </record>
 </odoo>

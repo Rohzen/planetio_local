@@ -37,7 +37,7 @@ class EUDRDeclaration(models.Model):
     _description = "EUDR Declaration"
 
     datestamp = fields.Datetime(string="Datestamp", default=lambda self: fields.Datetime.now())
-    name = fields.Char(required=True)
+    name = fields.Char(required=False)
     stage_id = fields.Many2one('eudr.stage', string='Stage', index=True, tracking=True)
     farmer_name = fields.Char()
     farmer_id_code = fields.Char()
