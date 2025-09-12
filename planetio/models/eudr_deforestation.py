@@ -111,21 +111,28 @@ class EUDRDeclarationLineDeforestation(models.Model):
         if not geom:
             raise UserError(_('Manca geometria (GeoJSON o lat/lon) sulla riga %s') % (getattr(self,'display_name',None) or self.id))
 
+        # The GFW Data API requires a Polygon/MultiPolygon for raster analysis;
+        # if a Point is provided, automatically expand it to a small bounding box
+        # around the point to allow the request to succeed.
+        bbox = self._geom_bbox(geom)
+        geom_req = geom
+        step = 'latest/original'
+        if geom.get('type') == 'Point' and bbox:
+            geom_req = bbox
+            step = 'latest/bbox'
+
         url_latest = 'https://data-api.globalforestwatch.org/dataset/gfw_integrated_alerts/latest/query/json'
         sql = "SELECT COUNT(*) AS cnt FROM results WHERE gfw_integrated_alerts__date >= '%s'" % date_from
         headers = {'x-api-key': api_key, 'Content-Type': 'application/json', 'Origin': origin}
 
-        # Try 1: original
-        body = {'sql': sql, 'geometry': geom}
+        # Try 1: geometry (possibly expanded to bbox)
+        body = {'sql': sql, 'geometry': geom_req}
         r = requests.post(url_latest, headers=headers, json=body, timeout=60)
-        step = 'latest/original'
 
         # Fallbacks for 500
-        if r.status_code >= 500:
-            bbox = self._geom_bbox(geom)
-            if bbox:
-                r = requests.post(url_latest, headers=headers, json={'sql': sql, 'geometry': bbox}, timeout=60)
-                step = 'latest/bbox'
+        if r.status_code >= 500 and bbox and geom_req is not bbox:
+            r = requests.post(url_latest, headers=headers, json={'sql': sql, 'geometry': bbox}, timeout=60)
+            step = 'latest/bbox'
 
         if r.status_code >= 500:
             short_from = (date.today() - timedelta(days=min(90, days_back))).isoformat()
@@ -134,7 +141,7 @@ class EUDRDeclarationLineDeforestation(models.Model):
                 r = requests.post(url_latest, headers=headers, json={'sql': sql_short, 'geometry': bbox}, timeout=60)
                 step = 'latest/bbox/90d'
             else:
-                r = requests.post(url_latest, headers=headers, json={'sql': sql_short, 'geometry': geom}, timeout=60)
+                r = requests.post(url_latest, headers=headers, json={'sql': sql_short, 'geometry': geom_req}, timeout=60)
                 step = 'latest/original/90d'
 
         if r.status_code >= 500:
@@ -143,7 +150,7 @@ class EUDRDeclarationLineDeforestation(models.Model):
                 r = requests.post(url_ver, headers=headers, json={'sql': sql, 'geometry': bbox}, timeout=60)
                 step = 'version/bbox'
             else:
-                r = requests.post(url_ver, headers=headers, json={'sql': sql, 'geometry': geom}, timeout=60)
+                r = requests.post(url_ver, headers=headers, json={'sql': sql, 'geometry': geom_req}, timeout=60)
                 step = 'version/original'
 
         if r.status_code >= 400:
