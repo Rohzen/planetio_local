@@ -339,9 +339,7 @@ class EUDRDeclaration(models.Model):
         # Ensure every declaration gets a sequence-generated name
         for vals in (vals_list or []):
             if not vals.get('name'):
-                seq = (self.env['ir.sequence'].next_by_code('eudr.declaration')
-                       or self.env['ir.sequence'].next_by_code('planetio.eudr.declaration')
-                       or 'EUDR-SEQ')
+                seq = self.env['ir.sequence'].next_by_code('eudr.declaration')
                 vals['name'] = seq
         return super(EUDRDeclaration, self).create(vals_list)
 
