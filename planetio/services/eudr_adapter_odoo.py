@@ -26,50 +26,42 @@ def submit_dds_for_batch(record):
     if not eori_value or len(eori_value) < 6:
         raise UserError(_("EORI mancante/non valido. Imposta planetio.eudr_eori nelle configurazioni."))
 
-    # GeoJSON example
-    GEOJSON = {
-        'type': 'FeatureCollection',
-        'features': [{
-            'type': 'Feature',
-            'properties': {
-                'plotId': 'BR-TEST-COFFEE-001',
-                'commodity': 'coffee',
-                'harvestDate': '2024-03-15',
-                'countryOfProduction': 'BR'
-            },
-            'geometry': {'type': 'Point', 'coordinates': [-46.6, -20.2]}
-        }]}
-    geojson_b64 = base64.b64encode(json.dumps(GEOJSON, separators=(',', ':')).encode('utf-8')).decode('ascii')
+    # Build GeoJSON from declaration lines
+    features = []
+    commodity = record.product_id.display_name if getattr(record, 'product_id', False) else (record.product_description or 'unknown')
+    harvest_date = fields.Date.context_today(record)
+    for line in getattr(record, 'line_ids', []):
+        geom = None
+        if line.geometry:
+            try:
+                geom = json.loads(line.geometry)
+            except Exception:
+                geom = None
+        if not geom:
+            continue
+        props = {
+            'plotId': line.farmer_id_code or line.name or f'line-{line.id}',
+            'commodity': commodity,
+            'harvestDate': fields.Date.to_string(harvest_date),
+            'countryOfProduction': (line.country or record.partner_id.country_id.code or 'XX').upper(),
+        }
+        features.append({'type': 'Feature', 'properties': props, 'geometry': geom})
 
-    # GeoJSON
-    # try:
-    #     gj_str = record.geo_analysis_id.geojson_data if (
-    #                 record.geo_analysis_id and record.geo_analysis_id.geojson_data) else None
-    #     gj = json.loads(gj_str) if gj_str else None
-    # except Exception:
-    #     gj = None
-    #
-    # def has_valid_geometry(fc):
-    #     try:
-    #         if fc and fc.get("type") == "FeatureCollection":
-    #             feats = fc.get("features") or []
-    #             for f in feats:
-    #                 geom = (f or {}).get("geometry")
-    #                 if geom and geom.get("type") in ("Point", "Polygon", "MultiPolygon", "MultiPoint", "LineString"):
-    #                     coords = geom.get("coordinates")
-    #                     if coords:
-    #                         return True
-    #     except Exception:
-    #         pass
-    #     return False
+    if not features:
+        raise UserError(_('GeoJSON mancante o senza geometrie valide nelle righe.'))
 
-    # if not has_valid_geometry(gj):
-    #     raise UserError(
-    #         _("GeoJSON mancante o senza geometrie valide: aggiungi almeno un punto/poligono con coordinate."))
-    #
-    # geojson_b64 = build_geojson_b64(gj)
+    geojson_dict = {'type': 'FeatureCollection', 'features': features}
+    geojson_b64 = build_geojson_b64(geojson_dict)
 
-
+    # Attach GeoJSON for traceability
+    record.env['ir.attachment'].create({
+        'name': f'DDS_GeoJSON_{record.id}.geojson',
+        'res_model': record._name,
+        'res_id': record.id,
+        'mimetype': 'application/geo+json',
+        'type': 'binary',
+        'datas': base64.b64encode(json.dumps(geojson_dict, separators=(',', ':')).encode('utf-8')),
+    })
 
     # Net weight (kg) — usa un campo reale e fai fallback sicuro
     peso = 1 #None
