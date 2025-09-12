@@ -142,7 +142,7 @@ def submit_dds_for_batch(record):
         if dds_id:
             if hasattr(record, 'dds_identifier'):
                 record.dds_identifier = dds_id
-            record.status_planetio = 'transmitted'
+            # record.status_planetio = 'transmitted'
             record.message_post(body=_('DDS trasmessa con successo. ID: <b>%s</b>') % dds_id)
             return dds_id
         else:
