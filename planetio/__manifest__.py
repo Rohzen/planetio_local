@@ -17,9 +17,9 @@
         'data/sequence.xml',
         # 'data/gfw_api_params.xml',
     ],
-    # 'external_dependencies': {
-    #     'python' : ['pandas', 'requests', 'google-generativeai', 'pyproj', 'shapely'],
-    # },
+    'external_dependencies': {
+        'python' : ['pandas', 'requests', 'google-generativeai', 'pyproj', 'shapely'],
+    },
     'installable': True,
     'application': True,
 }
