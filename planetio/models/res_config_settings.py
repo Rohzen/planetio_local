@@ -4,6 +4,10 @@ from odoo.exceptions import UserError
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
+    debug_import = fields.Boolean(string="Debug Excel Import",
+                                  config_parameter='planetio.debug_import',
+                                  default=True)
+
     gfw_email = fields.Char(string="GFW Email", config_parameter='planetio.gfw_email')
     gfw_password = fields.Char(string="GFW Password", config_parameter='planetio.gfw_password')
     gfw_org = fields.Char(string="GFW Organization", config_parameter='planetio.gfw_org', default='Planetio')
