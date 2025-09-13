@@ -9,6 +9,16 @@
     <xpath expr="//div[hasclass('settings')]" position="inside">
 
       <div class="app_settings_block" data-string="Planetio" data-key="planetio">
+        <div class="row mt16 o_settings_container" name="planetio_debug">
+          <div class="col-12 col-lg-12 o_setting_box">
+            <div class="o_setting_left_pane"/>
+            <div class="o_setting_right_pane">
+              <span class="o_form_label">Debug Excel Import</span>
+              <div class="text-muted"><field name="debug_import"/></div>
+            </div>
+          </div>
+        </div>
+
         <h2>Global Forest Watch API</h2>
         <div class="row mt16 o_settings_container" name="planetio_settings">
           <div class="col-12 col-lg-12 o_setting_box">

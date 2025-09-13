@@ -9,6 +9,13 @@ class ExcelImportWizard(models.TransientModel):
     file_name = fields.Char(string="Filename")
     template_id = fields.Many2one("excel.import.template", required=True)
 
+    def _default_debug_import(self):
+        icp = self.env['ir.config_parameter'].sudo()
+        val = icp.get_param('planetio.debug_import', default='True')
+        return str(val).lower() in ('1', 'true', 'yes')
+
+    debug_import = fields.Boolean(default=_default_debug_import, readonly=True)
+
     step = fields.Selection(
         [("upload","Upload"),
          ("map","Mapping"),
@@ -83,6 +90,11 @@ class ExcelImportWizard(models.TransientModel):
 
     def action_confirm(self):
         self.ensure_one()
+        if not self.debug_import and self.step == 'upload':
+            # run full pipeline silently
+            self.action_detect_and_map()
+            self.action_validate()
+
         result = self.env["excel.import.service"].create_records(self.job_id)
         created = result['created'] if isinstance(result, dict) else int(result or 0)
         decl_id = result.get('declaration_id') if isinstance(result, dict) else False
