@@ -7,11 +7,11 @@
     <field name="target">new</field>
   </record>
 
-  <menuitem id="menu_excel_import_wizard"
-            name="Import Wizard"
-            parent="menu_eudr_ai_root"
-            action="action_excel_import_wizard"
-            sequence="20"/>
+<!--  <menuitem id="menu_excel_import_wizard"-->
+<!--            name="Import Wizard"-->
+<!--            parent="menu_eudr_ai_root"-->
+<!--            action="action_excel_import_wizard"-->
+<!--            sequence="20"/>-->
 
   <!-- Wizard Form (single top-level group + single footer) -->
   <record id="view_excel_import_wizard_form" model="ir.ui.view">

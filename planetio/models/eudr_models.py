@@ -54,24 +54,6 @@ class EUDRDeclaration(models.Model):
     source_attachment_id = fields.Many2one("ir.attachment")
     line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
 
-    # DDS
-    # internal_ref = record.protocol_number or f'Batch-{record.id}',
-    # activity_type = 'IMPORT',
-    # company_name = company.name or 'Company',
-    # company_country = company_country,
-    # company_address = company_address,
-    # eori_value = eori_value,
-    # hs_heading = '090111',
-    # description_of_goods = 'Green coffee beans',
-    # net_weight_kg = net_weight_kg,
-    # producer_country = (record.country_code or 'BR').upper(),
-    # producer_name = record.name or 'Unknown Producer',
-    # geojson_b64 = geojson_b64,
-    # operator_type = 'OPERATOR',
-    # country_of_activity = company_country,
-    # border_cross_country = company_country,
-    # qdate = getattr(record, 'questionnaire_date', False)
-
     attachment_ids = fields.One2many(
         'ir.attachment', 'res_id',
         string='Attachments',

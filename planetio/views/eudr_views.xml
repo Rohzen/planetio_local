@@ -64,18 +64,17 @@
               <field name="eudr_third_party_client_id" attrs="{'invisible': [('eudr_company_type','!=','third_party_trader')]}"/>
               <field name="source_attachment_id" readonly="1" invisible="1"/>
               <field name="hs_code"/>
+              <field name="eudr_id" string="EUDR Ref"/>
             </group>
             <group>
               <field name="activity_type"/>
               <field name="area_ha" readonly="1"/>
-              <field name="product_id" invisible="1"/>
+              <field name="product_id" invisible="0"/>
               <field name="coffee_species" invisible="0"/>
               <field name="net_mass_kg" invisible="0"/>
               <field name="operator_name" invisible="0"/>
-              <field name="hs_code" invisible="1"/>
               <field name="product_description" invisible="1"/>
               <field name="name" string="Internal Ref"/>
-              <field name="eudr_id" string="EUDR Ref"/>
             </group>
         </group>
 

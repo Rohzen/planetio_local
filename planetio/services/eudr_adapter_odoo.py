@@ -63,26 +63,15 @@ def submit_dds_for_batch(record):
         'datas': base64.b64encode(json.dumps(geojson_dict, separators=(',', ':')).encode('utf-8')),
     })
 
-    # Net weight (kg) — usa un campo reale e fai fallback sicuro
-    peso = 1 #None
-    for name in ("net_weight_kg", "weight_net_kg", "weight_kg"):
-        if hasattr(record, name) and getattr(record, name):
-            try:
-                peso = float(getattr(record, name))
-                break
-            except Exception:
-                pass
-    if peso is None and record.farm_area:
-        # fallback molto prudente (evita 0); ma meglio NON usare farm_area in produzione
-        try:
-            peso = float(record.farm_area)
-        except Exception:
-            peso = None
+    if record.net_weight_kg:
+        net_weight_kg = str(max(1, int(round(peso))))
+    else:
+        raise UserError(_("net_weight must be set"))
 
-    if not peso or peso <= 0:
-        raise UserError(_("Peso netto (kg) mancante o non valido. Imposta un campo peso reale > 0."))
-
-    net_weight_kg = str(max(1, int(round(peso))))
+    if not net_weight_kg>0:
+        raise UserError(_("net_weight must be set"))
+    else:
+        peso = record.net_weight_kg
 
     client = EUDRClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
     company_address = (record.partner_id._display_address(without_company=True) or '').replace('\n', ' ')
@@ -101,8 +90,9 @@ def submit_dds_for_batch(record):
         company_country = record.partner_id.country_id.code or 'IT',
         company_address = company_address or 'Unknown Address',
         eori_value = record.partner_id.vat,
-        hs_heading = '090111',
-        description_of_goods = 'Green coffee beans',
+        hs_heading = record.hs_code or '090111',
+        description_of_goods = record.coffee_species.name,
+        # get scientific name =record.coffee_species.scientific_name,
         net_weight_kg = net_weight_kg,
         producer_country = (record.partner_id.country_id.code or 'BR').upper(),
         producer_name = record.name or 'Unknown Producer',
