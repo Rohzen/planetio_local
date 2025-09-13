@@ -67,7 +67,7 @@
                   string="Create Records"
                   type="object"
                   class="btn-primary"
-                  attrs="{'invisible':['|', '&', ('debug_import','=',True), ('step','!=','validate'), '&', ('debug_import','=',False), ('step','!=','upload')]}"/>
+                  />
 
           <!-- Cancel during steps upload/map/validate -->
           <button string="Cancel"
