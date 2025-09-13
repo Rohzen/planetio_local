@@ -1,5 +1,6 @@
 from odoo import models, api, _
 import base64, io, json, re, os
+import pdb
 
 try:
     import pandas as pd
@@ -339,6 +340,7 @@ class ExcelImportService(models.AbstractModel):
 
     @api.model
     def create_records(self, job):
+        pdb.set_trace()
         payload = json.loads(job.preview_json or '[]')
         rows = payload or self.validate_rows(job)['valid']
 

@@ -19,15 +19,16 @@ class ExcelImportJob(models.Model):
     log = fields.Text()
 
     def log_info(self, msg):
-        self.ensure_one()
-        self.log = (self.log or "") + msg + "\n"
-        self.env["ir.logging"].create({
-            "name":"excel_ai_import",
-            "type":"server",
-            "dbname": self._cr.dbname,
-            "level":"INFO",
-            "message": msg,
-            "path":"excel_ai_import",
-            "func":"job",
-            "line":0
-        })
+        pass
+        # self.ensure_one()
+        # self.log = (self.log or "") + msg + "\n"
+        # self.env["ir.logging"].create({
+        #     "name":"excel_ai_import",
+        #     "type":"server",
+        #     "dbname": self._cr.dbname,
+        #     "level":"INFO",
+        #     "message": msg,
+        #     "path":"excel_ai_import",
+        #     "func":"job",
+        #     "line":0
+        # })
