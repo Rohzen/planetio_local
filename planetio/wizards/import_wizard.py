@@ -1,5 +1,24 @@
-from odoo import models, fields
+from odoo import models, fields, _
+from odoo.exceptions import UserError
 import base64, json
+
+def extract_geojson_features(obj):
+    """Return list of (geometry_dict, properties_dict) tuples from a GeoJSON object."""
+    if not isinstance(obj, dict):
+        return []
+    t = obj.get("type")
+    if t == "FeatureCollection":
+        feats = []
+        for f in obj.get("features", []) or []:
+            if isinstance(f, dict) and isinstance(f.get("geometry"), dict):
+                feats.append((f["geometry"], f.get("properties") or {}))
+        return feats
+    if t == "Feature" and isinstance(obj.get("geometry"), dict):
+        return [(obj["geometry"], obj.get("properties") or {})]
+    if t in ("Point", "Polygon", "MultiPolygon", "MultiPoint", "LineString", "MultiLineString"):
+        return [(obj, {})]
+    return []
+
 
 class ExcelImportWizard(models.TransientModel):
     _name = "excel.import.wizard"
@@ -43,6 +62,26 @@ class ExcelImportWizard(models.TransientModel):
 
     def action_detect_and_map(self):
         self.ensure_one()
+        fname = (self.file_name or "").lower()
+        if fname.endswith((".geojson", ".json")):
+            try:
+                data = base64.b64decode(self.file_data or b"")
+                obj = json.loads(data.decode("utf-8"))
+            except Exception as e:
+                raise UserError(_("Invalid GeoJSON file: %s") % e)
+            feats = extract_geojson_features(obj)
+            preview = [g for g, _p in feats[:20]]
+            self.preview_json = json.dumps(preview, ensure_ascii=False)
+            self.mapping_json = "{}"
+            self.step = "validate"
+            return {
+                "type": "ir.actions.act_window",
+                "res_model": "excel.import.wizard",
+                "view_mode": "form",
+                "res_id": self.id,
+                "target": "new",
+            }
+
         attachment = self._create_attachment()
 
         job = self.env["excel.import.job"].create({
@@ -90,6 +129,65 @@ class ExcelImportWizard(models.TransientModel):
 
     def action_confirm(self):
         self.ensure_one()
+        fname = (self.file_name or "").lower()
+        if fname.endswith((".geojson", ".json")):
+            # Import GeoJSON directly into declaration lines
+            try:
+                data = base64.b64decode(self.file_data or b"")
+                obj = json.loads(data.decode("utf-8"))
+            except Exception:
+                raise UserError(_("Invalid GeoJSON file"))
+
+            decl_id = self.env.context.get("active_id")
+            Decl = self.env["eudr.declaration"]
+            if decl_id:
+                decl = Decl.browse(decl_id)
+            else:
+                decl = Decl.create({})
+                decl_id = decl.id
+
+            feats = extract_geojson_features(obj)
+            Line = self.env["eudr.declaration.line"]
+            created = 0
+            for geom, props in feats:
+                if not isinstance(geom, dict) or not geom.get("type"):
+                    continue
+                vals = {
+                    "declaration_id": decl_id,
+                    "geometry": json.dumps(geom, ensure_ascii=False),
+                }
+                gtype = str(geom.get("type", "")).lower()
+                if gtype in ("point", "polygon", "multipolygon"):
+                    vals["geo_type"] = "point" if gtype == "point" else "polygon"
+                name = props.get("name") or props.get("id")
+                if name:
+                    vals["name"] = name
+                Line.create(vals)
+                created += 1
+
+            # store attachment on declaration
+            attach = self.env["ir.attachment"].create({
+                "name": self.file_name or "upload.geojson",
+                "datas": self.file_data,
+                "res_model": "eudr.declaration",
+                "res_id": decl_id,
+                "type": "binary",
+                "mimetype": "application/geo+json",
+            })
+            try:
+                decl.write({"source_attachment_id": attach.id})
+            except Exception:
+                pass
+
+            self.step = "confirm"
+            return {
+                "type": "ir.actions.act_window",
+                "res_model": "eudr.declaration",
+                "view_mode": "form",
+                "res_id": decl_id,
+                "target": "current",
+            }
+
         if not self.debug_import and self.step == 'upload':
             # run full pipeline silently
             self.action_detect_and_map()
