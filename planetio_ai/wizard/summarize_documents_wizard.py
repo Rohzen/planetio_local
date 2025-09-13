@@ -59,6 +59,10 @@ class PlanetioSummarizeWizard(models.Model):
             )
 
             req.run_now()
+            if getattr(req, "status", None) == "error":
+                rec.message_post(body=f"AI request error: {req.error_message}")
+                continue
+
             summary = req.response_text or ""
             if not summary:
                 continue
