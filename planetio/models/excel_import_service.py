@@ -73,9 +73,10 @@ class ExcelImportService(models.AbstractModel):
 
         decl = getattr(job, "declaration_id", False)
         model_context = ctx.get("params", {}).get("model")
-        active_id = ctx.get("active_id")
-        if not decl and model_context == "eudr.declaration" and active_id:
-            decl = Decl.browse(active_id)
+        # active_id = ctx.get("active_id")
+        declaration_id = ctx.get("params", {}).get("id")
+        if not decl and model_context == "eudr.declaration" and declaration_id:
+            decl = Decl.browse(declaration_id)
 
         if not decl:
             decl = Decl.create({})
