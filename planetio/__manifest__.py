@@ -7,7 +7,6 @@
     'data': [
         'security/ir.model.access.csv',
         'views/eudr_views.xml',
-        # 'views/job_views.xml',
         'views/template_views.xml',
         'views/wizard_views.xml',
         'views/res_config_settings_view.xml',

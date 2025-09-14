@@ -32,7 +32,6 @@
 
             <!-- STEP: MAP -->
             <group attrs="{'invisible':['|',('step','!=','map'),('debug_import','=',False)]}">
-              <field name="job_id" readonly="1"/>
               <field name="mapping_json" widget="text" string="Proposed Mapping" readonly="1"/>
               <field name="preview_json" widget="text" string="Preview (first rows)" readonly="1"/>
             </group>
