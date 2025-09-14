@@ -1,4 +1,4 @@
-from odoo import models
+from odoo import models, fields
 import re, difflib
 
 def _normalize(h):
@@ -32,3 +32,12 @@ class ExcelHeaderMatcher(models.AbstractModel):
             return {"header": best[0], "score": float(score), "source": "fuzzy"}
 
         return {"header": None, "score": 0.0, "source": "none"}
+
+class ExcelHeaderAlias(models.Model):
+    _name = "excel.header.alias"
+    _description = "Header Alias"
+
+    template_field_id = fields.Many2one("excel.import.template.field", required=True, ondelete="cascade")
+    alias = fields.Char(required=True)
+    language = fields.Char()
+    weight = fields.Float(default=1.0)
