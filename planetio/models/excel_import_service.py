@@ -1,6 +1,5 @@
 from odoo import models, api, _
 import base64, io, json, re, os
-import pdb
 
 try:
     import pandas as pd
@@ -340,8 +339,7 @@ class ExcelImportService(models.AbstractModel):
 
     @api.model
     def create_records(self, job):
-        pdb.set_trace()
-        payload = json.loads(job.preview_json or '[]')
+        payload = json.loads(getattr(job, 'preview_json', '[]') or '[]')
         rows = payload or self.validate_rows(job)['valid']
 
         ctx = (self.env.context or {})
@@ -359,10 +357,14 @@ class ExcelImportService(models.AbstractModel):
             decl = Decl.create({})  # name will be set by EUDRDeclaration.create()
 
         # Link the job to the declaration so the relationship is persisted
-        try:
-            job.sudo().write({'declaration_id': decl.id})
-        except Exception:
-            pass
+        if hasattr(job, 'write'):
+            try:
+                job.sudo().write({'declaration_id': decl.id})
+            except Exception:
+                try:
+                    job.declaration_id = decl.id
+                except Exception:
+                    pass
 
         created = 0
         for idx, vals in enumerate(rows, start=1):

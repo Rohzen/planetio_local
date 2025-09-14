@@ -43,7 +43,9 @@ class ExcelImportWizard(models.TransientModel):
         default="upload"
     )
 
-    job_id = fields.Many2one("excel.import.job")
+    attachment_id = fields.Many2one("ir.attachment")
+    sheet_name = fields.Char()
+    declaration_id = fields.Many2one("eudr.declaration")
     mapping_json = fields.Text(readonly=True)
     preview_json = fields.Text(readonly=True)
     result_json = fields.Text(readonly=True)
@@ -54,8 +56,8 @@ class ExcelImportWizard(models.TransientModel):
         return self.env["ir.attachment"].create({
             "name": self.file_name or "upload.xlsx",
             "datas": self.file_data,
-            "res_model": "excel.import.job",
-            "res_id": 0,
+            "res_model": "excel.import.wizard",
+            "res_id": self.id,
             "type": "binary",
             "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         })
@@ -83,25 +85,14 @@ class ExcelImportWizard(models.TransientModel):
             }
 
         attachment = self._create_attachment()
+        self.attachment_id = attachment.id
 
-        job = self.env["excel.import.job"].create({
-            "attachment_id": attachment.id,
-            "template_id": self.template_id.id,
-        })
-        attachment.write({"res_id": job.id})
+        sheet, score = self.env["excel.import.service"].pick_best_sheet(self)
+        self.sheet_name = sheet
 
-        sheet, score = self.env["excel.import.service"].pick_best_sheet(job)
-        job.sheet_name = sheet
-        job.log_info(f"Selected sheet: {sheet} (score {score:.2f})")
-
-        mapping, preview = self.env["excel.import.service"].propose_mapping(job)
-        job.mapping_json = json.dumps(mapping, ensure_ascii=False)
-        job.preview_json = json.dumps(preview, ensure_ascii=False)
-        job.status = "mapped"
-
-        self.job_id = job.id
-        self.mapping_json = job.mapping_json
-        self.preview_json = job.preview_json
+        mapping, preview = self.env["excel.import.service"].propose_mapping(self)
+        self.mapping_json = json.dumps(mapping, ensure_ascii=False)
+        self.preview_json = json.dumps(preview, ensure_ascii=False)
         self.step = "map"
 
         return {
@@ -114,10 +105,8 @@ class ExcelImportWizard(models.TransientModel):
 
     def action_validate(self):
         self.ensure_one()
-        transformed = self.env["excel.import.service"].transform_and_validate(self.job_id)
-        self.job_id.result_json = transformed
+        transformed = self.env["excel.import.service"].transform_and_validate(self)
         self.result_json = transformed
-        self.job_id.status = "validated"
         self.step = "validate"
         return {
             "type": "ir.actions.act_window",
@@ -193,11 +182,10 @@ class ExcelImportWizard(models.TransientModel):
             self.action_detect_and_map()
             self.action_validate()
 
-        result = self.env["excel.import.service"].create_records(self.job_id)
+        result = self.env["excel.import.service"].create_records(self)
         created = result['created'] if isinstance(result, dict) else int(result or 0)
         decl_id = result.get('declaration_id') if isinstance(result, dict) else False
-        self.job_id.log_info(f"Created/updated records: {created}")
-        self.job_id.status = "done"
+        self.declaration_id = decl_id
         self.step = "confirm"
         if decl_id:
             return {
