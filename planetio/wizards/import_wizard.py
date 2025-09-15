@@ -65,10 +65,26 @@ class ExcelImportWizard(models.TransientModel):
     def action_detect_and_map(self):
         self.ensure_one()
         fname = (self.file_name or "").lower()
-        if fname.endswith((".geojson", ".json")):
+
+        # Detect GeoJSON either by extension or by inspecting the content. Some
+        # browsers/clients may omit the filename, which previously caused the
+        # wizard to treat the upload as an Excel file and crash when pandas
+        # could not detect a workbook format.
+        is_geojson = fname.endswith((".geojson", ".json"))
+        obj = None
+        if not is_geojson:
             try:
                 data = base64.b64decode(self.file_data or b"")
                 obj = json.loads(data.decode("utf-8"))
+                is_geojson = bool(extract_geojson_features(obj))
+            except Exception:
+                obj = None
+
+        if is_geojson:
+            try:
+                if obj is None:
+                    data = base64.b64decode(self.file_data or b"")
+                    obj = json.loads(data.decode("utf-8"))
             except Exception as e:
                 raise UserError(_("Invalid GeoJSON file: %s") % e)
             feats = extract_geojson_features(obj)
@@ -119,11 +135,25 @@ class ExcelImportWizard(models.TransientModel):
     def action_confirm(self):
         self.ensure_one()
         fname = (self.file_name or "").lower()
-        if fname.endswith((".geojson", ".json")):
-            # Import GeoJSON directly into declaration lines
+
+        # Same detection logic as in action_detect_and_map: allow GeoJSON even
+        # when the client does not provide a proper filename/extension.
+        is_geojson = fname.endswith((".geojson", ".json"))
+        obj = None
+        if not is_geojson:
             try:
                 data = base64.b64decode(self.file_data or b"")
                 obj = json.loads(data.decode("utf-8"))
+                is_geojson = bool(extract_geojson_features(obj))
+            except Exception:
+                obj = None
+
+        if is_geojson:
+            # Import GeoJSON directly into declaration lines
+            try:
+                if obj is None:
+                    data = base64.b64decode(self.file_data or b"")
+                    obj = json.loads(data.decode("utf-8"))
             except Exception:
                 raise UserError(_("Invalid GeoJSON file"))
 
