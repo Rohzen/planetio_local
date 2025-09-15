@@ -4,7 +4,7 @@
     'summary': 'Bridge tra Planetio e AI Gateway',
     'author': 'Roberto',
     'license': 'LGPL-3',
-    'depends': ['ai_gateway', 'planetio', 'mail', 'coffe_species'],
+    'depends': ['ai_gateway', 'planetio', 'mail'],
     'data': [
         'security/ir.model.access.csv',
         'views/summarize_documents_wizard_views.xml',
