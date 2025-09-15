@@ -347,6 +347,7 @@ class EUDRDeclaration(models.Model):
             'target': 'new',
             'context': {
                 'default_template_id': self.env.ref('planetio.tmpl_eudr_declaration').id,
+                'declaration_id': self.id,
             },
         }
 
