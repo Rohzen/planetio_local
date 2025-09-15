@@ -9,7 +9,17 @@ class GeminiProvider(object):
         if not self.api_key:
             raise ValueError('Gemini API key mancante in Impostazioni')
         genai.configure(api_key=self.api_key)
-        self._model = genai.GenerativeModel(self.model_name)
+        # ``GenerativeModel`` was introduced in newer versions of the
+        # ``google-generativeai`` package.  Older releases only expose the
+        # ``generate_text`` function.  To keep the provider compatible across
+        # versions we detect the availability of ``GenerativeModel`` at runtime
+        # and fall back to using ``generate_text`` if necessary.
+        if hasattr(genai, 'GenerativeModel'):
+            self._model = genai.GenerativeModel(self.model_name)
+            self._use_generate_text = False
+        else:  # pragma: no cover - depends on external package version
+            self._model = None
+            self._use_generate_text = True
 
     def _retry(self, func, *args, **kwargs):
         backoff = 1.0
@@ -27,9 +37,15 @@ class GeminiProvider(object):
         if system_instruction:
             parts.append(system_instruction)
         parts.append(prompt)
-        resp = self._retry(self._model.generate_content, parts)
-        text = getattr(resp, 'text', '') or ''
-        meta = getattr(resp, 'to_dict', lambda: {})()
+        if getattr(self, '_use_generate_text', False):  # pragma: no cover - fallback path
+            prompt_txt = "\n\n".join(parts)
+            resp = self._retry(genai.generate_text, model=self.model_name, prompt=prompt_txt)
+            text = getattr(resp, 'result', '') or getattr(resp, 'text', '') or ''
+            meta = getattr(resp, 'to_dict', lambda: {})()
+        else:
+            resp = self._retry(self._model.generate_content, parts)
+            text = getattr(resp, 'text', '') or ''
+            meta = getattr(resp, 'to_dict', lambda: {})()
         return {'text': text, 'meta': meta, 'tokens_in': 0, 'tokens_out': 0, 'cost': 0.0}
 
     def summarize_chunks(self, chunks, system_instruction=None, **kwargs):
