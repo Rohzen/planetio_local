@@ -54,7 +54,13 @@ class PlanetioSummarizeWizard(models.Model):
                     "task_type": "summarize",
                     "attachment_ids": [(6, 0, rec.attachment_ids.ids)],
                     "model_ref": f"{rec._name},{rec.id}",
-                    "payload": "Estrarre un riepilogo con i dati rilevanti alla deforestazione.",
+                    "payload": (
+                        "Analizza tutti i documenti allegati relativi alla dichiarazione EUDR e "
+                        "riassumi le informazioni utili a valutare lo stato della deforestazione. "
+                        "La risposta finale deve includere bullet point chiari, lo stato della "
+                        "deforestazione, eventuali rischi o anomalie e, se disponibili dati "
+                        "numerici, una tabella in formato testo con gli indicatori principali."
+                    ),
                 }
             )
 
