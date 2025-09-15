@@ -63,7 +63,7 @@ def submit_dds_for_batch(record):
         'datas': base64.b64encode(json.dumps(geojson_dict, separators=(',', ':')).encode('utf-8')),
     })
 
-    if record.net_weight_kg:
+    if record.net_mass_kg:
         net_weight_kg = str(max(1, int(round(peso))))
     else:
         raise UserError(_("net_weight must be set"))
@@ -71,7 +71,7 @@ def submit_dds_for_batch(record):
     if not net_weight_kg>0:
         raise UserError(_("net_weight must be set"))
     else:
-        peso = record.net_weight_kg
+        weight = record.net_mass_kg
 
     client = EUDRClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
     company_address = (record.partner_id._display_address(without_company=True) or '').replace('\n', ' ')
@@ -93,7 +93,7 @@ def submit_dds_for_batch(record):
         hs_heading = record.hs_code or '090111',
         description_of_goods = record.coffee_species.name,
         # get scientific name =record.coffee_species.scientific_name,
-        net_weight_kg = net_weight_kg,
+        net_weight_kg = weight,
         producer_country = (record.partner_id.country_id.code or 'BR').upper(),
         producer_name = record.name or 'Unknown Producer',
         geojson_b64 = geojson_b64,
