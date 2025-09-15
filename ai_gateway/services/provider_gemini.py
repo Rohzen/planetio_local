@@ -15,7 +15,7 @@ class GeminiProvider(object):
         # versions we detect the availability of ``GenerativeModel`` at runtime
         # and fall back to using ``generate_text`` if necessary.
         if hasattr(genai, 'GenerativeModel'):
-            self._model = genai.GenerativeModel(self.model_name)
+            self._model = genai.GenerativeModel(self._modern_model_name())
             self._use_generate_text = False
         else:  # pragma: no cover - depends on external package version
             self._model = None
@@ -27,6 +27,21 @@ class GeminiProvider(object):
         if self.model_name.startswith(legacy_prefixes):
             return self.model_name
         return f'models/{self.model_name}'
+
+    def _modern_model_name(self):
+        """Return a model name compatible with ``GenerativeModel``.
+
+        The modern client accepts bare model identifiers (e.g.
+        ``gemini-1.5-flash``).  However, configuration entries may still use
+        the REST-style ``models/`` prefix.  Passing such a value directly to
+        :class:`~google.generativeai.GenerativeModel` results in a ``404``
+        error ("Requested entity was not found").  To remain compatible with
+        both formats we strip the legacy prefix when present.
+        """
+
+        if self.model_name.startswith('models/'):
+            return self.model_name[len('models/'):]
+        return self.model_name
 
     def _retry(self, func, *args, **kwargs):
         backoff = 1.0
