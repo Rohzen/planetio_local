@@ -276,9 +276,35 @@ class ExcelImportWizard(models.TransientModel):
                 "target": "current",
             }
 
-        if not self.debug_import and self.step == 'upload':
-            # run full pipeline silently
+        mapping_data = None
+        if self.mapping_json:
+            try:
+                mapping_data = json.loads(self.mapping_json)
+            except Exception:
+                mapping_data = None
+
+        needs_mapping = not self.attachment_id or not self.sheet_name
+        if mapping_data is None:
+            # Treat unparsable JSON as missing mapping so that we rebuild it.
+            needs_mapping = True
+        elif isinstance(mapping_data, dict) and not mapping_data:
+            needs_mapping = True
+
+        if needs_mapping:
+            # ``action_detect_and_map`` prepares the attachment, detects the
+            # best sheet and stores the proposed mapping/preview.  This step is
+            # required for Excel files before we can validate and create
+            # records.  Previously it was only triggered when ``debug_import``
+            # was disabled which meant that clicking "Create Records" directly
+            # from the upload step would fail because no attachment/mapping was
+            # available.
             self.action_detect_and_map()
+
+        if not self.result_json:
+            # Ensure we always run the validation step so that
+            # ``excel.import.service`` receives normalized rows (with computed
+            # geometry, etc.).  Without this ``create_records`` would fall back
+            # to the raw preview rows, producing incomplete declaration lines.
             self.action_validate()
 
         result = self.env["excel.import.service"].create_records(self)
