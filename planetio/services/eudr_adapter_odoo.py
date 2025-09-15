@@ -3,6 +3,7 @@ import base64, json
 from odoo import _, fields
 from odoo.exceptions import UserError
 from .eudr_client import EUDRClient, build_geojson_b64
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 def submit_dds_for_batch(record):
     ICP = record.env['ir.config_parameter'].sudo()
@@ -63,15 +64,18 @@ def submit_dds_for_batch(record):
         'datas': base64.b64encode(json.dumps(geojson_dict, separators=(',', ':')).encode('utf-8')),
     })
 
-    if record.net_mass_kg:
-        net_weight_kg = str(max(1, int(round(peso))))
-    else:
-        raise UserError(_("net_weight must be set"))
+    raw = record.net_mass_kg
+    try:
+        kg = Decimal(str(raw))
+    except (InvalidOperation, TypeError):
+        raise UserError(_("net_weight must be a valid number (kg)"))
 
-    if not net_weight_kg>0:
-        raise UserError(_("net_weight must be set"))
-    else:
-        weight = record.net_mass_kg
+    if kg <= 0:
+        raise UserError(_("net_weight must be > 0 kg"))
+
+    # arrotondamento "commerciale", minimo 1
+    kg_int = max(1, int(kg.to_integral_value(rounding=ROUND_HALF_UP)))
+    weight = str(kg_int)
 
     client = EUDRClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
     company_address = (record.partner_id._display_address(without_company=True) or '').replace('\n', ' ')
