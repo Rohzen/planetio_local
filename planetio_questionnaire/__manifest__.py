@@ -1,7 +1,7 @@
 {
     "name": "Planetio Questionnaire",
     "summary": "Link coffee to-do batches to EUDR declarations",
-    "version": "16.0.1.0.0",
+    "version": "14.0.1.0.0",
     "author": "Planetio",
     "license": "LGPL-3",
     "depends": [

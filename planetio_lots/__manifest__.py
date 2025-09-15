@@ -1,7 +1,7 @@
 {
     "name": "Planetio Lots",
     "summary": "Associate stock lots with EUDR declarations",
-    "version": "16.0.1.0.0",
+    "version": "14.0.1.0.0",
     "author": "Planetio",
     "license": "LGPL-3",
     "depends": [
