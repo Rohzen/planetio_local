@@ -441,52 +441,6 @@ class ExcelImportService(models.AbstractModel):
         except Exception:
             pass
 
-    # @api.model
-    # def create_records(self, job):
-    #     payload = json.loads(getattr(job, 'preview_json', '[]') or '[]')
-    #     rows = payload or self.validate_rows(job)['valid']
-    #
-    #     ctx = (self.env.context or {})
-    #     Decl = self.env['eudr.declaration']
-    #
-    #     # If called inside a declaration form, append to that record
-    #     decl = getattr(job, 'declaration_id', False)
-    #     model_context = ctx.get('params', {}).get('model')
-    #     active_id = ctx.get('active_id')
-    #     if not decl and model_context == 'eudr.declaration' and active_id:
-    #         decl = Decl.browse(ctx['active_id'])
-    #
-    #     # If not inside a declaration, ALWAYS create a new one (sequence via model create())
-    #     if not decl:
-    #         decl = Decl.create({})  # name will be set by EUDRDeclaration.create()
-    #
-    #     # Link the job to the declaration so the relationship is persisted
-    #     if hasattr(job, 'write'):
-    #         try:
-    #             job.sudo().write({'declaration_id': decl.id})
-    #         except Exception:
-    #             try:
-    #                 job.declaration_id = decl.id
-    #             except Exception:
-    #                 pass
-    #
-    #     created = 0
-    #     for idx, vals in enumerate(rows, start=1):
-    #         safe_vals, _extras = self._sanitize_vals('eudr.declaration.line', vals)
-    #         safe_vals['declaration_id'] = decl.id
-    #
-    #         # Provide a readable line name if missing
-    #         if not safe_vals.get('name'):
-    #             safe_vals['name'] = (
-    #                 vals.get('name')
-    #                 or vals.get('farm_name')
-    #                 or vals.get('farmer_name')
-    #                 or _('Line %s') % idx
-    #             )
-    #
-    #         self.env['eudr.declaration.line'].create(safe_vals)
-    #         created += 1
-    #
-    #     return {'declaration_id': decl.id, 'created': created}
+
 
 

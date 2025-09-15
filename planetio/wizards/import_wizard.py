@@ -157,7 +157,15 @@ class ExcelImportWizard(models.TransientModel):
             except Exception:
                 raise UserError(_("Invalid GeoJSON file"))
 
-            decl_id = self.env.context.get("active_id")
+            ctx = (self.env.context or {})
+            model_context = ctx.get("params", {}).get("model")
+            # active_id = ctx.get("active_id")
+            decl_id = ctx.get("params", {}).get("id")
+            # if not decl and model_context == "eudr.declaration" and declaration_id:
+            #     decl = Decl.browse(declaration_id)
+            #
+            #
+            # decl_id = self.env.context.get("active_id")
             Decl = self.env["eudr.declaration"]
             if decl_id:
                 decl = Decl.browse(decl_id)
