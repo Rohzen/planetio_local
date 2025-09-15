@@ -94,7 +94,7 @@ class EUDRDeclaration(models.Model):
             ('090122',  '0901 22 – decaffeinated'),
             ('090190',  '0901 90 – others'),
         ], string="HS Code")
-    product_id  = fields.Many2one('product.product', string="Prodotto")
+    product_id  = fields.Many2one('product.product', string="Product")
     product_description = fields.Char(string="Description of raw materials or products")
     net_mass_kg = fields.Float(string="Net mass (kg)", digits=(16, 3))
     common_name = fields.Char(string="Common name")
