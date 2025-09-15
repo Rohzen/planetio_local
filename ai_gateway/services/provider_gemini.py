@@ -21,6 +21,13 @@ class GeminiProvider(object):
             self._model = None
             self._use_generate_text = True
 
+    def _legacy_model_name(self):  # pragma: no cover - depends on external package version
+        """Return a model name compatible with the legacy ``generate_text`` API."""
+        legacy_prefixes = ('models/', 'tunedModels/')
+        if self.model_name.startswith(legacy_prefixes):
+            return self.model_name
+        return f'models/{self.model_name}'
+
     def _retry(self, func, *args, **kwargs):
         backoff = 1.0
         for i in range(5):
@@ -39,7 +46,11 @@ class GeminiProvider(object):
         parts.append(prompt)
         if getattr(self, '_use_generate_text', False):  # pragma: no cover - fallback path
             prompt_txt = "\n\n".join(parts)
-            resp = self._retry(genai.generate_text, model=self.model_name, prompt=prompt_txt)
+            resp = self._retry(
+                genai.generate_text,
+                model=self._legacy_model_name(),
+                prompt=prompt_txt,
+            )
             text = getattr(resp, 'result', '') or getattr(resp, 'text', '') or ''
             meta = getattr(resp, 'to_dict', lambda: {})()
         else:
