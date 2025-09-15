@@ -65,3 +65,38 @@ def test_detect_geojson_without_extension():
     preview = json.loads(wiz.preview_json)
     assert preview[0]["type"] == "Point"
     assert result["type"] == "ir.actions.act_window"
+
+
+def test_map_geojson_properties_basic():
+    props = {
+        "farmer_s_name": "María Carmen Ramos",
+        "id": "1203-1954-00029",
+        "country": "Honduras ",
+        "region": "La Paz",
+        "municipality": "Cabañas",
+        "area": 2.25,
+        "name_of_farm": "CMP-007",
+        "ha_total": 2.25,
+        "type": "Punto",
+        "latitude": 14.059475,
+        "longitude": -88.12559,
+        "sheet_name": "Lot 604",
+    }
+    vals, extras = mod.map_geojson_properties(props)
+    assert vals["farmer_name"] == "María Carmen Ramos"
+    assert vals["farmer_id_code"] == "1203-1954-00029"
+    assert vals["country"].strip() == "Honduras"
+    assert vals["region"] == "La Paz"
+    assert vals["municipality"] == "Cabañas"
+    assert vals["farm_name"] == "CMP-007"
+    assert abs(vals["area_ha"] - 2.25) < 1e-6
+    assert vals["geo_type_raw"] == "Punto"
+    assert extras["latitude"] == 14.059475
+    assert extras["sheet_name"] == "Lot 604"
+
+
+def test_plot_id_equivalence():
+    vals1, _ = mod.map_geojson_properties({"plot": "PLOT1"})
+    vals2, _ = mod.map_geojson_properties({"plot-id": "PLOT2"})
+    assert vals1["farmer_id_code"] == "PLOT1"
+    assert vals2["farmer_id_code"] == "PLOT2"

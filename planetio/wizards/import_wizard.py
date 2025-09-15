@@ -20,6 +20,58 @@ def extract_geojson_features(obj):
     return []
 
 
+def map_geojson_properties(props):
+    """Map raw GeoJSON feature properties to EUDR line fields.
+
+    Returns a tuple (vals, extras) where ``vals`` contains recognized
+    ``eudr.declaration.line`` fields and ``extras`` holds unmapped
+    properties.  Keys are matched in a case-insensitive way and common
+    variants (e.g. ``plot-id`` vs ``plot``) are treated as equivalent.
+    """
+    if not isinstance(props, dict):
+        return {}, props or {}
+
+    def _norm(k):
+        return str(k or "").strip().lower().replace(" ", "_").replace("-", "_")
+
+    norm_props = {}
+    orig_by_norm = {}
+    for k, v in props.items():
+        nk = _norm(k)
+        if nk not in norm_props:
+            norm_props[nk] = v
+            orig_by_norm[nk] = k
+
+    vals = {}
+    used = set()
+
+    def take(field, *keys, convert_float=False):
+        for key in keys:
+            if key in norm_props and norm_props[key] not in (None, ""):
+                val = norm_props[key]
+                if convert_float:
+                    try:
+                        val = float(str(val).replace(",", "."))
+                    except Exception:
+                        pass
+                vals[field] = val
+                used.add(key)
+                break
+
+    take("farmer_name", "farmer_name", "farmer_s_name", "farmers_name")
+    take("farmer_id_code", "farmer_id_code", "id", "plot", "plot_id", "plotid")
+    take("country", "country")
+    take("region", "region")
+    take("municipality", "municipality")
+    take("farm_name", "farm_name", "name_of_farm")
+    take("area_ha", "area_ha", "ha_total", "area", convert_float=True)
+    take("geo_type_raw", "geo_type_raw", "type")
+    take("name", "name", "plot", "plot_id", "plotid", "farm_name", "farmer_name")
+
+    extras = {orig_by_norm[k]: norm_props[k] for k in norm_props.keys() - used}
+    return vals, extras
+
+
 class ExcelImportWizard(models.TransientModel):
     _name = "excel.import.wizard"
     _description = "Excel Import Wizard"
@@ -186,9 +238,18 @@ class ExcelImportWizard(models.TransientModel):
                 gtype = str(geom.get("type", "")).lower()
                 if gtype in ("point", "polygon", "multipolygon"):
                     vals["geo_type"] = "point" if gtype == "point" else "polygon"
-                name = props.get("name") or props.get("id")
-                if name:
-                    vals["name"] = name
+
+                mapped, extras = map_geojson_properties(props or {})
+                vals.update(mapped)
+                if extras:
+                    try:
+                        vals["external_properties_json"] = json.dumps(extras, ensure_ascii=False)
+                    except Exception:
+                        pass
+                if not vals.get("name"):
+                    fallback = mapped.get("farm_name") or mapped.get("farmer_name") or mapped.get("farmer_id_code")
+                    if fallback:
+                        vals["name"] = fallback
                 Line.create(vals)
                 created += 1
 
