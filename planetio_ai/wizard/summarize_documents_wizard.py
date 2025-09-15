@@ -3,10 +3,22 @@ import base64
 import io
 
 try:  # pragma: no cover - optional dependency
+    from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
-    from reportlab.pdfgen import canvas
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.platypus import (
+        ListFlowable,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+    )
 except Exception:  # pragma: no cover - handled gracefully at runtime
-    canvas = None
+    colors = None
+    ParagraphStyle = None
+    SimpleDocTemplate = None
+    Paragraph = None
+    ListFlowable = None
+    Spacer = None
     A4 = (595.27, 841.89)
 
 
@@ -21,19 +33,113 @@ class PlanetioSummarizeWizard(models.Model):
         the mimetype in that case.
         """
 
-        if not canvas:
+        if not SimpleDocTemplate:
             return text.encode("utf-8"), "text/plain"
 
         buffer = io.BytesIO()
-        c = canvas.Canvas(buffer, pagesize=A4)
-        text_obj = c.beginText(40, A4[1] - 40)
-        for line in text.splitlines():
-            text_obj.textLine(line)
-        c.drawText(text_obj)
-        c.showPage()
-        c.save()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            leftMargin=40,
+            rightMargin=40,
+            topMargin=60,
+            bottomMargin=60,
+        )
+
+        styles = getSampleStyleSheet()
+        body_style = ParagraphStyle(
+            "SummaryBody",
+            parent=styles["BodyText"],
+            leading=14,
+            spaceAfter=6,
+        )
+        header_style = ParagraphStyle(
+            "SummaryHeader",
+            parent=styles["Heading2"],
+            fontName="Helvetica-Bold",
+            textColor=colors.HexColor("#2e7d32"),
+            spaceBefore=12,
+            spaceAfter=6,
+        )
+        bullet_style = ParagraphStyle(
+            "SummaryBullet",
+            parent=body_style,
+            leftIndent=0,
+            firstLineIndent=0,
+            bulletIndent=0,
+        )
+
+        flowables = []
+        bullet_buffer = []
+
+        def add_spacer(height=12):
+            if flowables and isinstance(flowables[-1], Spacer):
+                return
+            flowables.append(Spacer(1, height))
+
+        def flush_bullets():
+            nonlocal bullet_buffer
+            if not bullet_buffer:
+                return
+            items = [Paragraph(item, bullet_style) for item in bullet_buffer]
+            if items:
+                flowables.append(
+                    ListFlowable(
+                        items,
+                        bulletType="bullet",
+                        leftIndent=16,
+                        bulletFontName="Helvetica",
+                        bulletFontSize=10,
+                    )
+                )
+                add_spacer(6)
+            bullet_buffer = []
+
+        for raw_line in text.replace("\r\n", "\n").split("\n"):
+            line = raw_line.strip()
+            if not line:
+                flush_bullets()
+                add_spacer()
+                continue
+
+            if line[0] in {"-", "*", "•"}:
+                bullet_text = line.lstrip("-*• ").strip()
+                if bullet_text:
+                    bullet_buffer.append(bullet_text)
+                continue
+
+            flush_bullets()
+
+            if self._is_header_line(line):
+                flowables.append(Paragraph(line.rstrip(":"), header_style))
+            else:
+                flowables.append(Paragraph(line, body_style))
+
+        flush_bullets()
+
+        if not flowables:
+            flowables.append(Paragraph(" ", body_style))
+
+        doc.build(flowables)
         buffer.seek(0)
         return buffer.getvalue(), "application/pdf"
+
+    @staticmethod
+    def _is_header_line(line):
+        """Return ``True`` when a line should be styled as a header."""
+
+        stripped = line.strip()
+        if not stripped:
+            return False
+        if stripped.endswith(":"):
+            return True
+        words = stripped.split()
+        if len(words) <= 6 and stripped.isupper():
+            return True
+        if len(words) <= 6 and stripped == stripped.title():
+            if all(ch.isalpha() or ch.isspace() for ch in stripped):
+                return True
+        return False
 
     def action_ai_analyze(self):
         """Summarise attached documents using the AI gateway service.
