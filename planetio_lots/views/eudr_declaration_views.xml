@@ -5,7 +5,14 @@
     <field name="inherit_id" ref="planetio.view_eudr_declaration_form"/>
     <field name="arch" type="xml">
       <xpath expr="//field[@name='net_mass_kg']" position="after">
-        <field name="stock_lot_id"/>
+        <field name="stock_lot_id"
+               domain="[('name','!=',False)]"
+               context="{'lot_label_with_product': True}"
+               options="{'no_create': True}">
+            <tree editable="bottom">
+                <field name="name"/>
+            </tree>
+        </field>
       </xpath>
     </field>
   </record>

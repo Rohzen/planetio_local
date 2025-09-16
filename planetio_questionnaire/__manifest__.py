@@ -6,10 +6,9 @@
     "license": "LGPL-3",
     "depends": [
         "planetio",
-        "planetio_todo",
     ],
     "data": [
-        "views/todo_batch_views.xml",
+        "views/questionnaire_views.xml",
         "views/eudr_declaration_views.xml",
     ],
     "installable": True,

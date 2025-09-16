@@ -2,7 +2,7 @@ from odoo import fields, models
 
 
 class CaffeCrudoTodoBatch(models.Model):
-    _inherit = "caffe.crudo.todo.batch"
+    _inherit = "eudr.questionnaire"
 
     declaration_id = fields.Many2one(
         comodel_name="eudr.declaration",
