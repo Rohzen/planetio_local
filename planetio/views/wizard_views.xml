@@ -31,13 +31,13 @@
             </group>
 
             <!-- STEP: MAP -->
-            <group attrs="{'invisible':['|',('step','!=','map'),('debug_import','=',False)]}">
+            <group attrs="{'invisible':['|',('step','!=','map'),('debug_import','!=',True)]}">
               <field name="mapping_json" widget="text" string="Proposed Mapping" readonly="1"/>
               <field name="preview_json" widget="text" string="Preview (first rows)" readonly="1"/>
             </group>
 
             <!-- STEP: VALIDATE -->
-            <group attrs="{'invisible':['|',('step','!=','validate'),('debug_import','=',False)]}">
+            <group attrs="{'invisible':['|',('step','!=','validate'),('debug_import','!=',True)]}">
               <field name="result_json" widget="text" string="Validation Result" readonly="1"/>
             </group>
 
@@ -54,13 +54,13 @@
                   string="Analyze &amp; Map"
                   type="object"
                   class="btn-primary"
-                  attrs="{'invisible':['|',('step','!=','upload'),('debug_import','=',False)]}"/>
+                  attrs="{'invisible':['|',('step','!=','upload'),('debug_import','!=',True)]}"/>
 
           <button name="action_validate"
                   string="Validate"
                   type="object"
                   class="btn-primary"
-                  attrs="{'invisible':['|',('step','!=','map'),('debug_import','=',False)]}"/>
+                  attrs="{'invisible':['|',('step','!=','map'),('debug_import','!=',True)]}"/>
 
           <button name="action_confirm"
                   string="Create Records"
@@ -75,7 +75,11 @@
                   attrs="{'invisible':[('step','=','confirm')]}"/>
 
           <!-- Nel gruppo dello step VALIDATE: mostra output -->
-          <field name="analysis_json" widget="text" string="External Analysis (per row)" readonly="1" attrs="{'invisible':[('debug_import','=',False)]}"/>
+          <field name="analysis_json"
+                 widget="text"
+                 string="External Analysis (per row)"
+                 readonly="1"
+                 attrs="{'invisible':[('debug_import','!=',True)]}"/>
 
           <!-- Close on confirm -->
           <button string="Close"
