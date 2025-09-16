@@ -14,7 +14,10 @@ class ResConfigSettings(models.TransientModel):
     gfw_alias = fields.Char(string="GFW API Alias", config_parameter='planetio.gfw_alias', default='planetio-dev')
     gfw_api_key = fields.Char(string="GFW API Key", config_parameter='planetio.gfw_api_key', readonly=False)
 
-    eudr_endpoint = fields.Char(string="EUDR Endpoint", config_parameter='planetio.eudr_endpoint', readonly=False, placeholder="https://acceptance.eudr.webcloud.ec.europa.eu/tracesnt/ws/EUDRSubmissionServiceV1")
+    eudr_endpoint = fields.Char(string="EUDR Endpoint", config_parameter='planetio.eudr_endpoint', readonly=False,
+                                placeholder="https://acceptance.eudr.webcloud.ec.europa.eu/tracesnt/ws/EUDRSubmissionServiceV1",
+                                default = "https://acceptance.eudr.webcloud.ec.europa.eu/tracesnt/ws/EUDRSubmissionServiceV1"
+                                )
     eudr_user = fields.Char(string="EUDR User", config_parameter='planetio.eudr_user', readonly=False)
     eudr_apikey = fields.Char(string="api-key", config_parameter='planetio.eudr_apikey', readonly=False)
     eudr_wsse_mode = fields.Char(string="WSSE mode", config_parameter='planetio.eudr_wsse_mode', readonly=False, default="digest")

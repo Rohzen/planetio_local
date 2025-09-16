@@ -9,15 +9,15 @@
   <record id="action_coffee_batch_todo_from_declaration_tree" model="ir.actions.act_window.view">
     <field name="sequence" eval="1"/>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="planetio_todo.view_coffee_batch_todo_tree"/>
-    <field name="act_window_id" ref="planetio_questionnaire.action_coffee_batch_todo_from_declaration"/>
+    <field name="view_id" ref="caffe_crudo_todo.view_coffee_batch_todo_tree"/>
+    <field name="act_window_id" ref="action_coffee_batch_todo_from_declaration"/>
   </record>
 
   <record id="action_coffee_batch_todo_from_declaration_form" model="ir.actions.act_window.view">
     <field name="sequence" eval="2"/>
     <field name="view_mode">form</field>
-    <field name="view_id" ref="planetio_todo.view_coffee_batch_todo_form"/>
-    <field name="act_window_id" ref="planetio_questionnaire.action_coffee_batch_todo_from_declaration"/>
+    <field name="view_id" ref="caffe_crudo_todo.view_coffee_batch_todo_form"/>
+    <field name="act_window_id" ref="action_coffee_batch_todo_from_declaration"/>
   </record>
 
   <record id="view_eudr_declaration_form_planetio_questionnaire" model="ir.ui.view">
@@ -25,15 +25,20 @@
     <field name="model">eudr.declaration</field>
     <field name="inherit_id" ref="planetio.view_eudr_declaration_form"/>
     <field name="arch" type="xml">
-      <xpath expr="//header" position="inside">
-        <button name="action_open_todo_batches"
-                type="object"
-                class="oe_stat_button"
-                string="To-Do Batches"
-                icon="fa-tasks">
-          <field name="todo_batch_count" widget="statinfo"/>
-        </button>
-      </xpath>
+       <div class="oe_button_box" position="inside">
+                <button
+                    class="oe_stat_button"
+                    name="action_open_todo_batches"
+                    type="object"
+                    icon="fa-map">
+<!--                    attrs="{'invisible': [('todo_batch_count', '=', 0)]}"-->
+                    <field
+                        name="todo_batch_count"
+                        widget="statinfo"
+                        string="Questionnaires"
+                    />
+                </button>
+            </div>
     </field>
   </record>
 </odoo>

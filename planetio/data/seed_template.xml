@@ -66,17 +66,17 @@
     <field name="transformer">to_float</field>
   </record>
 
-  <record id="tmpl_field_geometry" model="excel.import.template.field">
-    <field name="template_id" ref="tmpl_eudr_declaration"/>
-    <field name="field_id" ref="field_eudr_declaration__geometry"/>
-    <field name="transformer">geo_polygon</field>
-  </record>
+<!--  <record id="tmpl_field_geometry" model="excel.import.template.field">-->
+<!--    <field name="template_id" ref="tmpl_eudr_declaration"/>-->
+<!--    <field name="field_id" ref="field_eudr_declaration__geometry"/>-->
+<!--    <field name="transformer">geo_polygon</field>-->
+<!--  </record>-->
 
-  <record id="tmpl_field_geo_type" model="excel.import.template.field">
-    <field name="template_id" ref="tmpl_eudr_declaration"/>
-    <field name="field_id" ref="field_eudr_declaration__geo_type"/>
-    <field name="transformer">identity</field>
-  </record>
+<!--  <record id="tmpl_field_geo_type" model="excel.import.template.field">-->
+<!--    <field name="template_id" ref="tmpl_eudr_declaration"/>-->
+<!--    <field name="field_id" ref="field_eudr_declaration__geo_type"/>-->
+<!--    <field name="transformer">identity</field>-->
+<!--  </record>-->
 
   <!-- Aliases -->
   <record id="alias_farmer_name_1" model="excel.header.alias">
@@ -127,20 +127,20 @@
     <field name="alias">HA TOTAL</field>
   </record>
 
-  <record id="alias_lat" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_geometry"/>
-    <field name="alias">GPS LATITUDE (DD format)</field>
-  </record>
-  <record id="alias_lon" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_geometry"/>
-    <field name="alias">GPS LONGITUDE (DD format)</field>
-  </record>
-  <record id="alias_coord1" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_geometry"/>
-    <field name="alias">COORDINATES 1</field>
-  </record>
-  <record id="alias_coord2" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_geometry"/>
-    <field name="alias">COORDINATES 2</field>
-  </record>
+<!--  <record id="alias_lat" model="excel.header.alias">-->
+<!--    <field name="template_field_id" ref="tmpl_field_geometry"/>-->
+<!--    <field name="alias">GPS LATITUDE (DD format)</field>-->
+<!--  </record>-->
+<!--  <record id="alias_lon" model="excel.header.alias">-->
+<!--    <field name="template_field_id" ref="tmpl_field_geometry"/>-->
+<!--    <field name="alias">GPS LONGITUDE (DD format)</field>-->
+<!--  </record>-->
+<!--  <record id="alias_coord1" model="excel.header.alias">-->
+<!--    <field name="template_field_id" ref="tmpl_field_geometry"/>-->
+<!--    <field name="alias">COORDINATES 1</field>-->
+<!--  </record>-->
+<!--  <record id="alias_coord2" model="excel.header.alias">-->
+<!--    <field name="template_field_id" ref="tmpl_field_geometry"/>-->
+<!--    <field name="alias">COORDINATES 2</field>-->
+<!--  </record>-->
 </odoo>

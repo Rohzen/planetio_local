@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_purchase_order_form_osapiens" model="ir.ui.view">
+    <field name="name">purchase.order.form.osapiens</field>
+    <field name="model">purchase.order</field>
+    <field name="inherit_id" ref="purchase.purchase_order_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//sheet/notebook" position="inside">
+        <page string="oSapiens">
+          <group>
+            <field name="osapiens_lot_id" readonly="1"/>
+            <field name="osapiens_dds_reference"/>
+            <field name="osapiens_dds_status" readonly="1"/>
+          </group>
+          <group>
+            <button name="action_osapiens_push" type="object" string="Crea/aggiorna Lot su oSapiens" class="btn-primary"/>
+            <button name="action_osapiens_push_dds" type="object" string="Invia/aggiorna DDS" class="btn-secondary"/>
+          </group>
+        </page>
+      </xpath>
+    </field>
+  </record>
+</odoo>

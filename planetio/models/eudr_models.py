@@ -36,10 +36,44 @@ class EUDRDeclaration(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "EUDR Declaration"
 
+    def _default_stage_id(self):
+        """Return the Draft stage id when available."""
+        try:
+            stage = self.env.ref('planetio.eudr_stage_draft')
+        except ValueError:
+            return False
+        except Exception:
+            return False
+        return stage.id
+
+    def _get_stage_from_xmlid(self, xmlid):
+        """Safely fetch a stage from its xmlid."""
+        try:
+            return self.env.ref(xmlid)
+        except ValueError:
+            return self.env['eudr.stage']
+        except Exception:
+            return self.env['eudr.stage']
+
+    def _set_stage_from_xmlid(self, xmlid):
+        stage = self._get_stage_from_xmlid(xmlid)
+        if stage:
+            self.filtered(lambda rec: rec.stage_id != stage).write({'stage_id': stage.id})
+        return stage
+
     datestamp = fields.Datetime(string="Datestamp", default=lambda self: fields.Datetime.now())
     name = fields.Char(required=False)
+    partner_id = fields.Many2one(
+        'res.partner', string="Partner")
     eudr_id = fields.Char(required=False)
-    stage_id = fields.Many2one('eudr.stage', string='Stage', index=True, tracking=True)
+    dds_identifier = fields.Char(string="DDS Identifier (UUID)", readonly=True, copy=False)
+    stage_id = fields.Many2one(
+        'eudr.stage',
+        string='Stage',
+        index=True,
+        tracking=True,
+        default=lambda self: self._default_stage_id(),
+    )
     farmer_name = fields.Char()
     farmer_id_code = fields.Char()
     tax_code = fields.Char()
@@ -48,9 +82,6 @@ class EUDRDeclaration(models.Model):
     municipality = fields.Char()
     farm_name = fields.Char()
     area_ha = fields.Float(compute="_compute_area_ha", store=True, readonly=True)
-
-    geo_type = fields.Selection([("point","Point"),("polygon","Polygon")])
-    geometry = fields.Text()  # optional: header-level geometry if you ever use it
     source_attachment_id = fields.Many2one("ir.attachment")
     line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
 
@@ -60,22 +91,19 @@ class EUDRDeclaration(models.Model):
         domain=lambda self: [('res_model', '=', self._name)],
         help="Files linked to this declaration."
     )
-    eudr_type_override = fields.Selection([
-        ('trader', 'Trader'),
-        ('operator', 'Operator')
-    ], string="EUDR Role (Mixed)", default='trader', help="Specify whether you're acting as Trader or Operator for this batch.")
-    partner_id = fields.Many2one(
-        'res.partner', string="Partner"
-    )
-    eudr_third_party_client_id = fields.Many2one(
-        'res.partner', string="Client (3rd Party Trader)", help="Client on behalf of whom the DDS is being submitted."
-    )
     eudr_company_type = fields.Selection([
         ('trader', 'Trader'),
         ('operator', 'Operator'),
         ('mixed', 'Mixed'),
         ('third_party_trader', 'Third-party Trader')
     ], string="Company Type",)
+    eudr_type_override = fields.Selection([
+        ('TRADER', 'Trader'),
+        ('OPERATOR', 'Operator')
+    ], string="Operator", default='TRADER', help="Specify whether you're acting as Trader or Operator for this batch.")
+    eudr_third_party_client_id = fields.Many2one(
+        'res.partner', string="Client (3rd Party Trader)", help="Client on behalf of whom the DDS is being submitted."
+    )
     # Dati generali (DDS TRACES)
     activity_type = fields.Selection(
         [
@@ -338,10 +366,13 @@ class EUDRDeclaration(models.Model):
         we still provide a placeholder to avoid a ``required`` error and let the
         user fix it manually later.
         """
+        default_stage_id = self._default_stage_id()
         for vals in vals_list:
             if not vals.get('name'):
                 seq = self.env['ir.sequence'].next_by_code('eudr.declaration') or _('New')
                 vals['name'] = seq
+            if not vals.get('stage_id') and default_stage_id:
+                vals['stage_id'] = default_stage_id
 
         records = super(EUDRDeclaration, self).create(vals_list)
         return records
@@ -410,7 +441,8 @@ class EUDRDeclaration(models.Model):
         from ..services.eudr_adapter_odoo import submit_dds_for_batch
         for record in self:
             dds_id = submit_dds_for_batch(record)
-
+            if dds_id:
+                record._set_stage_from_xmlid('planetio.eudr_stage_sent')
 
     def action_open_import_wizard(self):
         self.ensure_one()

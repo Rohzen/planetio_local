@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="res_config_settings_view_form_osapiens" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.osapiens</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.view_res_config_settings"/>
+    <field name="arch" type="xml">
+    <xpath expr="//div[hasclass('settings')]" position="inside">
+        <div class="app_settings_block" data-string="oSapiens" data-key="planetio" string="oSapiens">
+          <h2>oSapiens</h2>
+          <div class="row mt16 o_settings_container">
+            <div class="col-12 col-lg-6 o_setting_box">
+              <div class="o_setting_left_pane">
+                <field name="osapiens_base_url"/>
+                <field name="osapiens_account_id"/>
+                <field name="osapiens_api_token" password="True"/>
+                <field name="osapiens_timeout"/>
+                <field name="osapiens_verify_ssl"/>
+              </div>
+              <div class="o_setting_right_pane">
+                <label for="osapiens_base_url"/>
+                <p class="text-muted">
+                  Configura l'accesso alle API oSapiens. Sostituisci i path segnaposto nel client con quelli ufficiali.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </xpath>
+    </field>
+  </record>
+</odoo>

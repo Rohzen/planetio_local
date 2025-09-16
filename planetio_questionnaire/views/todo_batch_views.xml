@@ -2,9 +2,9 @@
   <record id="view_coffee_batch_todo_tree_inherit_planetio_questionnaire" model="ir.ui.view">
     <field name="name">view.coffee.batch.todo.tree.inherit.planetio_questionnaire</field>
     <field name="model">caffe.crudo.todo.batch</field>
-    <field name="inherit_id" ref="planetio_todo.view_coffee_batch_todo_tree"/>
+    <field name="inherit_id" ref="planetio_todo.pt_caffe_crudo_todo_tree_view"/>
     <field name="arch" type="xml">
-      <xpath expr="//tree" position="inside">
+      <xpath expr="//field[@name='planetio_days_left']" position="after">
         <field name="declaration_id"/>
       </xpath>
     </field>
@@ -13,9 +13,9 @@
   <record id="view_coffee_batch_todo_form_inherit_planetio_questionnaire" model="ir.ui.view">
     <field name="name">view.coffee.batch.todo.form.inherit.planetio_questionnaire</field>
     <field name="model">caffe.crudo.todo.batch</field>
-    <field name="inherit_id" ref="planetio_todo.view_coffee_batch_todo_form"/>
+    <field name="inherit_id" ref="planetio_todo.pt_caffe_crudo_todo_form_view"/>
     <field name="arch" type="xml">
-      <xpath expr="//sheet" position="inside">
+    <xpath expr="//field[@name='eudr_third_party_client_id']" position ="after">
         <group string="EUDR">
           <field name="declaration_id"/>
         </group>

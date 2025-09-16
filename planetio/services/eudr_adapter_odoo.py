@@ -101,7 +101,7 @@ def submit_dds_for_batch(record):
         producer_country = (record.partner_id.country_id.code or 'BR').upper(),
         producer_name = record.name or 'Unknown Producer',
         geojson_b64 = geojson_b64,
-        operator_type = 'OPERATOR',
+        operator_type = record.eudr_type_override or 'TRADER',
         country_of_activity = company_country,
         border_cross_country = company_country,
         comment=comment_text,

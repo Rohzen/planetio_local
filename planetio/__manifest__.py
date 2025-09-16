@@ -11,7 +11,6 @@
         'views/wizard_views.xml',
         'views/res_config_settings_view.xml',
         'data/eudr_stages.xml',
-        'data/eudr_params.xml',
         'data/seed_template.xml',
         'data/sequence.xml',
     ],
