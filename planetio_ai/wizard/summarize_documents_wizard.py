@@ -1,6 +1,7 @@
 from odoo import _, fields, models
 import base64
 import io
+import json
 import logging
 
 try:  # pragma: no cover - optional dependency
@@ -32,12 +33,16 @@ class PlanetioSummarizeWizard(models.Model):
     def _summary_to_pdf(self, text, record):
         """Convert the AI summary into a nicely formatted PDF."""
 
-        pdf_bytes, mimetype = self._summary_to_pdf_qweb(text, record)
+        deforestation_feedback = self._prepare_deforestation_feedback(record)
+
+        pdf_bytes, mimetype = self._summary_to_pdf_qweb(
+            text, record, deforestation_feedback=deforestation_feedback
+        )
         if pdf_bytes:
             return pdf_bytes, mimetype
-        return self._summary_to_pdf_reportlab(text)
+        return self._summary_to_pdf_reportlab(text, deforestation_feedback)
 
-    def _summary_to_pdf_qweb(self, text, record):
+    def _summary_to_pdf_qweb(self, text, record, deforestation_feedback=None):
         """Render the summary using the dedicated QWeb report.
 
         Returns ``(bytes, mimetype)`` when the rendering succeeds and
@@ -45,7 +50,11 @@ class PlanetioSummarizeWizard(models.Model):
         to the ReportLab implementation or to raw text.
         """
 
-        if not (text and record and record.id):
+        has_text = bool(text and text.strip())
+        has_deforestation = bool(
+            deforestation_feedback and deforestation_feedback.get("blocks")
+        )
+        if not (record and record.id and (has_text or has_deforestation)):
             return None, None
 
         report = self.env.ref(
@@ -55,18 +64,34 @@ class PlanetioSummarizeWizard(models.Model):
             return None, None
 
         try:
-            data = self._prepare_summary_data(text, record)
+            data = self._prepare_summary_data(
+                text, record, deforestation_feedback=deforestation_feedback
+            )
             pdf_bytes, _ = report._render_qweb_pdf([record.id], data=data)
             return pdf_bytes, "application/pdf"
         except Exception:  # pragma: no cover - handled via fallback
             _logger.exception("Falling back to ReportLab for AI summary rendering")
             return None, None
 
-    def _summary_to_pdf_reportlab(self, text):
+    def _summary_to_pdf_reportlab(self, text, deforestation_feedback=None):
         """Fallback ReportLab-based implementation for PDF summaries."""
 
+        deforestation_text = ""
+        if deforestation_feedback:
+            deforestation_text = (
+                deforestation_feedback.get("plain_text") or ""
+            ).strip()
+
+        combined_text = (text or "").strip()
+        if deforestation_text:
+            combined_text = (
+                f"{combined_text}\n\n{deforestation_text}"
+                if combined_text
+                else deforestation_text
+            )
+
         if not SimpleDocTemplate:
-            return text.encode("utf-8"), "text/plain"
+            return combined_text.encode("utf-8"), "text/plain"
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -127,7 +152,7 @@ class PlanetioSummarizeWizard(models.Model):
                 add_spacer(6)
             bullet_buffer = []
 
-        for raw_line in text.replace("\r\n", "\n").split("\n"):
+        for raw_line in combined_text.replace("\r\n", "\n").split("\n"):
             line = raw_line.strip()
             if not line:
                 flush_bullets()
@@ -156,10 +181,15 @@ class PlanetioSummarizeWizard(models.Model):
         buffer.seek(0)
         return buffer.getvalue(), "application/pdf"
 
-    def _prepare_summary_data(self, text, record):
+    def _prepare_summary_data(self, text, record, deforestation_feedback=None):
         """Convert the AI text response into data consumable by QWeb."""
 
         blocks = self._prepare_summary_blocks(text)
+        defor_blocks = []
+        if deforestation_feedback:
+            defor_blocks = deforestation_feedback.get("blocks") or []
+        if defor_blocks:
+            blocks = defor_blocks + blocks
         generated_on = fields.Datetime.context_timestamp(record, fields.Datetime.now())
 
         summary = {
@@ -173,6 +203,13 @@ class PlanetioSummarizeWizard(models.Model):
             "raw_text": text.strip(),
             "empty_label": _("No summary content was returned by the AI service."),
         }
+
+        if deforestation_feedback:
+            summary["deforestation"] = {
+                "line_count": deforestation_feedback.get("line_count", 0),
+                "total_alerts": deforestation_feedback.get("total_alerts", 0),
+                "lines": deforestation_feedback.get("lines", []),
+            }
 
         return {"doc_data": {record.id: summary}}
 
@@ -297,6 +334,273 @@ class PlanetioSummarizeWizard(models.Model):
             if all(ch.isalpha() or ch.isspace() for ch in stripped):
                 return True
         return False
+
+    def _prepare_deforestation_feedback(self, record):
+        """Collect deforestation alerts linked to the declaration ``record``."""
+
+        if not record:
+            return {}
+
+        lines = getattr(record, "line_ids", self.env["eudr.declaration.line"])
+        feedback_lines = []
+        total_alerts = 0
+
+        for line in lines:
+            details_raw = getattr(line, "defor_details_json", None)
+            details = {}
+            if details_raw:
+                try:
+                    details = json.loads(details_raw)
+                except Exception:
+                    details = {}
+
+            metrics = details.get("metrics") if isinstance(details, dict) else {}
+            meta = details.get("meta") if isinstance(details, dict) else {}
+
+            raw_alerts = []
+            if isinstance(details, dict):
+                raw_alerts = details.get("alerts") or []
+                if not raw_alerts and isinstance(details.get("data"), dict):
+                    raw_alerts = details["data"].get("alerts") or []
+            if not isinstance(raw_alerts, list):
+                raw_alerts = []
+
+            formatted_alerts = [
+                alert_text
+                for alert_text in (
+                    self._format_alert_entry(alert)
+                    for alert in raw_alerts
+                    if alert not in (None, "")
+                )
+                if alert_text
+            ]
+
+            message = (details.get("message") if isinstance(details, dict) else None) or (
+                getattr(line, "external_message", "") or ""
+            )
+            provider = (meta.get("provider") if isinstance(meta, dict) else None) or (
+                getattr(line, "defor_provider", "") or ""
+            )
+
+            alert_count = None
+            if isinstance(metrics, dict):
+                alert_count = metrics.get("alert_count")
+            if alert_count is None:
+                line_alerts = getattr(line, "defor_alerts", None)
+                if line_alerts is not None and line_alerts is not False:
+                    alert_count = line_alerts
+
+            area_ha = None
+            if isinstance(metrics, dict):
+                area_ha = metrics.get("area_ha_total")
+            if area_ha is None:
+                line_area = getattr(line, "defor_area_ha", None)
+                if line_area is not None and line_area is not False:
+                    area_ha = line_area
+
+            has_data = any(
+                (
+                    bool(message),
+                    bool(provider),
+                    alert_count is not None,
+                    bool(formatted_alerts),
+                    area_ha is not None,
+                )
+            )
+            if not has_data:
+                continue
+
+            line_name = getattr(line, "display_name", None) or getattr(line, "name", None)
+            line_name = line_name or str(line.id)
+
+            if alert_count is not None:
+                try:
+                    total_alerts += int(float(alert_count))
+                except Exception:
+                    pass
+
+            feedback_lines.append(
+                {
+                    "line_id": line.id,
+                    "name": line_name,
+                    "provider": provider or "",
+                    "alert_count": alert_count,
+                    "area_ha": area_ha,
+                    "message": message or "",
+                    "alerts": formatted_alerts,
+                }
+            )
+
+        if not feedback_lines:
+            return {}
+
+        feedback = {
+            "lines": feedback_lines,
+            "total_alerts": total_alerts,
+            "line_count": len(feedback_lines),
+        }
+
+        blocks = self._build_deforestation_blocks(feedback)
+        feedback["blocks"] = blocks
+        feedback["plain_text"] = self._blocks_to_plain_text(blocks)
+        return feedback
+
+    def _build_deforestation_blocks(self, feedback):
+        """Create summary blocks describing deforestation feedback."""
+
+        if not feedback:
+            return []
+
+        lines = feedback.get("lines") or []
+        if not lines:
+            return []
+
+        blocks = []
+        total_alerts = feedback.get("total_alerts", 0)
+        line_count = feedback.get("line_count", len(lines))
+
+        blocks.append({"type": "header", "text": _("Deforestation alerts summary")})
+        if total_alerts:
+            summary_text = _("%(count)s alert(s) detected across %(lines)s line(s).") % {
+                "count": total_alerts,
+                "lines": line_count,
+            }
+        else:
+            summary_text = _(
+                "The latest deforestation analysis reported no alerts for the processed lines."
+            )
+        blocks.append({"type": "paragraph", "text": summary_text})
+
+        table_rows = []
+        header = [
+            _("Line"),
+            _("Provider"),
+            _("Alerts"),
+            _("Area (ha)"),
+            _("Message"),
+        ]
+        for line in lines:
+            table_rows.append(
+                [
+                    str(line.get("name") or "-"),
+                    str(line.get("provider") or "-"),
+                    self._format_alert_count(line.get("alert_count")),
+                    self._format_area(line.get("area_ha")),
+                    str(line.get("message") or "-"),
+                ]
+            )
+        blocks.append({"type": "table", "header": header, "rows": table_rows})
+
+        for line in lines:
+            alerts = line.get("alerts") or []
+            if not alerts:
+                continue
+            title = _("Alerts for %s") % (line.get("name") or line.get("line_id"))
+            blocks.append({"type": "header", "text": title})
+            limited = list(alerts[:10])
+            if len(alerts) > 10:
+                limited.append(
+                    _("...and %(count)s more alert(s).")
+                    % {"count": len(alerts) - 10}
+                )
+            blocks.append({"type": "bullets", "items": limited})
+
+        return blocks
+
+    @staticmethod
+    def _blocks_to_plain_text(blocks):
+        """Convert summary blocks into a plaintext representation."""
+
+        if not blocks:
+            return ""
+
+        lines = []
+        for block in blocks:
+            btype = block.get("type")
+            if btype == "header":
+                text = block.get("text")
+                if text:
+                    if lines:
+                        lines.append("")
+                    lines.append(str(text))
+            elif btype == "paragraph":
+                text = block.get("text")
+                if text:
+                    lines.append(str(text))
+            elif btype == "bullets":
+                for item in block.get("items", []):
+                    if item:
+                        lines.append(f"- {item}")
+            elif btype == "table":
+                header = block.get("header", [])
+                rows = block.get("rows", [])
+                if header:
+                    lines.append(" | ".join(str(cell) for cell in header))
+                for row in rows:
+                    lines.append(" | ".join(str(cell) for cell in row))
+        return "\n".join(lines)
+
+    @staticmethod
+    def _format_alert_count(value):
+        if value is None or value is False or value == "":
+            return "-"
+        try:
+            number = float(value)
+        except Exception:
+            return str(value)
+        if number.is_integer():
+            return str(int(number))
+        return f"{number:.2f}"
+
+    @staticmethod
+    def _format_area(value):
+        if value is None or value is False or value == "":
+            return "-"
+        try:
+            number = float(value)
+        except Exception:
+            return str(value)
+        return f"{number:.2f}"
+
+    def _format_alert_entry(self, alert):
+        if isinstance(alert, dict):
+            preferred_keys = [
+                ("alert_id", _("Alert ID")),
+                ("id", _("Alert ID")),
+                ("date", _("Date")),
+                ("start_date", _("Start date")),
+                ("end_date", _("End date")),
+                ("confidence", _("Confidence")),
+                ("intensity", _("Intensity")),
+                ("area_ha", _("Area (ha)")),
+                ("areaHa", _("Area (ha)")),
+            ]
+            parts = []
+            for key, label in preferred_keys:
+                if key not in alert:
+                    continue
+                value = alert.get(key)
+                if value in (None, "", [], {}):
+                    continue
+                if key in {"area_ha", "areaHa"}:
+                    value = self._format_area(value)
+                parts.append(f"{label}: {value}")
+
+            if not parts:
+                for key, value in list(alert.items())[:3]:
+                    if value in (None, "", [], {}):
+                        continue
+                    parts.append(f"{key}: {value}")
+
+            if parts:
+                return ", ".join(parts)
+
+            try:
+                return json.dumps(alert, ensure_ascii=False)
+            except Exception:
+                return str(alert)
+
+        return str(alert)
 
     def action_ai_analyze(self):
         """Summarise attached documents using the AI gateway service.
