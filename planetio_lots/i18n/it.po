@@ -1,6 +1,6 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* planetio_lots
+#       * planetio_lots
 #
 msgid ""
 msgstr ""
@@ -15,3 +15,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: it\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: planetio_lots
+#: model:ir.model.fields,field_description:planetio_lots.field_eudr_declaration__stock_lot_id
+msgid "Stock Lot"
+msgstr "Lotto di magazzino"
+
+#. module: planetio_lots
+#: model:ir.model.fields,help:planetio_lots.field_eudr_declaration__stock_lot_id
+msgid "Select an existing stock lot to link with this declaration."
+msgstr "Seleziona un lotto di magazzino esistente da collegare a questa dichiarazione."

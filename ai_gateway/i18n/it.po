@@ -1,6 +1,6 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* ai_gateway
+#       * ai_gateway
 #
 msgid ""
 msgstr ""
@@ -15,3 +15,168 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: it\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: ai_gateway
+#: model:ir.model,name:ai_gateway.model_ai_request
+msgid "AI Request"
+msgstr "Richiesta AI"
+
+#. module: ai_gateway
+#: model:ir.model,name:ai_gateway.model_ai_gateway_service
+msgid "AI Gateway Service"
+msgstr "Servizio AI Gateway"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_ai_request__provider
+msgid "Provider"
+msgstr "Provider"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_ai_request__task_type
+msgid "Task Type"
+msgstr "Tipo di attivit\u00e0"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_ai_request__status
+msgid "Status"
+msgstr "Stato"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_ai_request__model_ref
+msgid "Model Ref"
+msgstr "Riferimento modello"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_ai_request__payload
+msgid "Payload"
+msgstr "Payload"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_ai_request__duration_ms
+msgid "Duration Ms"
+msgstr "Durata (ms)"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_ai_request__cost_estimate
+msgid "Cost Estimate"
+msgstr "Stima costi"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_res_config_settings__ai_gemini_api_key
+msgid "Gemini API Key"
+msgstr "Chiave API Gemini"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_res_config_settings__ai_gemini_model
+msgid "Gemini Model name"
+msgstr "Nome modello Gemini"
+
+#. module: ai_gateway
+#: model:ir.model.fields,field_description:ai_gateway.field_res_config_settings__ai_max_chunk_chars
+msgid "Max chars per chunk"
+msgstr "Caratteri massimi per blocco"
+
+#. module: ai_gateway
+#: selection:ai.request,provider
+msgid "Gemini"
+msgstr "Gemini"
+
+#. module: ai_gateway
+#: selection:ai.request,task_type
+msgid "Chat/Generate"
+msgstr "Chat/Generazione"
+
+#. module: ai_gateway
+#: selection:ai.request,task_type
+msgid "Summarize"
+msgstr "Riassumi"
+
+#. module: ai_gateway
+#: selection:ai.request,task_type
+msgid "Classify"
+msgstr "Classifica"
+
+#. module: ai_gateway
+#: selection:ai.request,task_type
+msgid "Embed"
+msgstr "Genera embedding"
+
+#. module: ai_gateway
+#: selection:ai.request,status
+msgid "Draft"
+msgstr "Bozza"
+
+#. module: ai_gateway
+#: selection:ai.request,status
+msgid "Running"
+msgstr "In esecuzione"
+
+#. module: ai_gateway
+#: selection:ai.request,status
+msgid "Done"
+msgstr "Completata"
+
+#. module: ai_gateway
+#: selection:ai.request,status
+msgid "Error"
+msgstr "Errore"
+
+#. module: ai_gateway
+#: selection:ai.request,status
+msgid "Queued"
+msgstr "In coda"
+
+#. module: ai_gateway
+#: model:ir.actions.act_window,name:ai_gateway.action_ai_request
+msgid "AI Requests"
+msgstr "Richieste AI"
+
+#. module: ai_gateway
+#: model:ir.ui.menu,name:ai_gateway.menu_ai_root
+msgid "AI"
+msgstr "AI"
+
+#. module: ai_gateway
+#: model:ir.ui.menu,name:ai_gateway.menu_ai_requests
+msgid "Requests"
+msgstr "Richieste"
+
+#. module: ai_gateway
+#: model_terms:ir.ui.view,arch_db:ai_gateway.view_ai_request_form
+msgid "AI Request"
+msgstr "Richiesta AI"
+
+#. module: ai_gateway
+#: model_terms:ir.ui.view,arch_db:ai_gateway.view_ai_request_tree
+msgid "AI Requests"
+msgstr "Richieste AI"
+
+#. module: ai_gateway
+#: model_terms:ir.ui.view,arch_db:ai_gateway.view_res_config_settings_ai_gateway
+msgid "AI Gateway"
+msgstr "AI Gateway"
+
+#. module: ai_gateway
+#: model_terms:ir.ui.view,arch_db:ai_gateway.view_res_config_settings_ai_gateway
+msgid "Default provider"
+msgstr "Provider predefinito"
+
+#. module: ai_gateway
+#: model_terms:ir.ui.view,arch_db:ai_gateway.view_res_config_settings_ai_gateway
+msgid "Gemini API key"
+msgstr "Chiave API Gemini"
+
+#. module: ai_gateway
+#: model_terms:ir.ui.view,arch_db:ai_gateway.view_res_config_settings_ai_gateway
+msgid "Gemini model"
+msgstr "Modello Gemini"
+
+#. module: ai_gateway
+#: model_terms:ir.ui.view,arch_db:ai_gateway.view_res_config_settings_ai_gateway
+msgid "Max chunk chars"
+msgstr "Caratteri massimi per blocco"
+
+#. module: ai_gateway
+#: model:ir.actions.act_window,name:ai_gateway.action_planetio_config_settings
+msgid "AI Gateway Settings"
+msgstr "Impostazioni AI Gateway"
