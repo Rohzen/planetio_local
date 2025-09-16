@@ -1,0 +1,88 @@
+<odoo noupdate="1">
+    <record id="survey_eudr_questionnaire" model="survey.survey">
+        <field name="title">Eudr Questionnaire</field>
+        <field name="survey_type">survey</field>
+        <field name="description">Questionnaire used to collect due diligence details from the EUDR declarations.</field>
+    </record>
+
+    <record id="survey_eudr_questionnaire_page_intro" model="survey.question">
+        <field name="survey_id" ref="planetio_surveys.survey_eudr_questionnaire"/>
+        <field name="question_type">page</field>
+        <field name="title">General Information</field>
+        <field name="sequence" eval="1"/>
+    </record>
+
+    <record id="survey_eudr_questionnaire_q_overview" model="survey.question">
+        <field name="survey_id" ref="planetio_surveys.survey_eudr_questionnaire"/>
+        <field name="page_id" ref="planetio_surveys.survey_eudr_questionnaire_page_intro"/>
+        <field name="question_type">textbox</field>
+        <field name="title">Provide a summary of the supply chain for this declaration.</field>
+        <field name="sequence" eval="2"/>
+        <field name="is_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_questionnaire_q_dds_steps" model="survey.question">
+        <field name="survey_id" ref="planetio_surveys.survey_eudr_questionnaire"/>
+        <field name="page_id" ref="planetio_surveys.survey_eudr_questionnaire_page_intro"/>
+        <field name="question_type">multiple_choice</field>
+        <field name="title">Which due diligence steps have been completed?</field>
+        <field name="sequence" eval="3"/>
+        <field name="is_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_questionnaire_q_dds_steps_ans1" model="survey.question.answer">
+        <field name="question_id" ref="planetio_surveys.survey_eudr_questionnaire_q_dds_steps"/>
+        <field name="value">Risk assessment performed</field>
+        <field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_questionnaire_q_dds_steps_ans2" model="survey.question.answer">
+        <field name="question_id" ref="planetio_surveys.survey_eudr_questionnaire_q_dds_steps"/>
+        <field name="value">Supplier compliance verified</field>
+        <field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_questionnaire_q_dds_steps_ans3" model="survey.question.answer">
+        <field name="question_id" ref="planetio_surveys.survey_eudr_questionnaire_q_dds_steps"/>
+        <field name="value">Mitigation actions documented</field>
+        <field name="sequence" eval="3"/>
+    </record>
+    <record id="survey_eudr_questionnaire_q_dds_steps_ans4" model="survey.question.answer">
+        <field name="question_id" ref="planetio_surveys.survey_eudr_questionnaire_q_dds_steps"/>
+        <field name="value">Monitoring activities scheduled</field>
+        <field name="sequence" eval="4"/>
+    </record>
+
+    <record id="survey_eudr_questionnaire_q_traceability" model="survey.question">
+        <field name="survey_id" ref="planetio_surveys.survey_eudr_questionnaire"/>
+        <field name="page_id" ref="planetio_surveys.survey_eudr_questionnaire_page_intro"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">Is traceability documentation available for all lots?</field>
+        <field name="sequence" eval="4"/>
+        <field name="is_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_questionnaire_q_traceability_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_surveys.survey_eudr_questionnaire_q_traceability"/>
+        <field name="value">Yes, documentation is available</field>
+        <field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_questionnaire_q_traceability_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_surveys.survey_eudr_questionnaire_q_traceability"/>
+        <field name="value">No, there are pending gaps</field>
+        <field name="sequence" eval="2"/>
+    </record>
+
+    <record id="survey_eudr_questionnaire_page_risk" model="survey.question">
+        <field name="survey_id" ref="planetio_surveys.survey_eudr_questionnaire"/>
+        <field name="question_type">page</field>
+        <field name="title">Risk Evaluation</field>
+        <field name="sequence" eval="5"/>
+    </record>
+
+    <record id="survey_eudr_questionnaire_q_risk_notes" model="survey.question">
+        <field name="survey_id" ref="planetio_surveys.survey_eudr_questionnaire"/>
+        <field name="page_id" ref="planetio_surveys.survey_eudr_questionnaire_page_risk"/>
+        <field name="question_type">textbox</field>
+        <field name="title">List any identified risks and mitigation measures.</field>
+        <field name="sequence" eval="6"/>
+    </record>
+</odoo>
