@@ -150,6 +150,32 @@ class EUDRClient:
             return None
 
     @staticmethod
+    def parse_reference_number(response_text: str) -> str:
+        """
+        Estrae il TRACES reference number dalla SubmitStatementResponse:
+        //eudr:referenceNumber (namespace submission v1).
+        Ritorna None se non presente.
+        """
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(response_text)
+            ns = {
+                "S": "http://schemas.xmlsoap.org/soap/envelope/",
+                "eudr": "http://ec.europa.eu/tracesnt/certificate/eudr/submission/v1",
+            }
+            el = root.find(".//eudr:referenceNumber", ns)
+            if el is not None and el.text and el.text.strip():
+                return el.text.strip()
+
+            # Fallback: qualunque elemento con local-name 'referenceNumber'
+            for e in root.iter():
+                if e.tag.rsplit('}', 1)[-1] == "referenceNumber" and e.text:
+                    return e.text.strip()
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
     def parse_ws_request_id(response_text: str) -> str:
         try:
             root = ET.fromstring(response_text)

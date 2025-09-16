@@ -132,13 +132,24 @@ def submit_dds_for_batch(record):
     })
 
     if status == 200:
-        dds_id = client.parse_dds_identifier(text)
+        dds_id = client.parse_dds_identifier(text)  # UUID tecnico
+        # referenceNumber “umano” (serve il parser nel client)
+        ref_no = getattr(client, 'parse_reference_number', lambda _: None)(text)
+
         if dds_id:
             if hasattr(record, 'dds_identifier'):
                 record.dds_identifier = dds_id
-                record.eudr_id = dds_id
-            # record.status_planetio = 'transmitted'
-            record.message_post(body=_('DDS trasmessa con successo. ID: <b>%s</b>') % dds_id)
+            if ref_no and hasattr(record, 'eudr_id'):
+                record.eudr_id = ref_no  # <- il tuo campo per la reference number
+
+            # record.status_planetio = 'transmitted'  # se vogliamo aggiornare lo stato
+
+            record.message_post(
+                body=_('DDS trasmessa con successo. ID: <b>%s</b>%s') % (
+                    dds_id,
+                    (", Reference: <b>%s</b>" % ref_no) if ref_no else ""
+                )
+            )
             return dds_id
         else:
             raise UserError(_('DDS inviata ma senza ddsIdentifier. Controlla la risposta XML.'))
@@ -154,7 +165,6 @@ def submit_dds_for_batch(record):
             msg = _('Violazioni regole EUDR rilevate:\n%s') % "\n".join(bullets)
             if wsid:
                 msg += _('\n\nWS_REQUEST_ID: %s') % wsid
-            # Log anche sul chatter per storico completo
             record.message_post(body=msg.replace("\n", "<br/>"))
             raise UserError(msg)
         else:
@@ -162,8 +172,8 @@ def submit_dds_for_batch(record):
             base = _('Errore EUDR (%s): %s') % (status, (text or '')[:800])
             if wsid_only:
                 base += _('\n\nWS_REQUEST_ID: %s') % wsid_only
-            # Log raw sul chatter per analisi manuale
             record.message_post(
                 body=("Fault grezzo (parsing fallito):<br/><pre>%s</pre>" % (text or "")).replace("\n", "<br/>"))
             raise UserError(base)
+
 
