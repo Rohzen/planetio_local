@@ -124,10 +124,10 @@ class EUDRDeclaration(models.Model):
         ], string="HS Code")
     product_id  = fields.Many2one('product.product', string="Product")
     product_description = fields.Char(string="Description of raw materials or products")
-    net_mass_kg = fields.Float(string="Net mass (kg)", digits=(16, 3))
+    net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3))
     common_name = fields.Char(string="Common name")
     producer_name = fields.Char(string="Producer name")
-    coffee_species  = fields.Many2one('coffee.species', string="Coffee species")
+    coffee_species  = fields.Many2one('coffee.species', string="Product")
 
     # ---------------------- helpers ----------------------
 

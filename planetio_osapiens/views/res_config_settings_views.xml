@@ -18,13 +18,13 @@
                   Configura l'accesso alle API oSapiens. Sostituisci i path segnaposto nel client con quelli ufficiali.
                 </p>
                 <span class="o_form_label">Account</span>
-                <field name="osapiens_account_id"/>
+                  <field name="osapiens_account_id"/>
                 <span class="o_form_label">Api-key/Token</span>
-                <field name="osapiens_api_token" password="True"/>
+                  <field name="osapiens_api_token" password="True"/>
                 <span class="o_form_label">Timeout</span>
-                <field name="osapiens_timeout"/>
+                  <field name="osapiens_timeout"/>
                 <span class="o_form_label">SSL</span>
-                <field name="osapiens_verify_ssl"/>
+                  <field name="osapiens_verify_ssl"/>
               </div>
             </div>
           </div>

@@ -10,16 +10,21 @@
         <field name="name">eudr.declaration.form.planetio.surveys</field>
         <field name="model">eudr.declaration</field>
         <field name="inherit_id" ref="planetio.view_eudr_declaration_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//div[@class='oe_button_box']" position="inside">
-                <button name="action_view_survey_user_inputs"
-                        type="object"
-                        class="oe_stat_button"
-                        icon="fa-question-circle"
-                        attrs="{'invisible': [('id', '=', False)]}">
-                    <field name="survey_user_input_count" widget="statinfo" string="Questionnaires"/>
-                </button>
-            </xpath>
-        </field>
+            <field name="arch" type="xml">
+               <div class="oe_button_box" position="inside">
+                        <button
+                            class="oe_stat_button"
+                            name="action_view_survey_user_inputs"
+                            type="object"
+                            icon="fa-question-circle"
+                            attrs="{'invisible': [('id', '=', False)]}">
+                            <field
+                                name="survey_user_input_count"
+                                widget="statinfo"
+                                string="Questionnaires"
+                            />
+                        </button>
+                    </div>
+            </field>
     </record>
-</odoo>
+ </odoo>
