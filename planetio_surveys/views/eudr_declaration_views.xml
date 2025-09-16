@@ -1,0 +1,25 @@
+<odoo>
+    <record id="action_eudr_declaration_survey_user_input" model="ir.actions.act_window">
+        <field name="name">Questionnaires</field>
+        <field name="res_model">survey.user_input</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'default_declaration_id': active_id}</field>
+    </record>
+
+    <record id="view_eudr_declaration_form_inherit_surveys" model="ir.ui.view">
+        <field name="name">eudr.declaration.form.planetio.surveys</field>
+        <field name="model">eudr.declaration</field>
+        <field name="inherit_id" ref="planetio.view_eudr_declaration_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@class='oe_button_box']" position="inside">
+                <button name="action_view_survey_user_inputs"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-question-circle"
+                        attrs="{'invisible': [('id', '=', False)]}">
+                    <field name="survey_user_input_count" widget="statinfo" string="Questionnaires"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

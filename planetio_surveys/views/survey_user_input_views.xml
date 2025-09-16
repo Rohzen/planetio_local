@@ -1,0 +1,23 @@
+<odoo>
+    <record id="view_survey_user_input_tree_inherit_declaration" model="ir.ui.view">
+        <field name="name">survey.user_input.tree.planetio.surveys</field>
+        <field name="model">survey.user_input</field>
+        <field name="inherit_id" ref="survey.view_survey_user_input_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree/field[@name='survey_id']" position="after">
+                <field name="declaration_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_survey_user_input_form_inherit_declaration" model="ir.ui.view">
+        <field name="name">survey.user_input.form.planetio.surveys</field>
+        <field name="model">survey.user_input</field>
+        <field name="inherit_id" ref="survey.view_survey_user_input_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='survey_id']" position="after">
+                <field name="declaration_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
