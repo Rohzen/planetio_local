@@ -257,19 +257,56 @@ class EUDRDeclaration(models.Model):
             out.append((x - x0, y - y0))  # shift near origin to improve stability
         return out
 
+    def _polygon_area_m2(self, polygons_rings):
+        """Compute area in m² for the given polygons (list of rings)."""
+        if not polygons_rings:
+            return 0.0
+
+        area_geo = self._geodesic_area_m2_of_polygons(polygons_rings)
+        if area_geo is not None:
+            return area_geo
+
+        total = 0.0
+        for rings in polygons_rings:
+            if not rings:
+                continue
+            exterior = [
+                (pt[0], pt[1])
+                for pt in rings[0]
+                if isinstance(pt, (list, tuple)) and len(pt) >= 2
+            ]
+            if not exterior:
+                continue
+            ex_xy = self._project_points_to_meters(exterior)
+            poly_area = self._shoelace_area_m2(ex_xy)
+            for hole in rings[1:]:
+                hole_ll = [
+                    (pt[0], pt[1])
+                    for pt in hole
+                    if isinstance(pt, (list, tuple)) and len(pt) >= 2
+                ]
+                if not hole_ll:
+                    continue
+                hole_xy = self._project_points_to_meters(hole_ll)
+                poly_area -= self._shoelace_area_m2(hole_xy)
+            total += max(0.0, poly_area)
+        return total
+
     # ------------------ main compute ------------------
 
     @api.depends("line_ids.geometry", "line_ids.geo_type")
     def _compute_area_ha(self):
         for rec in self:
-            polygons = []     # list of polygons, each polygon is list of rings (list of [lon, lat])
-            points_ll = []    # list of (lon, lat)
+            total_area_m2 = 0.0
 
-            # collect geometries from lines
             for line in rec.line_ids:
-                gobj = self._safe_json_load(line.geometry)
+                gobj = self._safe_json_load(getattr(line, "geometry", None))
                 if not gobj:
                     continue
+
+                polygons = []
+                point_count = 0
+
                 for geom in self._iter_geojson_geometries(gobj):
                     gtype = geom.get("type")
                     if gtype in ("Polygon", "MultiPolygon"):
@@ -277,46 +314,19 @@ class EUDRDeclaration(models.Model):
                     elif gtype == "Point":
                         coords = geom.get("coordinates") or []
                         if isinstance(coords, (list, tuple)) and len(coords) >= 2:
-                            points_ll.append((float(coords[0]), float(coords[1])))
+                            point_count += 1
                     elif gtype == "MultiPoint":
                         coords = geom.get("coordinates") or []
                         for pt in coords:
                             if isinstance(pt, (list, tuple)) and len(pt) >= 2:
-                                points_ll.append((float(pt[0]), float(pt[1])))
-                    # LineString/MultiLineString are ignored for area
+                                point_count += 1
 
-            area_m2 = 0.0
+                if polygons:
+                    total_area_m2 += rec._polygon_area_m2(polygons)
+                elif point_count:
+                    total_area_m2 += point_count * 4.0
 
-            # priority 1: true polygons, computed geodesically if possible
-            if polygons:
-                area_geo = self._geodesic_area_m2_of_polygons(polygons)
-                if area_geo is not None:
-                    area_m2 = area_geo
-                else:
-                    # fallback: project rings to meters and apply shoelace with holes
-                    total = 0.0
-                    for rings in polygons:
-                        if not rings:
-                            continue
-                        exterior = [(pt[0], pt[1]) for pt in rings[0] if isinstance(pt, (list, tuple)) and len(pt) >= 2]
-                        ex_xy = self._project_points_to_meters(exterior)
-                        poly_area = self._shoelace_area_m2(ex_xy)
-                        for hole in rings[1:]:
-                            hole_ll = [(pt[0], pt[1]) for pt in hole if isinstance(pt, (list, tuple)) and len(pt) >= 2]
-                            hole_xy = self._project_points_to_meters(hole_ll)
-                            poly_area -= self._shoelace_area_m2(hole_xy)
-                        total += max(0.0, poly_area)
-                    area_m2 = total
-
-            # priority 2: no polygons → use convex hull of points if >= 3
-            elif len(points_ll) >= 3:
-                pts_xy = self._project_points_to_meters(points_ll)
-                hull = self._convex_hull(pts_xy)
-                area_m2 = self._shoelace_area_m2(hull)
-
-            # else: area remains 0.0
-
-            rec.area_ha = (area_m2 / 10000.0) if area_m2 > 0.0 else 0.0
+            rec.area_ha = (total_area_m2 / 10000.0) if total_area_m2 > 0.0 else 0.0
 
     @api.model_create_multi
     def create(self, vals_list):
