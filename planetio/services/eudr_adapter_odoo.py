@@ -89,7 +89,7 @@ def submit_dds_for_batch(record):
 
     submit_xml = client.build_statement_xml(
         internal_ref = record.name or f'Batch-{record.id}',
-        activity_type = 'IMPORT',
+        activity_type = record.activity_type.upper(),
         company_name = record.partner_id.name or 'Company',
         company_country = record.partner_id.country_id.code or 'IT',
         company_address = company_address or 'Unknown Address',

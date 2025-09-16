@@ -61,16 +61,20 @@ class EUDRClient:
             '</wsse:Security>'
         )
 
+
     # --- Build SubmitStatementRequest (order validated) ---
     def build_statement_xml(self, *, internal_ref: str, activity_type: str, company_name: str,
                             company_country: str, company_address: str, eori_value: str,
                             hs_heading: str, description_of_goods: str, net_weight_kg: str,
                             producer_country: str, producer_name: str, geojson_b64: str,
                             operator_type: str = "OPERATOR",
-                            country_of_activity: str, border_cross_country: str, comment: str) -> str:
+                            country_of_activity: str, border_cross_country: str, comment: str,
+                            scientific_name: str = None, common_name: str = None) -> str:
         if not geojson_b64:
             raise ValueError("geojson_b64 is required")
-        return (
+
+        # Prima parte fino a hsHeading
+        xml = (
             '<eudr:SubmitStatementRequest '
             'xmlns:eudr="http://ec.europa.eu/tracesnt/certificate/eudr/submission/v1" '
             'xmlns:model="http://ec.europa.eu/tracesnt/certificate/eudr/model/v1" '
@@ -102,6 +106,19 @@ class EUDRClient:
             '</model:goodsMeasure>'
             '</model:descriptors>'
             f'<model:hsHeading>{hs_heading}</model:hsHeading>'
+        )
+
+        # --- SPECIES (opzionale, formato più comune) ---
+        if scientific_name or common_name:
+            xml += '<model:speciesInformation>'
+            if scientific_name:
+                xml += f'<model:scientificName>{scientific_name}</model:scientificName>'
+            if common_name:
+                xml += f'<model:commonName>{common_name}</model:commonName>'
+            xml += '</model:speciesInformation>'
+
+        # Chiusura con producers e resto
+        xml += (
             '<model:producers>'
             '<model:position>1</model:position>'
             f'<model:country>{producer_country}</model:country>'
@@ -113,6 +130,8 @@ class EUDRClient:
             '</eudr:statement>'
             '</eudr:SubmitStatementRequest>'
         )
+
+        return xml
 
     def build_envelope(self, submit_request_xml: str) -> str:
         wsse_header = self._build_wsse_header()

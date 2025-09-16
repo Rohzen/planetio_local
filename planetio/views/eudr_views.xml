@@ -40,7 +40,7 @@
     <form string="EUDR Declaration">
       <header>
           <button name="action_open_import_wizard" type="object"
-                  string="Import Wizard" class="btn-secondary" icon="fa-upload"/>
+                  string="Import" class="btn-secondary" icon="fa-upload"/>
 <!--          <button name="action_export_geojson" type="object"-->
 <!--                  string="Export GeoJSON" class="oe_highlight" icon="fa-download"/>-->
           <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success"
