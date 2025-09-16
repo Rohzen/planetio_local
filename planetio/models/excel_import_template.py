@@ -28,4 +28,3 @@ class ExcelImportTemplateField(models.Model):
         [("by_header","By Header"),("by_regex","By Regex"),("by_ai","By AI")],
         default="by_ai"
     )
-    alias_ids = fields.One2many("excel.header.alias","template_field_id")

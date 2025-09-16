@@ -51,15 +51,6 @@
                     <field name="transformer"/>
                     <field name="selector_policy"/>
                   </group>
-                  <group string="Aliases">
-                    <field name="alias_ids">
-                      <tree editable="bottom">
-                        <field name="alias"/>
-                        <field name="language"/>
-                        <field name="weight"/>
-                      </tree>
-                    </field>
-                  </group>
                 </form>
               </field>
             </page>
