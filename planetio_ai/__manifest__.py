@@ -8,6 +8,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/summarize_documents_wizard_views.xml',
+        'report/ai_summary_report.xml',
     ],
     'installable': True,
 }

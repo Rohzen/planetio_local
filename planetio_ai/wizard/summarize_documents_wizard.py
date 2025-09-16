@@ -1,6 +1,7 @@
-from odoo import api, fields, models
+from odoo import _, fields, models
 import base64
 import io
+import logging
 
 try:  # pragma: no cover - optional dependency
     from reportlab.lib import colors
@@ -22,16 +23,47 @@ except Exception:  # pragma: no cover - handled gracefully at runtime
     A4 = (595.27, 841.89)
 
 
+_logger = logging.getLogger(__name__)
+
+
 class PlanetioSummarizeWizard(models.Model):
     _inherit = "eudr.declaration"
 
-    def _summary_to_pdf(self, text):
-        """Convert plain text summary to PDF bytes.
+    def _summary_to_pdf(self, text, record):
+        """Convert the AI summary into a nicely formatted PDF."""
 
-        Falls back to returning the raw text encoded if the ``reportlab``
-        dependency is not available.  The caller is responsible for deciding
-        the mimetype in that case.
+        pdf_bytes, mimetype = self._summary_to_pdf_qweb(text, record)
+        if pdf_bytes:
+            return pdf_bytes, mimetype
+        return self._summary_to_pdf_reportlab(text)
+
+    def _summary_to_pdf_qweb(self, text, record):
+        """Render the summary using the dedicated QWeb report.
+
+        Returns ``(bytes, mimetype)`` when the rendering succeeds and
+        ``(None, None)`` otherwise so that the caller can gracefully fall back
+        to the ReportLab implementation or to raw text.
         """
+
+        if not (text and record and record.id):
+            return None, None
+
+        report = self.env.ref(
+            "planetio_ai.action_report_ai_summary", raise_if_not_found=False
+        )
+        if not report:
+            return None, None
+
+        try:
+            data = self._prepare_summary_data(text, record)
+            pdf_bytes, _ = report._render_qweb_pdf([record.id], data=data)
+            return pdf_bytes, "application/pdf"
+        except Exception:  # pragma: no cover - handled via fallback
+            _logger.exception("Falling back to ReportLab for AI summary rendering")
+            return None, None
+
+    def _summary_to_pdf_reportlab(self, text):
+        """Fallback ReportLab-based implementation for PDF summaries."""
 
         if not SimpleDocTemplate:
             return text.encode("utf-8"), "text/plain"
@@ -124,6 +156,131 @@ class PlanetioSummarizeWizard(models.Model):
         buffer.seek(0)
         return buffer.getvalue(), "application/pdf"
 
+    def _prepare_summary_data(self, text, record):
+        """Convert the AI text response into data consumable by QWeb."""
+
+        blocks = self._prepare_summary_blocks(text)
+        generated_on = fields.Datetime.context_timestamp(record, fields.Datetime.now())
+
+        summary = {
+            "title": _("AI Document Summary"),
+            "record_label": _("Declaration"),
+            "record_name": record.display_name,
+            "generated_on_label": _("Generated on"),
+            "generated_on": generated_on,
+            "blocks": blocks,
+            "raw_label": _("Original AI response"),
+            "raw_text": text.strip(),
+            "empty_label": _("No summary content was returned by the AI service."),
+        }
+
+        return {"doc_data": {record.id: summary}}
+
+    def _prepare_summary_blocks(self, text):
+        """Parse the summary into a list of semantic blocks for QWeb."""
+
+        blocks = []
+        bullet_buffer = []
+        paragraph_buffer = []
+        table_buffer = []
+
+        def flush_paragraph():
+            nonlocal paragraph_buffer
+            if not paragraph_buffer:
+                return
+            paragraph = " ".join(paragraph_buffer)
+            blocks.append({"type": "paragraph", "text": paragraph})
+            paragraph_buffer = []
+
+        def flush_bullets():
+            nonlocal bullet_buffer
+            if not bullet_buffer:
+                return
+            blocks.append({"type": "bullets", "items": bullet_buffer[:]})
+            bullet_buffer = []
+
+        def flush_table():
+            nonlocal table_buffer
+            if not table_buffer:
+                return
+            filtered_rows = [
+                row for row in table_buffer if not self._is_table_separator_row(row)
+            ]
+            table_buffer = []
+            if not filtered_rows:
+                return
+            header = filtered_rows[0]
+            rows = filtered_rows[1:] if len(filtered_rows) > 1 else []
+            blocks.append({"type": "table", "header": header, "rows": rows})
+
+        for raw_line in text.replace("\r\n", "\n").split("\n"):
+            line = raw_line.strip()
+            if not line:
+                flush_paragraph()
+                flush_bullets()
+                flush_table()
+                continue
+
+            if line[0] in {"-", "*", "•"}:
+                flush_paragraph()
+                flush_table()
+                bullet_text = line.lstrip("-*• ").strip()
+                if bullet_text:
+                    bullet_buffer.append(bullet_text)
+                continue
+
+            table_row = self._parse_table_row(line)
+            if table_row:
+                flush_paragraph()
+                flush_bullets()
+                table_buffer.append(table_row)
+                continue
+
+            flush_bullets()
+            flush_table()
+
+            if self._is_header_line(line):
+                flush_paragraph()
+                blocks.append({"type": "header", "text": line.rstrip(":")})
+            else:
+                paragraph_buffer.append(line)
+
+        flush_paragraph()
+        flush_bullets()
+        flush_table()
+
+        return blocks
+
+    @staticmethod
+    def _parse_table_row(line):
+        """Return a list of cells when ``line`` looks like a Markdown table."""
+
+        stripped = line.strip()
+        if "|" not in stripped:
+            return []
+        raw_cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(raw_cells) < 2:
+            return []
+        if not any(cell for cell in raw_cells):
+            return []
+        if not any(any(ch.isalnum() for ch in cell) for cell in raw_cells):
+            return []
+        return raw_cells
+
+    @staticmethod
+    def _is_table_separator_row(row):
+        """Detect rows made only of separators (``----`` or ``====``)."""
+
+        if not row:
+            return True
+        for cell in row:
+            cleaned = cell.replace(" ", "")
+            if not cleaned:
+                continue
+            if any(ch not in "-=_–—" for ch in cleaned):
+                return False
+        return True
+
     @staticmethod
     def _is_header_line(line):
         """Return ``True`` when a line should be styled as a header."""
@@ -179,7 +336,7 @@ class PlanetioSummarizeWizard(models.Model):
             if not summary:
                 continue
 
-            pdf_bytes, mimetype = self._summary_to_pdf(summary)
+            pdf_bytes, mimetype = self._summary_to_pdf(summary, rec)
 
             self.env["ir.attachment"].create(
                 {
