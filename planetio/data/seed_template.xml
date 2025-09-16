@@ -1,6 +1,6 @@
 
 <odoo>
-  <!-- EUDR Declaration template with initial fields and aliases -->
+  <!-- EUDR Declaration template with initial fields -->
   <record id="tmpl_eudr_declaration" model="excel.import.template">
     <field name="name">EUDR Declaration</field>
     <field name="model_id" ref="model_eudr_declaration"/>
@@ -78,69 +78,4 @@
 <!--    <field name="transformer">identity</field>-->
 <!--  </record>-->
 
-  <!-- Aliases -->
-  <record id="alias_farmer_name_1" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_farmer_name"/>
-    <field name="alias">FARMER'S NAME</field>
-  </record>
-  <record id="alias_farmer_name_2" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_farmer_name"/>
-    <field name="alias">FARMER</field>
-  </record>
-
-  <record id="alias_farmer_id" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_farmer_id"/>
-    <field name="alias">ID</field>
-  </record>
-
-  <record id="alias_tax_code" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_tax_code"/>
-    <field name="alias">TAX CODE</field>
-  </record>
-
-  <record id="alias_country" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_country"/>
-    <field name="alias">COUNTRY</field>
-  </record>
-
-  <record id="alias_region" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_region"/>
-    <field name="alias">REGION</field>
-  </record>
-
-  <record id="alias_municipality" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_municipality"/>
-    <field name="alias">MUNICIPALITY</field>
-  </record>
-
-  <record id="alias_farm_name_1" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_farm_name"/>
-    <field name="alias">NAME OF FARM</field>
-  </record>
-  <record id="alias_farm_name_2" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_farm_name"/>
-    <field name="alias">NAME OF FARM- PLOT ID</field>
-  </record>
-
-  <record id="alias_area" model="excel.header.alias">
-    <field name="template_field_id" ref="tmpl_field_area"/>
-    <field name="alias">HA TOTAL</field>
-  </record>
-
-<!--  <record id="alias_lat" model="excel.header.alias">-->
-<!--    <field name="template_field_id" ref="tmpl_field_geometry"/>-->
-<!--    <field name="alias">GPS LATITUDE (DD format)</field>-->
-<!--  </record>-->
-<!--  <record id="alias_lon" model="excel.header.alias">-->
-<!--    <field name="template_field_id" ref="tmpl_field_geometry"/>-->
-<!--    <field name="alias">GPS LONGITUDE (DD format)</field>-->
-<!--  </record>-->
-<!--  <record id="alias_coord1" model="excel.header.alias">-->
-<!--    <field name="template_field_id" ref="tmpl_field_geometry"/>-->
-<!--    <field name="alias">COORDINATES 1</field>-->
-<!--  </record>-->
-<!--  <record id="alias_coord2" model="excel.header.alias">-->
-<!--    <field name="template_field_id" ref="tmpl_field_geometry"/>-->
-<!--    <field name="alias">COORDINATES 2</field>-->
-<!--  </record>-->
 </odoo>
