@@ -287,3 +287,20 @@ class EUDRDeclarationDeforestation(models.Model):
                         pass
                     continue
         return True
+
+    def action_create_deforestation_geojson(self):
+        from ..services.eudr_adapter_odoo import (
+            attach_deforestation_geojson,
+            build_deforestation_geojson,
+        )
+
+        for decl in self:
+            geojson_dict = build_deforestation_geojson(decl)
+            attachment = attach_deforestation_geojson(decl, geojson_dict)
+            decl.message_post(
+                body=_(
+                    "Deforestation GeoJSON created and saved as <b>%s</b>."
+                )
+                % attachment.name
+            )
+        return True

@@ -46,6 +46,8 @@
 <!--                  string="Export GeoJSON" class="oe_highlight" icon="fa-download"/>-->
           <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success"
                   string="Deforestation analysis" icon="fa-tree"/>
+          <button name="action_create_deforestation_geojson" type="object" class="btn-secondary"
+                  string="Create Deforestation GeoJSON" icon="fa-download"/>
           <button name="action_create_geojson" type="object" class="btn-secondary"
                   string="Create GeoJSON" icon="fa-save"/>
           <button name="action_transmit_dds" type="object" class="oe_highlight"

@@ -17,6 +17,41 @@ def _place_description(line, record, idx):
     desc = ", ".join([p for p in parts if p])
     return (desc[:240] or f"Plot {idx}")  # accorcia per sicurezza
 
+def _safe_json_loads(value):
+    if not value:
+        return None
+    if isinstance(value, (dict, list)):
+        return value
+    try:
+        return json.loads(value)
+    except Exception:
+        return {"raw": value}
+
+
+def _safe_float(value):
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _get_line_geometry(line):
+    geom = None
+    if hasattr(line, "_line_geometry"):
+        try:
+            geom = line._line_geometry()
+        except Exception:
+            geom = None
+    if not geom and getattr(line, "geometry", None):
+        try:
+            geom = json.loads(line.geometry)
+        except Exception:
+            geom = None
+    return geom if isinstance(geom, dict) and geom.get("type") else None
+
+
 def build_dds_geojson(record):
     """Return the GeoJSON payload used for DDS submissions."""
     features = []
@@ -28,12 +63,7 @@ def build_dds_geojson(record):
     harvest_date = fields.Date.context_today(record)
 
     for idx, line in enumerate(getattr(record, "line_ids", []), start=1):
-        geom = None
-        if line.geometry:
-            try:
-                geom = json.loads(line.geometry)
-            except Exception:
-                geom = None
+        geom = _get_line_geometry(line)
         if not geom:
             continue
 
@@ -62,17 +92,91 @@ def build_dds_geojson(record):
     return {"type": "FeatureCollection", "features": features}
 
 
-def attach_dds_geojson(record, geojson_dict):
-    """Persist the DDS GeoJSON as an attachment on the record."""
+def build_deforestation_geojson(record):
+    """Return a GeoJSON FeatureCollection including deforestation metrics."""
 
+    features = []
+
+    for idx, line in enumerate(getattr(record, "line_ids", []), start=1):
+        geom = _get_line_geometry(line)
+        if not geom:
+            continue
+
+        props = {
+            "lineId": line.id,
+            "plotId": line.farmer_id_code or line.name or f"line-{line.id}",
+            "index": idx,
+            "name": line.name,
+            "farmerName": getattr(line, "farmer_name", None),
+            "farmerIdCode": getattr(line, "farmer_id_code", None),
+            "farmName": getattr(line, "farm_name", None),
+            "country": getattr(line, "country", None),
+            "region": getattr(line, "region", None),
+            "municipality": getattr(line, "municipality", None),
+            "geoType": geom.get("type"),
+        }
+
+        area_val = _safe_float(getattr(line, "area_ha", None))
+        if area_val is not None:
+            props["areaHa"] = area_val
+        elif getattr(line, "area_ha", None) not in (None, ""):
+            props["areaHaRaw"] = getattr(line, "area_ha")
+
+        defor_info = {
+            "ok": bool(getattr(line, "external_ok", False)),
+            "status": getattr(line, "external_status", None),
+            "provider": getattr(line, "defor_provider", None),
+            "alertCount": getattr(line, "defor_alerts", None),
+            "alertAreaHa": getattr(line, "defor_area_ha", None),
+            "httpCode": getattr(line, "external_http_code", None),
+            "uid": getattr(line, "external_uid", None),
+        }
+
+        msg = getattr(line, "external_message", None) or getattr(
+            line, "external_message_short", None
+        )
+        if msg:
+            defor_info["message"] = msg
+
+        details = _safe_json_loads(getattr(line, "defor_details_json", None))
+        if details:
+            defor_info["details"] = details
+            if isinstance(details, dict) and not defor_info.get("message"):
+                detail_msg = details.get("message")
+                if detail_msg:
+                    defor_info["message"] = detail_msg
+
+        external_props = _safe_json_loads(getattr(line, "external_properties_json", None))
+        if external_props:
+            defor_info["externalProperties"] = external_props
+
+        # Remove keys with ``None`` values but keep False/0
+        defor_info = {
+            key: val
+            for key, val in defor_info.items()
+            if val is not None and val != ""
+        }
+        defor_info["ok"] = bool(getattr(line, "external_ok", False))
+
+        props["deforestation"] = defor_info
+
+        features.append({"type": "Feature", "properties": props, "geometry": geom})
+
+    if not features:
+        raise UserError(_("No valid geometries found to build deforestation GeoJSON."))
+
+    return {"type": "FeatureCollection", "features": features}
+
+
+def _attach_geojson(record, geojson_dict, filename):
     attachment_vals = {
-        "name": f"DDS_GeoJSON_{record.id}.geojson",
+        "name": filename,
         "res_model": record._name,
         "res_id": record.id,
         "mimetype": "application/geo+json",
         "type": "binary",
         "datas": base64.b64encode(
-            json.dumps(geojson_dict, separators=(",", ":")).encode("utf-8")
+            json.dumps(geojson_dict, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         ),
     }
 
@@ -89,6 +193,20 @@ def attach_dds_geojson(record, geojson_dict):
         existing.write(attachment_vals)
         return existing
     return Attachment.create(attachment_vals)
+
+
+def attach_dds_geojson(record, geojson_dict):
+    """Persist the DDS GeoJSON as an attachment on the record."""
+
+    return _attach_geojson(record, geojson_dict, f"DDS_GeoJSON_{record.id}.geojson")
+
+
+def attach_deforestation_geojson(record, geojson_dict):
+    """Persist the deforestation GeoJSON as an attachment on the record."""
+
+    return _attach_geojson(
+        record, geojson_dict, f"Deforestation_GeoJSON_{record.id}.geojson"
+    )
 
 def submit_dds_for_batch(record):
     ICP = record.env['ir.config_parameter'].sudo()
