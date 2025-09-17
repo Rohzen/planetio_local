@@ -1,5 +1,6 @@
 
 from odoo import models, fields, api, _
+from odoo.tools.misc import formatLang
 from odoo.exceptions import UserError
 import json
 import math
@@ -100,7 +101,7 @@ class EUDRDeclaration(models.Model):
     eudr_type_override = fields.Selection([
         ('TRADER', 'Trader'),
         ('OPERATOR', 'Operator')
-    ], string="Operator", default='TRADER', help="Specify whether you're acting as Trader or Operator for this batch.")
+    ], string="Operator", default='OPERATOR', help="Specify whether you're acting as Trader or Operator for this batch.")
     eudr_third_party_client_id = fields.Many2one(
         'res.partner', string="Client (3rd Party Trader)", help="Client on behalf of whom the DDS is being submitted."
     )
@@ -128,6 +129,12 @@ class EUDRDeclaration(models.Model):
     common_name = fields.Char(string="Common name")
     producer_name = fields.Char(string="Producer name")
     coffee_species  = fields.Many2one('coffee.species', string="Product")
+    area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
+
+    @api.depends('area_ha')
+    def _compute_area_ha_display(self):
+        for rec in self:
+            rec.area_ha_display = formatLang(self.env, rec.area_ha or 0.0, digits=4)
 
     # ---------------------- helpers ----------------------
 
@@ -322,7 +329,7 @@ class EUDRDeclaration(models.Model):
 
     # ------------------ main compute ------------------
 
-    @api.depends("line_ids.geometry", "line_ids.geo_type")
+    @api.depends("line_ids.geometry", "line_ids.geo_type", "line_ids")
     def _compute_area_ha(self):
         for rec in self:
             total_area_m2 = 0.0

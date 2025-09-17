@@ -82,7 +82,7 @@ class ExcelImportWizard(models.TransientModel):
 
     def _default_debug_import(self):
         icp = self.env['ir.config_parameter'].sudo()
-        val = icp.get_param('planetio.debug_import', default='True')
+        val = icp.get_param('planetio.debug_import')
         return str(val).lower() in ('1', 'true', 'yes')
 
     debug_import = fields.Boolean(default=_default_debug_import, readonly=True)

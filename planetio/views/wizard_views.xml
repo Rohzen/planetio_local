@@ -23,7 +23,7 @@
           <group>
             <!-- STEP: UPLOAD -->
             <field name="step" invisible="1"/>
-            <field name="debug_import" invisible="1"/>
+            <field name="debug_import" invisible="0"/>
             <group attrs="{'invisible':[('step','!=','upload')]}" >
               <field name="template_id" required="1"/>
               <field name="file_name" readonly="1"/>
@@ -54,7 +54,7 @@
                   string="Analyze &amp; Map"
                   type="object"
                   class="btn-primary"
-                  attrs="{'invisible':['|',('step','!=','upload'),('debug_import','!=',True)]}"/>
+                  attrs="{'invisible':[('debug_import','!=',True)]}"/>
 
           <button name="action_validate"
                   string="Validate"

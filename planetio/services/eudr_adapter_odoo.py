@@ -99,7 +99,7 @@ def submit_dds_for_batch(record):
         # get scientific name =record.coffee_species.scientific_name,
         net_weight_kg = weight,
         producer_country = (record.partner_id.country_id.code or 'BR').upper(),
-        producer_name = record.name or 'Unknown Producer',
+        producer_name = record.producer_name or 'Unknown Producer',
         geojson_b64 = geojson_b64,
         operator_type = record.eudr_type_override or 'TRADER',
         country_of_activity = company_country,

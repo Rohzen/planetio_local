@@ -67,6 +67,7 @@
               <field name="source_attachment_id" readonly="1" invisible="1"/>
               <field name="activity_type"/>
               <field name="eudr_id" string="EUDR Reference" readonly="1"/>
+              <field name="dds_identifier" string="DDS Identifier" readonly="1"/>
             </group>
             <group>
               <field name="product_id" invisible="1"/>
@@ -75,6 +76,7 @@
               <field name="net_mass_kg" invisible="0"/>
               <field name="area_ha" readonly="1"/>
               <field name="operator_name" invisible="1"/>
+              <field name="producer_name" invisible="0"/>
               <field name="product_description" invisible="1"/>
               <field name="name" string="Internal Ref" invisible="1"/>
             </group>

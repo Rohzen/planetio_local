@@ -71,10 +71,12 @@ class ExcelImportService(models.AbstractModel):
         Decl = self.env["eudr.declaration"]
         Line = self.env["eudr.declaration.line"]
 
-        decl = getattr(job, "declaration_id", False)
-        model_context = ctx.get("params", {}).get("model") or ctx.get("params", {}).get("active_model")
-        # active_id = ctx.get("active_id")
-        declaration_id = ctx.get("params", {}).get("id") or ctx.get("params", {}).get("active_id")
+        params = ctx.get('params') or {}
+        model_context = params.get('model') or ctx.get('active_model')
+        declaration_id = params.get('id') or ctx.get('active_id') or (ctx.get('active_ids') or [None])[0]
+
+        decl = getattr(job, 'declaration_id', False)
+
         if not decl and model_context == "eudr.declaration" and declaration_id:
             decl = Decl.browse(declaration_id)
 

@@ -149,7 +149,7 @@ msgstr "Cliente per conto del quale viene inviata la DDS."
 #. module: planetio
 #: model:ir.model.fields,field_description:planetio.field_eudr_declaration__activity_type
 msgid "Activity"
-msgstr "Attivit\u00e0"
+msgstr "Attività"
 
 #. module: planetio
 #: model:ir.model.fields,field_description:planetio.field_eudr_declaration__operator_name
