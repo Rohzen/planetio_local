@@ -6,10 +6,11 @@
     "author": "Planetio",
     "license": "LGPL-3",
     "website": "https://planetio.example",
-    "depends": ["base", "purchase"],
+    "depends": ["base", "purchase", "planetio"],
     "data": [
         "views/res_config_settings_views.xml",
         "views/purchase_order_views.xml",
+        "views/eudr_declaration_actions.xml",
     ],
     "application": False,
     "installable": True,
