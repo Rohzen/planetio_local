@@ -23,7 +23,7 @@
           <group>
             <!-- STEP: UPLOAD -->
             <field name="step" invisible="1"/>
-            <field name="debug_import" invisible="0"/>
+            <field name="debug_import" invisible="1"/>
             <group attrs="{'invisible':[('step','!=','upload')]}" >
               <field name="template_id" required="1"/>
               <field name="file_name" readonly="1"/>
