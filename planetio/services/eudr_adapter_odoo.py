@@ -6,9 +6,19 @@ from .eudr_client import EUDRClient, build_geojson_b64
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 
+def _place_description(line, record, idx):
+    parts = [
+        (line.farm_name or "").strip(),
+        (line.municipality or "").strip(),
+        (line.region or "").strip(),
+        ((line.country or (record.partner_id.country_id.code or "")).upper()).strip(),
+        (line.farmer_id_code or line.name or f"plot-{idx}")
+    ]
+    desc = ", ".join([p for p in parts if p])
+    return (desc[:240] or f"Plot {idx}")  # accorcia per sicurezza
+
 def build_dds_geojson(record):
     """Return the GeoJSON payload used for DDS submissions."""
-
     features = []
     commodity = (
         record.product_id.display_name
@@ -17,7 +27,7 @@ def build_dds_geojson(record):
     )
     harvest_date = fields.Date.context_today(record)
 
-    for line in getattr(record, "line_ids", []):
+    for idx, line in enumerate(getattr(record, "line_ids", []), start=1):
         geom = None
         if line.geometry:
             try:
@@ -26,16 +36,28 @@ def build_dds_geojson(record):
                 geom = None
         if not geom:
             continue
+
+        country_code = (line.country or record.partner_id.country_id.code or "XX").upper()
+        desc = _place_description(line, record, idx)
+
         props = {
             "plotId": line.farmer_id_code or line.name or f"line-{line.id}",
             "commodity": commodity,
             "harvestDate": fields.Date.to_string(harvest_date),
-            "countryOfProduction": (line.country or record.partner_id.country_id.code or "XX").upper(),
+            "countryOfProduction": country_code,
+            # >>> questi due riempiono "Production Place Description" in TRACES
+            "description": desc,
+            "name": desc,
+            # opzionali (utili in UI/log)
+            "index": idx,
+            "type": geom.get("type"),
+            "areaHa": float(getattr(line, "area_ha", 0) or 0),
         }
+
         features.append({"type": "Feature", "properties": props, "geometry": geom})
 
     if not features:
-        raise UserError(_("GeoJSON mancante o senza geometrie valide nelle righe."))
+        raise UserError(_("GeoJSON missing or no valid geometries on lines."))
 
     return {"type": "FeatureCollection", "features": features}
 

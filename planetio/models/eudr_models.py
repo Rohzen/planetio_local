@@ -122,10 +122,10 @@ class EUDRDeclaration(models.Model):
             ('090121',  '0901 21 – non-decaffeinated'),
             ('090122',  '0901 22 – decaffeinated'),
             ('090190',  '0901 90 – others'),
-        ], string="HS Code")
+        ], string="HS Code", default="090111")
     product_id  = fields.Many2one('product.product', string="Product")
     product_description = fields.Char(string="Description of raw materials or products")
-    net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3))
+    net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3), required=True)
     common_name = fields.Char(string="Common name")
     producer_name = fields.Char(string="Producer name")
     coffee_species  = fields.Many2one('coffee.species', string="Product")
@@ -329,19 +329,23 @@ class EUDRDeclaration(models.Model):
 
     # ------------------ main compute ------------------
 
-    @api.depends("line_ids.geometry", "line_ids.geo_type", "line_ids")
+    @api.depends(
+        "line_ids", "line_ids.geometry", "line_ids.geo_type",
+    )
     def _compute_area_ha(self):
+        ICP = self.env['ir.config_parameter'].sudo()
+        # valore in ettari per punto (default 4 ha)
+        ha_per_point = float(ICP.get_param('planetio.eudr_point_area_ha', '4'))
+        fallback_m2_per_point = ha_per_point * 10000.0
+
         for rec in self:
             total_area_m2 = 0.0
-
             for line in rec.line_ids:
                 gobj = self._safe_json_load(getattr(line, "geometry", None))
                 if not gobj:
                     continue
 
-                polygons = []
-                point_count = 0
-
+                polygons, point_count = [], 0
                 for geom in self._iter_geojson_geometries(gobj):
                     gtype = geom.get("type")
                     if gtype in ("Polygon", "MultiPolygon"):
@@ -359,7 +363,7 @@ class EUDRDeclaration(models.Model):
                 if polygons:
                     total_area_m2 += rec._polygon_area_m2(polygons)
                 elif point_count:
-                    total_area_m2 += point_count * 4.0
+                    total_area_m2 += point_count * fallback_m2_per_point
 
             rec.area_ha = (total_area_m2 / 10000.0) if total_area_m2 > 0.0 else 0.0
 

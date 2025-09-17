@@ -67,19 +67,20 @@
               <field name="eudr_type_override"/>
               <field name="eudr_third_party_client_id" attrs="{'invisible': [('eudr_company_type','!=','third_party_trader')]}"/>
               <field name="source_attachment_id" readonly="1" invisible="1"/>
-              <field name="activity_type"/>
-              <field name="eudr_id" string="EUDR Reference" readonly="1"/>
+              <field name="activity_type" string="Attività"/>
+              <field name="eudr_id" string="EUDR Reference" readonly="0" invisible="1"/>
               <field name="dds_identifier" string="DDS Identifier" readonly="1"/>
             </group>
             <group>
-              <field name="product_id" invisible="1"/>
               <field name="hs_code"/>
+              <field name="product_id" invisible="0"/>
               <field name="coffee_species" invisible="0"/>
+              <field name="product_description" invisible="1"/>
               <field name="net_mass_kg" invisible="0"/>
-              <field name="area_ha" readonly="1"/>
+              <field name="area_ha_display" string="Area Ha" readonly="1"/>
+              <field name="area_ha" readonly="1" invisible="1"/>
               <field name="operator_name" invisible="1"/>
               <field name="producer_name" invisible="0"/>
-              <field name="product_description" invisible="1"/>
               <field name="name" string="Internal Ref" invisible="1"/>
             </group>
         </group>
