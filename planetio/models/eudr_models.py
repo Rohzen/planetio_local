@@ -427,6 +427,17 @@ class EUDRDeclaration(models.Model):
             "target": "new",
         }
 
+    def action_create_geojson(self):
+        from ..services.eudr_adapter_odoo import attach_dds_geojson, build_dds_geojson
+
+        for record in self:
+            geojson_dict = build_dds_geojson(record)
+            attachment = attach_dds_geojson(record, geojson_dict)
+            record.message_post(
+                body=_("GeoJSON creato e salvato come <b>%s</b>.") % attachment.name
+            )
+        return True
+
     def open_otp_wizard(self):
         self.ensure_one()
 
