@@ -263,7 +263,9 @@ class EUDRDeclarationLineDeforestation(models.Model):
                 message_type='comment',
                 subtype_xmlid='mail.mt_note',
             )
-        self._set_stage_from_xmlid('planetio.eudr_stage_validated')
+        declarations = lines.mapped('declaration_id')
+        if declarations:
+            declarations._set_stage_from_xmlid('planetio.eudr_stage_validated')
         return True
 
 

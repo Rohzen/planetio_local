@@ -209,21 +209,32 @@ class ExcelImportWizard(models.TransientModel):
             except Exception:
                 raise UserError(_("Invalid GeoJSON file"))
 
-            ctx = (self.env.context or {})
-            model_context = ctx.get("params", {}).get("model")
-            # active_id = ctx.get("active_id")
-            decl_id = ctx.get("params", {}).get("id")
-            # if not decl and model_context == "eudr.declaration" and declaration_id:
-            #     decl = Decl.browse(declaration_id)
-            #
-            #
-            # decl_id = self.env.context.get("active_id")
+            ctx = self.env.context or {}
             Decl = self.env["eudr.declaration"]
-            if decl_id:
-                decl = Decl.browse(decl_id)
-            else:
+
+            decl = self.declaration_id
+            if not decl:
+                active_model = ctx.get("active_model")
+                active_id = ctx.get("active_id")
+                if active_model == "eudr.declaration" and active_id:
+                    decl = Decl.browse(active_id)
+
+            if not decl:
+                params = ctx.get("params") or {}
+                param_model = params.get("model")
+                param_id = params.get("id")
+                if param_model == "eudr.declaration" and param_id:
+                    decl = Decl.browse(param_id)
+
+            if decl and not decl.exists():
+                decl = Decl.browse([])
+
+            if not decl:
                 decl = Decl.create({})
-                decl_id = decl.id
+
+            decl_id = decl.id
+            if not self.declaration_id:
+                self.declaration_id = decl
 
             feats = extract_geojson_features(obj)
             Line = self.env["eudr.declaration.line"]
