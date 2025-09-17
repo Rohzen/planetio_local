@@ -5,6 +5,69 @@ from odoo.exceptions import UserError
 from .eudr_client import EUDRClient, build_geojson_b64
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
+
+def build_dds_geojson(record):
+    """Return the GeoJSON payload used for DDS submissions."""
+
+    features = []
+    commodity = (
+        record.product_id.display_name
+        if getattr(record, "product_id", False)
+        else (record.product_description or "unknown")
+    )
+    harvest_date = fields.Date.context_today(record)
+
+    for line in getattr(record, "line_ids", []):
+        geom = None
+        if line.geometry:
+            try:
+                geom = json.loads(line.geometry)
+            except Exception:
+                geom = None
+        if not geom:
+            continue
+        props = {
+            "plotId": line.farmer_id_code or line.name or f"line-{line.id}",
+            "commodity": commodity,
+            "harvestDate": fields.Date.to_string(harvest_date),
+            "countryOfProduction": (line.country or record.partner_id.country_id.code or "XX").upper(),
+        }
+        features.append({"type": "Feature", "properties": props, "geometry": geom})
+
+    if not features:
+        raise UserError(_("GeoJSON mancante o senza geometrie valide nelle righe."))
+
+    return {"type": "FeatureCollection", "features": features}
+
+
+def attach_dds_geojson(record, geojson_dict):
+    """Persist the DDS GeoJSON as an attachment on the record."""
+
+    attachment_vals = {
+        "name": f"DDS_GeoJSON_{record.id}.geojson",
+        "res_model": record._name,
+        "res_id": record.id,
+        "mimetype": "application/geo+json",
+        "type": "binary",
+        "datas": base64.b64encode(
+            json.dumps(geojson_dict, separators=(",", ":")).encode("utf-8")
+        ),
+    }
+
+    Attachment = record.env["ir.attachment"]
+    existing = Attachment.search(
+        [
+            ("res_model", "=", record._name),
+            ("res_id", "=", record.id),
+            ("name", "=", attachment_vals["name"]),
+        ],
+        limit=1,
+    )
+    if existing:
+        existing.write(attachment_vals)
+        return existing
+    return Attachment.create(attachment_vals)
+
 def submit_dds_for_batch(record):
     ICP = record.env['ir.config_parameter'].sudo()
     endpoint = ICP.get_param('planetio.eudr_endpoint') or 'https://acceptance.eudr.webcloud.ec.europa.eu/tracesnt/ws/EUDRSubmissionServiceV1'
@@ -27,42 +90,9 @@ def submit_dds_for_batch(record):
     if not eori_value or len(eori_value) < 6:
         raise UserError(_("EORI mancante/non valido. Imposta planetio.eudr_eori nelle configurazioni."))
 
-    # Build GeoJSON from declaration lines
-    features = []
-    commodity = record.product_id.display_name if getattr(record, 'product_id', False) else (record.product_description or 'unknown')
-    harvest_date = fields.Date.context_today(record)
-    for line in getattr(record, 'line_ids', []):
-        geom = None
-        if line.geometry:
-            try:
-                geom = json.loads(line.geometry)
-            except Exception:
-                geom = None
-        if not geom:
-            continue
-        props = {
-            'plotId': line.farmer_id_code or line.name or f'line-{line.id}',
-            'commodity': commodity,
-            'harvestDate': fields.Date.to_string(harvest_date),
-            'countryOfProduction': (line.country or record.partner_id.country_id.code or 'XX').upper(),
-        }
-        features.append({'type': 'Feature', 'properties': props, 'geometry': geom})
-
-    if not features:
-        raise UserError(_('GeoJSON mancante o senza geometrie valide nelle righe.'))
-
-    geojson_dict = {'type': 'FeatureCollection', 'features': features}
+    geojson_dict = build_dds_geojson(record)
+    attach_dds_geojson(record, geojson_dict)
     geojson_b64 = build_geojson_b64(geojson_dict)
-
-    # Attach GeoJSON for traceability
-    record.env['ir.attachment'].create({
-        'name': f'DDS_GeoJSON_{record.id}.geojson',
-        'res_model': record._name,
-        'res_id': record.id,
-        'mimetype': 'application/geo+json',
-        'type': 'binary',
-        'datas': base64.b64encode(json.dumps(geojson_dict, separators=(',', ':')).encode('utf-8')),
-    })
 
     raw = record.net_mass_kg
     try:
