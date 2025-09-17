@@ -384,6 +384,12 @@ class EUDRDeclaration(models.Model):
                 vals['name'] = seq
             if not vals.get('stage_id') and default_stage_id:
                 vals['stage_id'] = default_stage_id
+            # ``net_mass_kg`` is required but certain automated flows (e.g.
+            # GeoJSON imports) create declarations before the weight is known.
+            # Provide a safe default to avoid a validation error and let users
+            # update the value afterwards.
+            if 'net_mass_kg' not in vals:
+                vals['net_mass_kg'] = 0.0
 
         records = super(EUDRDeclaration, self).create(vals_list)
         return records
