@@ -8,7 +8,7 @@
         'security/ir.model.access.csv',
         'views/eudr_views.xml',
         'views/template_views.xml',
-        'views/wizard_views.xml',
+        'wizards/import_wizard.xml',
         'views/res_config_settings_view.xml',
         'data/eudr_stages.xml',
         'data/seed_template.xml',

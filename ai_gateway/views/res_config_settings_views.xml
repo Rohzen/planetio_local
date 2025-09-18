@@ -18,12 +18,16 @@
                 <span class="o_form_label">Default provider</span>
                 <div class="text-muted"><field name="ai_default_provider"/></div>
 
+                <span class="o_form_label">Max chunk chars</span>
+                <div class="text-muted"><field name="ai_max_chunk_chars"/></div>
+
+                <h2>Gemini</h2>
                 <span class="o_form_label">Gemini API key</span>
                 <div class="text-muted"><field name="ai_gemini_api_key" password="True"/></div>
 
                 <span class="o_form_label">Gemini model</span>
                 <div class="text-muted"><field name="ai_gemini_model"/></div>
-
+                <h2>Claude</h2>
                 <span class="o_form_label">Claude API key</span>
                 <div class="text-muted"><field name="ai_claude_api_key" password="True"/></div>
 
@@ -32,9 +36,6 @@
 
                 <span class="o_form_label">Claude max output tokens</span>
                 <div class="text-muted"><field name="ai_claude_max_output_tokens"/></div>
-
-                <span class="o_form_label">Max chunk chars</span>
-                <div class="text-muted"><field name="ai_max_chunk_chars"/></div>
 
               </div>
             </div>

@@ -71,7 +71,7 @@
               <field name="source_attachment_id" readonly="1" invisible="1"/>
               <field name="activity_type" string="Attività"/>
               <field name="eudr_id" string="EUDR Reference" readonly="0" invisible="1"/>
-              <field name="dds_identifier" string="DDS Identifier" readonly="1"/>
+              <field name="dds_identifier" string="DDS Identifier" readonly="1" widget="copy"/>
             </group>
             <group>
               <field name="hs_code"/>
