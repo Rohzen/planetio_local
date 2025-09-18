@@ -367,33 +367,22 @@ class EUDRDeclaration(models.Model):
 
             rec.area_ha = (total_area_m2 / 10000.0) if total_area_m2 > 0.0 else 0.0
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Assign a sequence-generated name if missing.
-
-        The "name" field on ``eudr.declaration`` is required, therefore when a
-        record is created without explicitly providing one we pull the next
-        value from ``ir.sequence``.  If for some reason the sequence is missing
-        we still provide a placeholder to avoid a ``required`` error and let the
-        user fix it manually later.
-        """
+    @api.model
+    def create(self, vals):
+        # assegna stage di default se non specificato
         default_stage_id = self._default_stage_id()
-        for vals in vals_list:
-            if not vals.get('name'):
-                seq = self.env['ir.sequence'].next_by_code('eudr.declaration') or _('New')
-                vals['name'] = seq
-            if not vals.get('stage_id') and default_stage_id:
-                vals['stage_id'] = default_stage_id
-            # ``net_mass_kg`` is required but certain automated flows (e.g.
-            # GeoJSON imports) create declarations before the weight is known.
-            # Provide a safe default to avoid a validation error and let users
-            # update the value afterwards.
-            if 'net_mass_kg' not in vals:
-                vals['net_mass_kg'] = 0.0
 
-        records = super(EUDRDeclaration, self).create(vals_list)
-        return records
+        # Abilitare per multicompany
+        # if 'company_id' in vals:
+        #     self = self.with_company(vals['company_id'])
+        if not vals.get('name'):
+            seq_date = None
+            vals['name'] = self.env['ir.sequence'].next_by_code('eudr.declaration') or _('New')
+            vals['stage_id'] = default_stage_id
+            vals['net_mass_kg'] = 0.0
 
+        result = super(EUDRDeclaration, self).create(vals)
+        return result
 
     def action_open_excel_import_wizard(self):
         self.ensure_one()
