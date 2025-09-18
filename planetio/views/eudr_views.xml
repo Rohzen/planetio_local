@@ -71,7 +71,25 @@
               <field name="source_attachment_id" readonly="1" invisible="1"/>
               <field name="activity_type" string="Attività"/>
               <field name="eudr_id" string="EUDR Reference" readonly="0" invisible="1"/>
-              <field name="dds_identifier" string="DDS Identifier" readonly="1" widget="copy"/>
+              <div class="o_row bg-light p-2 rounded mb-2">
+                <div class="o_td_label">
+                  <label for="dds_identifier" class="o_form_label">DDS Identifier</label>
+                </div>
+
+                <div class="o_td_field">
+                  <field name="dds_identifier"
+                         readonly="1"
+                         widget="copy"
+                         nolabel="1"
+                         class="oe_inline"/>
+                  <button name="action_retrieve_dds"
+                          type="object"
+                          string="Retrieve DDS Data"
+                          class="oe_inline btn btn-secondary btn-sm"
+                          style="margin-left:8px;"
+                          attrs="{'invisible': [('dds_identifier','=',False)]}"/>
+                </div>
+              </div>
             </group>
             <group>
               <field name="hs_code"/>

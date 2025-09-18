@@ -3,6 +3,7 @@ import base64, json
 from odoo import _, fields
 from odoo.exceptions import UserError
 from .eudr_client import EUDRClient, build_geojson_b64
+from .eudr_client_retrieve import EUDRRetrievalClient
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 
@@ -53,36 +54,29 @@ def _get_line_geometry(line):
 
 
 def build_dds_geojson(record):
-    """Return the GeoJSON payload used for DDS submissions."""
     features = []
-    commodity = (
-        record.product_id.display_name
-        if getattr(record, "product_id", False)
-        else (record.product_description or "unknown")
-    )
-    harvest_date = fields.Date.context_today(record)
-
     for idx, line in enumerate(getattr(record, "line_ids", []), start=1):
         geom = _get_line_geometry(line)
         if not geom:
             continue
 
-        country_code = (line.country or record.partner_id.country_id.code or "XX").upper()
-        desc = _place_description(line, record, idx)
+        # ProducerCountry ISO2
+        producer_country = (line.country or record.partner_id.country_id.code or "XX").upper()
+        # ProductionPlace (max ~240 char)
+        production_place = _place_description(line, record, idx)
 
         props = {
-            "plotId": line.farmer_id_code or line.name or f"line-{line.id}",
-            "commodity": commodity,
-            "harvestDate": fields.Date.to_string(harvest_date),
-            "countryOfProduction": country_code,
-            # >>> questi due riempiono "Production Place Description" in TRACES
-            "description": desc,
-            "name": desc,
-            # opzionali (utili in UI/log)
-            "index": idx,
-            "type": geom.get("type"),
-            "areaHa": float(getattr(line, "area_ha", 0) or 0),
+            # Usato da TRACES per raggruppare i produttori (Type II)
+            "ProducerName": getattr(line, "farmer_name", None) or getattr(record, "producer_name", None) or (line.farmer_id_code or line.name or f"line-{line.id}"),
+            "ProducerCountry": producer_country,
+            # Popola la colonna “Production Place Description”
+            "ProductionPlace": production_place,
         }
+
+        # Area solo per geometrie Point (in ettari)
+        if geom.get("type") == "Point":
+            area_val = _safe_float(getattr(line, "area_ha", None)) or 4.0  # TRACES mette 4ha di default se mancante
+            props["Area"] = float(area_val)
 
         features.append({"type": "Feature", "properties": props, "geometry": geom})
 
@@ -258,23 +252,25 @@ def submit_dds_for_batch(record):
         )
 
     submit_xml = client.build_statement_xml(
-        internal_ref = record.name or f'Batch-{record.id}',
-        activity_type = record.activity_type.upper(),
-        company_name = record.partner_id.name or 'Company',
-        company_country = record.partner_id.country_id.code or 'IT',
-        company_address = company_address or 'Unknown Address',
-        eori_value = record.partner_id.vat,
-        hs_heading = record.hs_code or '090111',
-        description_of_goods = record.coffee_species.name,
-        # get scientific name =record.coffee_species.scientific_name,
-        net_weight_kg = weight,
-        producer_country = (record.partner_id.country_id.code or 'BR').upper(),
-        producer_name = record.producer_name or 'Unknown Producer',
-        geojson_b64 = geojson_b64,
-        operator_type = record.eudr_type_override or 'TRADER',
-        country_of_activity = company_country,
-        border_cross_country = company_country,
+        internal_ref=record.name or f'Batch-{record.id}',
+        activity_type=record.activity_type.upper(),
+        company_name=record.partner_id.name or 'Company',
+        company_country=record.partner_id.country_id.code or 'IT',
+        company_address=company_address or 'Unknown Address',
+        eori_value=record.partner_id.vat,
+        hs_heading=record.hs_code or '090111',
+        description_of_goods=(
+            record.coffee_species.name if record.coffee_species else (record.product_id.display_name or '')),
+        net_weight_kg=weight,
+        producer_country=(record.partner_id.country_id.code or 'BR').upper(),
+        producer_name=record.producer_name or 'Unknown Producer',
+        geojson_b64=geojson_b64,
+        operator_type=record.eudr_type_override or 'TRADER',
+        country_of_activity=company_country,
+        border_cross_country=company_country,
         comment=comment_text,
+        scientific_name=getattr(record.coffee_species, 'scientific_name', None),
+        common_name=getattr(record.coffee_species, 'name', None),
     )
 
     envelope = client.build_envelope(submit_xml)
@@ -346,4 +342,84 @@ def submit_dds_for_batch(record):
                 body=("Fault grezzo (parsing fallito):<br/><pre>%s</pre>" % (text or "")).replace("\n", "<br/>"))
             raise UserError(base)
 
+def action_retrieve_dds_numbers(record):
+    """Given record.dds_identifier, call Retrieval SOAP and fill eudr_id (and others if present)."""
+    ICP = record.env['ir.config_parameter'].sudo()
 
+    # Separate endpoint from submit
+    endpoint = ICP.get_param('planetio.eudr_retrieval_endpoint') or \
+               'https://webgate.acceptance.ec.europa.eu/tracesnt-alpha/ws/EUDRRetrievalServiceV1'
+    username  = ICP.get_param('planetio.eudr_user') or ''
+    apikey    = ICP.get_param('planetio.eudr_apikey') or ''
+    wsse_mode = (ICP.get_param('planetio.eudr_wsse_mode') or 'digest').lower()
+    wsclient  = ICP.get_param('planetio.eudr_webservice_client_id') or 'eudr-test'
+
+    if not username or not apikey:
+        raise UserError(_('Credenziali EUDR mancanti: imposta planetio.eudr_user e planetio.eudr_apikey.'))
+
+    dds_uuid = (getattr(record, 'dds_identifier', None) or '').strip()
+    if not dds_uuid:
+        raise UserError(_('Nessun DDS Identifier (UUID) presente sul record.'))
+
+    client = EUDRRetrievalClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
+
+    # build + attach request for audit
+    retrieval_xml = client.build_retrieval_xml(dds_uuid)
+    envelope = client.build_retrieval_envelope(retrieval_xml)
+    record.env['ir.attachment'].create({
+        'name': f'DDS_Retrieve_Request_{record.id}.xml',
+        'res_model': record._name,
+        'res_id': record.id,
+        'mimetype': 'text/xml',
+        'type': 'binary',
+        'datas': base64.b64encode(envelope.encode('utf-8')),
+    })
+
+    status, text = client.retrieve_dds(dds_uuid)
+
+    # attach response
+    record.env['ir.attachment'].create({
+        'name': f'DDS_Retrieve_Response_{record.id}.xml',
+        'res_model': record._name,
+        'res_id': record.id,
+        'mimetype': 'text/xml',
+        'type': 'binary',
+        'datas': base64.b64encode((text or '').encode('utf-8')),
+    })
+
+    if status != 200:
+        wsid = client.parse_ws_request_id(text)
+        msg = _('Errore Retrieval EUDR (%s)') % status
+        if wsid:
+            msg += _('\n\nWS_REQUEST_ID: %s') % wsid
+        raise UserError(msg)
+
+    entries = client.parse_retrieval_result(text) or []
+    hit = next((e for e in entries if e.get('uuid') == dds_uuid), None) or (entries[0] if entries else None)
+    if not hit:
+        record.message_post(body=_('Retrieve OK ma nessuna voce restituita per il UUID.'))
+        return False
+
+    refno = hit.get('referenceNumber')
+    verno = hit.get('verificationNumber')
+    status_txt = hit.get('status')
+
+    vals = {}
+    if refno and hasattr(record, 'eudr_id'):
+        vals['eudr_id'] = refno
+    if verno and hasattr(record, 'eudr_verification_number'):
+        vals['eudr_verification_number'] = verno
+    if status_txt and hasattr(record, 'eudr_status'):
+        vals['eudr_status'] = status_txt
+
+    if vals:
+        record.write(vals)
+
+    record.message_post(body=_(
+        'Retrieve DDS: status=<b>%s</b>%s%s' % (
+            status_txt or '-',
+            (', Reference=<b>%s</b>' % refno) if refno else '',
+            (', Verification=<b>%s</b>' % verno) if verno else '',
+        )
+    ))
+    return True

@@ -99,7 +99,7 @@ msgstr "Partner"
 #. module: planetio
 #: model:ir.model.fields,field_description:planetio.field_eudr_declaration__dds_identifier
 msgid "DDS Identifier (UUID)"
-msgstr "Identificativo DDS (UUID)"
+msgstr "Id trasmissione"
 
 #. module: planetio
 #: model:ir.model.fields,field_description:planetio.field_eudr_declaration__stage_id

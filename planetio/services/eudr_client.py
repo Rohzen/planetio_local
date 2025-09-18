@@ -108,14 +108,33 @@ class EUDRClient:
             f'<model:hsHeading>{hs_heading}</model:hsHeading>'
         )
 
-        # --- SPECIES (opzionale, formato più comune) ---
+        # --- SPECIES (no <model:species> wrapper) ---
         if scientific_name or common_name:
-            xml += '<model:speciesInformation>'
+            xml += '<model:speciesInfo>'
             if scientific_name:
                 xml += f'<model:scientificName>{scientific_name}</model:scientificName>'
             if common_name:
                 xml += f'<model:commonName>{common_name}</model:commonName>'
-            xml += '</model:speciesInformation>'
+            xml += '</model:speciesInfo>'
+
+        # --- SPECIES LIST (opzionale, formato multiplo, da implementare per più coffee species) ---
+        # if species_list:
+        #     xml += '<model:speciesList>'
+        #     for sp in species_list:
+        #         sci = (sp.get("scientificName") or "").strip()
+        #         com = (sp.get("commonName") or "").strip()
+        #         xml += '<model:species>'
+        #         if sci: xml += f'<model:scientificName>{sci}</model:scientificName>'
+        #         if com: xml += f'<model:commonName>{com}</model:commonName>'
+        #         xml += '</model:species>'
+        #     xml += '</model:speciesList>'
+        # elif scientific_name or common_name:
+        #     xml += '<model:speciesInformation>'
+        #     if scientific_name:
+        #         xml += f'<model:scientificName>{scientific_name}</model:scientificName>'
+        #     if common_name:
+        #         xml += f'<model:commonName>{common_name}</model:commonName>'
+        #     xml += '</model:speciesInformation>'
 
         # Chiusura con producers e resto
         xml += (

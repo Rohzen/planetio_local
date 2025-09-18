@@ -2,6 +2,7 @@
 from odoo import models, fields, api, _
 from odoo.tools.misc import formatLang
 from odoo.exceptions import UserError
+from ..services.eudr_adapter_odoo import action_retrieve_dds_numbers
 import json
 import math
 import urllib.parse
@@ -473,6 +474,12 @@ class EUDRDeclaration(models.Model):
                 'active_id': self.id,
             }
         }
+
+    def action_retrieve_dds(self):
+        for rec in self:
+            action_retrieve_dds_numbers(rec)
+        return True
+
 class EUDRDeclarationLine(models.Model):
     _name = "eudr.declaration.line"
     _description = "EUDR Declaration Line"
@@ -617,3 +624,4 @@ class EUDRDeclarationLine(models.Model):
             'url': url,
             'target': 'new',
         }
+
