@@ -5,6 +5,7 @@ class ResConfigSettings(models.TransientModel):
 
     ai_default_provider = fields.Selection([
         ('gemini', 'Gemini'),
+        ('claude', 'Claude'),
     ], string='Provider AI predefinito',
        default='gemini',
        config_parameter='ai_gateway.default_provider',
@@ -21,6 +22,26 @@ class ResConfigSettings(models.TransientModel):
         help='es. gemini-1.5-flash o gemini-1.5-pro',
         default='gemini-1.5-flash',
         config_parameter='ai_gateway.gemini_model'
+    )
+
+    ai_claude_api_key = fields.Char(
+        string='Claude API Key',
+        help='Chiave API per Anthropic Claude',
+        config_parameter='ai_gateway.claude_api_key'
+    )
+
+    ai_claude_model = fields.Char(
+        string='Claude Model name',
+        help='es. claude-3-sonnet-20240229',
+        default='claude-3-sonnet-20240229',
+        config_parameter='ai_gateway.claude_model'
+    )
+
+    ai_claude_max_output_tokens = fields.Integer(
+        string='Claude max output tokens',
+        default=1024,
+        help='Numero massimo di token generati dal modello Claude',
+        config_parameter='ai_gateway.claude_max_output_tokens'
     )
 
     ai_max_chunk_chars = fields.Integer(

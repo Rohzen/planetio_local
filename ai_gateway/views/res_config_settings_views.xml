@@ -24,6 +24,15 @@
                 <span class="o_form_label">Gemini model</span>
                 <div class="text-muted"><field name="ai_gemini_model"/></div>
 
+                <span class="o_form_label">Claude API key</span>
+                <div class="text-muted"><field name="ai_claude_api_key" password="True"/></div>
+
+                <span class="o_form_label">Claude model</span>
+                <div class="text-muted"><field name="ai_claude_model"/></div>
+
+                <span class="o_form_label">Claude max output tokens</span>
+                <div class="text-muted"><field name="ai_claude_max_output_tokens"/></div>
+
                 <span class="o_form_label">Max chunk chars</span>
                 <div class="text-muted"><field name="ai_max_chunk_chars"/></div>
 

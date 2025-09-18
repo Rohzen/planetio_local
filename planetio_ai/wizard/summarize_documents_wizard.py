@@ -611,6 +611,12 @@ class PlanetioSummarizeWizard(models.Model):
         """
 
         AiRequest = self.env["ai.request"]
+        default_provider = (
+            self.env["ir.config_parameter"].sudo().get_param(
+                "ai_gateway.default_provider", "gemini"
+            )
+            or "gemini"
+        )
         for rec in self:
             if not rec.attachment_ids:
                 continue
@@ -618,6 +624,7 @@ class PlanetioSummarizeWizard(models.Model):
             req = AiRequest.create(
                 {
                     "name": f"AI Summary for {rec.id}",
+                    "provider": default_provider,
                     "task_type": "summarize",
                     "attachment_ids": [(6, 0, rec.attachment_ids.ids)],
                     "model_ref": f"{rec._name},{rec.id}",
