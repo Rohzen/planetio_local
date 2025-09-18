@@ -25,7 +25,7 @@
           <field name="name"/>
           <field name="create_date"/>
           <field name="partner_id"/>
-          <field name="source_attachment_id"/>
+          <field name="source_attachment_id" invisible="1"/>
           <field name="area_ha"/>
           <field name="stage_id"/>
         </tree>
@@ -47,9 +47,9 @@
           <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success"
                   string="Deforestation analysis" icon="fa-tree"/>
           <button name="action_create_deforestation_geojson" type="object" class="btn-secondary"
-                  string="Create Deforestation GeoJSON" icon="fa-download"/>
+                  string="Deforestation GeoJSON" icon="fa-download"/>
           <button name="action_create_geojson" type="object" class="btn-secondary"
-                  string="Create GeoJSON" icon="fa-save"/>
+                  string="Traces GeoJSON" icon="fa-save"/>
           <button name="action_transmit_dds" type="object" class="oe_highlight"
                   string="Trasmit DDS" icon="fa-paper-plane"/>
           <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>

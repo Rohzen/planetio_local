@@ -525,7 +525,7 @@ msgstr "Dichiarazione EUDR"
 #. module: planetio
 #: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
 msgid "Import"
-msgstr "Importa"
+msgstr "Import"
 
 #. module: planetio
 #: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form

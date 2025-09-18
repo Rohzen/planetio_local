@@ -1,23 +1,21 @@
 <odoo noupdate="1">
 
-    <!-- 1) Create the survey -->
+    <!-- Survey base (come nel tuo file) -->
     <record id="survey_eudr_questionnaire" model="survey.survey">
         <field name="title">EUDR Test Survey</field>
         <field name="description">Minimal survey to test loading.</field>
     </record>
 
-    <!-- 2) Create a section/page (NO question_type here) -->
     <record id="survey_eudr_page_intro" model="survey.question">
-        <field name="survey_id" ref="planetio_surveys.survey_eudr_questionnaire"/>
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
         <field name="is_page" eval="True"/>
         <field name="title">Introduction Page</field>
         <field name="sequence" eval="1"/>
     </record>
 
-    <!-- 3) One single-choice question under that page -->
     <record id="survey_eudr_q_test" model="survey.question">
-        <field name="survey_id" ref="planetio_surveys.survey_eudr_questionnaire"/>
-        <field name="page_id" ref="planetio_surveys.survey_eudr_page_intro"/>
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_intro"/>
         <field name="question_type">simple_choice</field>
         <field name="title">Do you see this question?</field>
         <field name="sequence" eval="2"/>
@@ -25,17 +23,216 @@
         <field name="constr_error_msg">Please choose an option.</field>
     </record>
 
-    <!-- 4) Answers for the single-choice question -->
     <record id="survey_eudr_q_test_yes" model="survey.question.answer">
-        <field name="question_id" ref="planetio_surveys.survey_eudr_q_test"/>
+        <field name="question_id" ref="survey_eudr_q_test"/>
         <field name="value">Yes</field>
         <field name="sequence" eval="1"/>
     </record>
-
     <record id="survey_eudr_q_test_no" model="survey.question.answer">
-        <field name="question_id" ref="planetio_surveys.survey_eudr_q_test"/>
+        <field name="question_id" ref="survey_eudr_q_test"/>
         <field name="value">No</field>
         <field name="sequence" eval="2"/>
+    </record>
+
+    <!-- Pagina semplice per la verifica EUDR -->
+    <record id="survey_eudr_page_check" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="is_page" eval="True"/>
+        <field name="title">Verifica EUDR (deforestazione)</field>
+        <field name="sequence" eval="10"/>
+    </record>
+
+    <!-- 10 domande (tutte simple_choice) -->
+    <record id="survey_eudr_q1" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">La commodity rientra nell’elenco EUDR (legno, soia, olio di palma, cacao, caffè, gomma, bovini)?</field>
+        <field name="sequence" eval="11"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_q2" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">Sono disponibili le coordinate geografiche delle parcelle di origine?</field>
+        <field name="sequence" eval="12"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_q3" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">La produzione/raccolta è antecedente al 31/12/2020 o proviene da aree non deforestate dopo tale data?</field>
+        <field name="sequence" eval="13"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_q4" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">È stata eseguita una valutazione del rischio EUDR per questo lotto?</field>
+        <field name="sequence" eval="14"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_q5" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">Il livello di rischio risultante è Basso?</field>
+        <field name="sequence" eval="15"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_q6" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">Sono state adottate misure di mitigazione quando necessario?</field>
+        <field name="sequence" eval="16"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_q7" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">Esiste tracciabilità end-to-end lungo tutta la catena di fornitura?</field>
+        <field name="sequence" eval="17"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_q8" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">Sono disponibili documenti probatori (es. mappe, contratti, certificazioni)?</field>
+        <field name="sequence" eval="18"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_q9" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">Il fornitore conferma la conformità EUDR (no deforestazione, rispetto leggi locali)?</field>
+        <field name="sequence" eval="19"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <record id="survey_eudr_q10" model="survey.question">
+        <field name="survey_id" ref="survey_eudr_questionnaire"/>
+        <field name="page_id" ref="survey_eudr_page_check"/>
+        <field name="question_type">simple_choice</field>
+        <field name="title">Acconsenti alla conservazione della documentazione per almeno 5 anni?</field>
+        <field name="sequence" eval="20"/>
+        <field name="constr_mandatory" eval="True"/>
+    </record>
+
+    <!-- Risposte Sì / No / Non applicabile per tutte le 10 domande -->
+    <!-- Helper macro: per semplicità, ripetiamo per ogni domanda -->
+    <record id="survey_eudr_q1_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q1"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q1_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q1"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q1_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q1"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
+    </record>
+
+    <record id="survey_eudr_q2_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q2"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q2_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q2"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q2_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q2"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
+    </record>
+
+    <record id="survey_eudr_q3_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q3"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q3_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q3"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q3_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q3"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
+    </record>
+
+    <record id="survey_eudr_q4_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q4"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q4_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q4"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q4_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q4"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
+    </record>
+
+    <record id="survey_eudr_q5_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q5"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q5_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q5"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q5_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q5"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
+    </record>
+
+    <record id="survey_eudr_q6_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q6"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q6_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q6"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q6_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q6"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
+    </record>
+
+    <record id="survey_eudr_q7_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q7"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q7_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q7"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q7_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q7"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
+    </record>
+
+    <record id="survey_eudr_q8_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q8"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q8_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q8"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q8_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q8"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
+    </record>
+
+    <record id="survey_eudr_q9_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q9"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q9_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q9"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q9_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q9"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
+    </record>
+
+    <record id="survey_eudr_q10_a_yes" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q10"/><field name="value">Sì</field><field name="sequence" eval="1"/>
+    </record>
+    <record id="survey_eudr_q10_a_no" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q10"/><field name="value">No</field><field name="sequence" eval="2"/>
+    </record>
+    <record id="survey_eudr_q10_a_na" model="survey.question.answer">
+        <field name="question_id" ref="survey_eudr_q10"/><field name="value">Non applicabile</field><field name="sequence" eval="3"/>
     </record>
 
 </odoo>

@@ -80,8 +80,8 @@ class ExcelImportService(models.AbstractModel):
         if not decl and model_context == "eudr.declaration" and declaration_id:
             decl = Decl.browse(declaration_id)
 
-        if not decl:
-            decl = Decl.create({})
+        # if not decl:
+        #     decl = Decl.create({})
 
         if hasattr(job, "write"):
             try:
