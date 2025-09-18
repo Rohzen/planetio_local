@@ -1,7 +1,7 @@
 {
     'name': 'AI Gateway',
     'version': '14.0.1.0.0',
-    'summary': 'Gateway unificato per servizi AI (Gemini default)',
+    'summary': 'Gateway unificato per servizi AI (Gemini e Claude)',
     'author': 'Roberto Zanardo',
     'license': 'LGPL-3',
     'depends': ['base', 'mail'],

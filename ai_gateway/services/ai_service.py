@@ -1,4 +1,6 @@
 from odoo import models
+
+from .provider_claude import ClaudeProvider
 from .provider_gemini import GeminiProvider
 
 
@@ -109,6 +111,8 @@ class AiGatewayService(models.AbstractModel):
         provider_key = provider_key or self.env['ir.config_parameter'].sudo().get_param('ai_gateway.default_provider', 'gemini')
         if provider_key == 'gemini':
             return GeminiProvider(self.env)
+        if provider_key == 'claude':
+            return ClaudeProvider(self.env)
         raise ValueError('Provider non supportato: %s' % provider_key)
 
     def run_request(self, req):

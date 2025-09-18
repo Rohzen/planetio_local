@@ -7,10 +7,18 @@ class AiRequest(models.Model):
     _description = 'AI Request'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
+    def _default_provider(self):
+        return (
+            self.env['ir.config_parameter']
+            .sudo()
+            .get_param('ai_gateway.default_provider', 'gemini')
+        )
+
     name = fields.Char(required=True, default=lambda self: 'AI Request')
     provider = fields.Selection([
         ('gemini', 'Gemini'),
-    ], default='gemini', required=True, tracking=True)
+        ('claude', 'Claude'),
+    ], default=_default_provider, required=True, tracking=True)
 
     task_type = fields.Selection([
         ('chat', 'Chat/Generate'),
