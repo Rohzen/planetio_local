@@ -1,10 +1,4 @@
 google-generativeai
-odoo
 pandas
-pdfminer.six
-PyPDF2
 pyproj
-pytest
-reportlab
-requests
 shapely
