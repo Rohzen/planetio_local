@@ -1,0 +1,223 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#       * coffee_species
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 14.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-16 21:58+0000\n"
+"PO-Revision-Date: 2025-09-16 21:58+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: coffee_species
+#: model:ir.model,name:coffee_species.model_coffee_species
+msgid "Coffee Species"
+msgstr "Specie di caff\u00e8"
+
+#. module: coffee_species
+#: model:ir.model.fields,field_description:coffee_species.field_coffee_species__name
+msgid "Common Name"
+msgstr "Nome comune"
+
+#. module: coffee_species
+#: model:ir.model.fields,field_description:coffee_species.field_coffee_species__scientific_name
+msgid "Scientific Name"
+msgstr "Nome scientifico"
+
+#. module: coffee_species
+#: model:ir.model.fields,field_description:coffee_species.field_coffee_species__synonyms
+msgid "Synonyms"
+msgstr "Sinonimi"
+
+#. module: coffee_species
+#: model:ir.model.fields,field_description:coffee_species.field_coffee_species__is_commercial
+msgid "Commercially Cultivated"
+msgstr "Coltivato commercialmente"
+
+#. module: coffee_species
+#: model:ir.model.fields,field_description:coffee_species.field_coffee_species__region
+msgid "Region/Origin"
+msgstr "Regione/origine"
+
+#. module: coffee_species
+#: model:ir.model.fields,field_description:coffee_species.field_coffee_species__notes
+msgid "Notes"
+msgstr "Note"
+
+#. module: coffee_species
+#: model:ir.model.constraint,message:coffee_species.constraint_coffee_species_scientific_name_uniq
+msgid "Scientific name must be unique."
+msgstr "Il nome scientifico deve essere univoco."
+
+#. module: coffee_species
+#: model:ir.actions.act_window,name:coffee_species.action_coffee_species
+#: model:ir.ui.menu,name:coffee_species.menu_coffee_species
+msgid "Coffee Species"
+msgstr "Specie di caff\u00e8"
+
+#. module: coffee_species
+#: model_terms:ir.ui.view,arch_db:coffee_species.view_coffee_species_form
+msgid "Notes"
+msgstr "Note"
+
+#. module: coffee_species
+#: model_terms:ir.actions.act_window,help:coffee_species.action_coffee_species
+msgid "Add and manage coffee species, with common and scientific names."
+msgstr "Aggiungi e gestisci le specie di caff\u00e8, con nomi comuni e scientifici."
+
+#. module: coffee_species
+#: model_terms:ir.ui.view,arch_db:coffee_species.view_coffee_species_search
+msgid "Commercial"
+msgstr "Commerciale"
+
+#. module: coffee_species
+#: model_terms:ir.ui.view,arch_db:coffee_species.view_coffee_species_search
+msgid "Active"
+msgstr "Attivo"
+
+#. module: coffee_species
+#: model_terms:ir.ui.view,arch_db:coffee_species.view_coffee_species_search
+msgid "Active species"
+msgstr "Specie attive"
+
+#. module: coffee_species
+#: model_terms:ir.ui.view,arch_db:coffee_species.view_coffee_species_search
+msgid "Group By"
+msgstr "Raggruppa per"
+
+#. module: coffee_species
+#: model_terms:ir.ui.view,arch_db:coffee_species.view_coffee_species_search
+msgid "Region"
+msgstr "Regione"
+
+#. module: coffee_species
+#: model:coffee.species,name:coffee_species.coffee_species_arabica
+msgid "Arabica coffee"
+msgstr "Caff\u00e8 Arabica"
+
+#. module: coffee_species
+#: model:coffee.species,region:coffee_species.coffee_species_arabica
+msgid "Ethiopia / Yemen (origins)"
+msgstr "Etiopia / Yemen (origini)"
+
+#. module: coffee_species
+#: model:coffee.species,notes:coffee_species.coffee_species_arabica
+msgid "Most widely consumed; generally sweeter and more acidic."
+msgstr "La pi\u00f9 consumata; generalmente pi\u00f9 dolce e acida."
+
+#. module: coffee_species
+#: model:coffee.species,name:coffee_species.coffee_species_robusta
+msgid "Robusta coffee"
+msgstr "Caff\u00e8 Robusta"
+
+#. module: coffee_species
+#: model:coffee.species,region:coffee_species.coffee_species_robusta
+msgid "Central &amp; West Africa (origins)"
+msgstr "Africa centrale e occidentale (origini)"
+
+#. module: coffee_species
+#: model:coffee.species,notes:coffee_species.coffee_species_robusta
+msgid "Higher caffeine; stronger, more bitter profile."
+msgstr "Pi\u00f9 caffeina; profilo pi\u00f9 forte e amaro."
+
+#. module: coffee_species
+#: model:coffee.species,name:coffee_species.coffee_species_liberica
+msgid "Liberica coffee"
+msgstr "Caff\u00e8 Liberica"
+
+#. module: coffee_species
+#: model:coffee.species,region:coffee_species.coffee_species_liberica
+msgid "West &amp; Central Africa (origins)"
+msgstr "Africa occidentale e centrale (origini)"
+
+#. module: coffee_species
+#: model:coffee.species,notes:coffee_species.coffee_species_liberica
+msgid "Distinct fruity/woody notes; larger beans."
+msgstr "Note fruttate/legnose marcate; chicchi pi\u00f9 grandi."
+
+#. module: coffee_species
+#: model:coffee.species,name:coffee_species.coffee_species_excelsa
+msgid "Excelsa coffee"
+msgstr "Caff\u00e8 Excelsa"
+
+#. module: coffee_species
+#: model:coffee.species,region:coffee_species.coffee_species_excelsa
+msgid "Central Africa (origins)"
+msgstr "Africa centrale (origini)"
+
+#. module: coffee_species
+#: model:coffee.species,notes:coffee_species.coffee_species_excelsa
+msgid "Often classified under Liberica; tart, complex."
+msgstr "Spesso classificata sotto Liberica; acidula e complessa."
+
+#. module: coffee_species
+#: model:coffee.species,name:coffee_species.coffee_species_stenophylla
+msgid "Stenophylla coffee"
+msgstr "Caff\u00e8 Stenophylla"
+
+#. module: coffee_species
+#: model:coffee.species,synonyms:coffee_species.coffee_species_stenophylla
+msgid "Highland coffee"
+msgstr "Caff\u00e8 di montagna"
+
+#. module: coffee_species
+#: model:coffee.species,region:coffee_species.coffee_species_stenophylla
+msgid "West Africa"
+msgstr "Africa occidentale"
+
+#. module: coffee_species
+#: model:coffee.species,notes:coffee_species.coffee_species_stenophylla
+msgid "Heat-tolerant; renewed interest for climate resilience."
+msgstr "Tollerante al calore; rinnovato interesse per la resilienza climatica."
+
+#. module: coffee_species
+#: model:coffee.species,name:coffee_species.coffee_species_mauritiana
+msgid "Mauritius coffee"
+msgstr "Caff\u00e8 Mauritius"
+
+#. module: coffee_species
+#: model:coffee.species,region:coffee_species.coffee_species_mauritiana
+msgid "Mascarenes"
+msgstr "Mascarene"
+
+#. module: coffee_species
+#: model:coffee.species,notes:coffee_species.coffee_species_mauritiana
+msgid "Wild/rare."
+msgstr "Selvatico/raro."
+
+#. module: coffee_species
+#: model:coffee.species,name:coffee_species.coffee_species_congensis
+msgid "Congo coffee"
+msgstr "Caff\u00e8 del Congo"
+
+#. module: coffee_species
+#: model:coffee.species,region:coffee_species.coffee_species_congensis
+msgid "Congo Basin"
+msgstr "Bacino del Congo"
+
+#. module: coffee_species
+#: model:coffee.species,notes:coffee_species.coffee_species_congensis
+msgid "Wild/limited cultivation."
+msgstr "Selvatico/coltivazione limitata."
+
+#. module: coffee_species
+#: model:coffee.species,name:coffee_species.coffee_species_afrikana
+msgid "Sierra Leone coffee"
+msgstr "Caff\u00e8 della Sierra Leone"
+
+#. module: coffee_species
+#: model:coffee.species,region:coffee_species.coffee_species_afrikana
+msgid "Sierra Leone"
+msgstr "Sierra Leone"
+
+#. module: coffee_species
+#: model:coffee.species,notes:coffee_species.coffee_species_afrikana
+msgid "Rare; sometimes treated under C. stenophylla in literature."
+msgstr "Raro; talvolta considerato parte di C. stenophylla in letteratura."

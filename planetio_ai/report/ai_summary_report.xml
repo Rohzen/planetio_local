@@ -1,0 +1,158 @@
+<odoo>
+    <template id="report_ai_summary_document">
+        <t t-set="summary_data" t-value="_summary_data or {}"/>
+        <t t-set="summary_blocks" t-value="summary_data.get('blocks', [])"/>
+        <t t-set="doc_name" t-value="(summary_data.get('title') or 'AI Document Summary')"/>
+        <t t-call="web.external_layout">
+            <div class="o_ai_summary">
+                <style type="text/css">
+                    .o_ai_summary__title {
+                        color: #2e7d32;
+                        margin: 0 0 12px 0;
+                        font-size: 22px;
+                    }
+                    .o_ai_summary__meta {
+                        display: flex;
+                        justify-content: space-between;
+                        font-size: 12px;
+                        color: #555555;
+                        margin-bottom: 18px;
+                    }
+                    .o_ai_summary__meta span {
+                        display: inline-block;
+                    }
+                    .o_ai_summary__section {
+                        color: #2e7d32;
+                        font-size: 16px;
+                        margin: 18px 0 8px 0;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+                    .o_ai_summary__paragraph {
+                        margin: 0 0 12px 0;
+                        font-size: 12px;
+                        line-height: 1.5;
+                    }
+                    .o_ai_summary__list {
+                        margin: 0 0 12px 18px;
+                        padding: 0;
+                        font-size: 12px;
+                    }
+                    .o_ai_summary__list li {
+                        margin-bottom: 4px;
+                    }
+                    .o_ai_summary__table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 12px 0 16px 0;
+                        font-size: 11px;
+                    }
+                    .o_ai_summary__table th {
+                        background-color: #e8f5e9;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                    }
+                    .o_ai_summary__table th,
+                    .o_ai_summary__table td {
+                        border: 1px solid #c8e6c9;
+                        padding: 6px 8px;
+                        text-align: left;
+                    }
+                    .o_ai_summary__empty {
+                        font-size: 12px;
+                        font-style: italic;
+                        color: #888888;
+                        margin-bottom: 16px;
+                    }
+                    .o_ai_summary__raw pre {
+                        background-color: #f9f9f9;
+                        border: 1px solid #dddddd;
+                        border-radius: 4px;
+                        padding: 10px;
+                        font-size: 10px;
+                        white-space: pre-wrap;
+                        word-break: break-word;
+                    }
+                    .o_ai_summary__raw h4 {
+                        margin: 24px 0 8px 0;
+                        font-size: 14px;
+                    }
+                </style>
+
+                <div class="o_ai_summary__header">
+                    <h2 class="o_ai_summary__title" t-esc="summary_data.get('title') or 'AI Document Summary'"/>
+                    <div class="o_ai_summary__meta">
+                        <span t-if="summary_data.get('record_name')">
+                            <strong t-esc="summary_data.get('record_label') or 'Declaration'"/>:
+                            <span t-esc="summary_data.get('record_name')"/>
+                        </span>
+                        <span t-if="summary_data.get('generated_on')">
+                            <strong t-esc="summary_data.get('generated_on_label') or 'Generated on'"/>:
+                            <span t-esc="format_datetime(summary_data.get('generated_on'))"/>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="o_ai_summary__body">
+                    <t t-foreach="summary_blocks" t-as="block">
+                        <t t-if="block.get('type') == 'header'">
+                            <h3 class="o_ai_summary__section" t-esc="block.get('text')"/>
+                        </t>
+                        <t t-elif="block.get('type') == 'paragraph'">
+                            <p class="o_ai_summary__paragraph" t-esc="block.get('text')"/>
+                        </t>
+                        <t t-elif="block.get('type') == 'bullets'">
+                            <ul class="o_ai_summary__list">
+                                <li t-foreach="block.get('items', [])" t-as="item" t-esc="item"/>
+                            </ul>
+                        </t>
+                        <t t-elif="block.get('type') == 'table'">
+                            <table class="o_ai_summary__table">
+                                <thead>
+                                    <tr>
+                                        <th t-foreach="block.get('header', [])" t-as="cell" t-esc="cell"/>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="block.get('rows', [])" t-as="row">
+                                        <td t-foreach="row" t-as="cell" t-esc="cell"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                    </t>
+
+                    <div class="o_ai_summary__empty" t-if="not summary_blocks">
+                        <span t-esc="summary_data.get('empty_label') or 'No summary content was returned by the AI service.'"/>
+                    </div>
+                </div>
+
+                <div class="o_ai_summary__raw" t-if="summary_data.get('raw_text')">
+                    <h4 t-esc="summary_data.get('raw_label') or 'Original AI response'"/>
+                    <pre><t t-esc="summary_data.get('raw_text')"/></pre>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_ai_summary">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="planetio_ai.report_ai_summary_document">
+                    <t t-set="doc" t-value="doc"/>
+                    <t t-set="_summary_data" t-value="(data or {}).get('doc_data', {}).get(doc.id, {})"/>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <report
+        id="action_report_ai_summary"
+        model="eudr.declaration"
+        string="AI Summary"
+        report_type="qweb-pdf"
+        name="planetio_ai.report_ai_summary"
+        file="planetio_ai.report_ai_summary"
+        print_report_name="'AI Summary - %s' % (object.display_name or object.id)"
+    />
+</odoo>

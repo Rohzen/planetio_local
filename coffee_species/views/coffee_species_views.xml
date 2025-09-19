@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Action -->
+        <record id="action_coffee_species" model="ir.actions.act_window">
+            <field name="name">Coffee Species</field>
+            <field name="res_model">coffee.species</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p>Add and manage coffee species, with common and scientific names.</p>
+            </field>
+        </record>
+
+        <!-- Hook under Product menu -->
+        <menuitem id="menu_coffee_species"
+                  name="Coffee Species"
+                  parent="sale.product_menu_catalog"
+                  action="action_coffee_species"
+                  sequence="95"/>
+
+        <!-- Tree view -->
+        <record id="view_coffee_species_tree" model="ir.ui.view">
+            <field name="name">coffee.species.tree</field>
+            <field name="model">coffee.species</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="scientific_name"/>
+                    <field name="synonyms"/>
+                    <field name="is_commercial"/>
+                    <field name="region"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form view -->
+        <record id="view_coffee_species_form" model="ir.ui.view">
+            <field name="name">coffee.species.form</field>
+            <field name="model">coffee.species</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                        <group>
+                            <group>
+                                <field name="scientific_name" required="1"/>
+                                <field name="synonyms"/>
+                                <field name="is_commercial"/>
+                            </group>
+                            <group>
+                                <field name="region"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Notes">
+                                <field name="notes" nolabel="1"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search view -->
+        <record id="view_coffee_species_search" model="ir.ui.view">
+            <field name="name">coffee.species.search</field>
+            <field name="model">coffee.species</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="scientific_name"/>
+                    <filter string="Commercial" name="is_commercial" domain="[('is_commercial','=',True)]"/>
+                    <filter string="Active" name="active" domain="[('active','=',True)]" help="Active species"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Commercial" name="group_commercial" context="{'group_by':'is_commercial'}"/>
+                        <filter string="Region" name="group_region" context="{'group_by':'region'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+    </data>
+</odoo>

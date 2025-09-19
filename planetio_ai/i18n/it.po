@@ -1,0 +1,170 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#       * planetio_ai
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 14.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-16 21:58+0000\n"
+"PO-Revision-Date: 2025-09-16 21:58+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: planetio_ai
+#: model_terms:ir.ui.view,arch_db:planetio_ai.view_eudr_declaration_form_ai
+msgid "AI Analyze"
+msgstr "Analisi AI"
+
+#. module: planetio_ai
+#: model:ir.actions.report,name:planetio_ai.action_report_ai_summary
+msgid "AI Summary"
+msgstr "Riepilogo AI"
+
+#. module: planetio_ai
+#: model:ir.actions.report,print_report_name:planetio_ai.action_report_ai_summary
+msgid "AI Summary - %s"
+msgstr "Riepilogo AI - %s"
+
+#. module: planetio_ai
+#: model_terms:ir.ui.view,arch_db:planetio_ai.report_ai_summary_document
+msgid "AI Document Summary"
+msgstr "Riepilogo documentale AI"
+
+#. module: planetio_ai
+#: model_terms:ir.ui.view,arch_db:planetio_ai.report_ai_summary_document
+msgid "Declaration"
+msgstr "Dichiarazione"
+
+#. module: planetio_ai
+#: model_terms:ir.ui.view,arch_db:planetio_ai.report_ai_summary_document
+msgid "Generated on"
+msgstr "Generato il"
+
+#. module: planetio_ai
+#: model_terms:ir.ui.view,arch_db:planetio_ai.report_ai_summary_document
+msgid "No summary content was returned by the AI service."
+msgstr "Il servizio AI non ha restituito alcun contenuto riassuntivo."
+
+#. module: planetio_ai
+#: model_terms:ir.ui.view,arch_db:planetio_ai.report_ai_summary_document
+msgid "Original AI response"
+msgstr "Risposta AI originale"
+
+#. module: planetio_ai
+#: model_terms:ir.ui.view,arch_db:planetio_ai.report_ai_summary
+msgid "AI Summary"
+msgstr "Riepilogo AI"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "AI Document Summary"
+msgstr "Riepilogo documentale AI"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Declaration"
+msgstr "Dichiarazione"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Generated on"
+msgstr "Generato il"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Original AI response"
+msgstr "Risposta AI originale"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "No summary content was returned by the AI service."
+msgstr "Il servizio AI non ha restituito alcun contenuto riassuntivo."
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Deforestation alerts summary"
+msgstr "Riepilogo allerte deforestazione"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+#, python-format
+msgid "%(count)s alert(s) detected across %(lines)s line(s)."
+msgstr "%(count)s allerta/e rilevate su %(lines)s riga/e."
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "The latest deforestation analysis reported no alerts for the processed lines."
+msgstr "L'ultima analisi sulla deforestazione non ha segnalato allerte per le righe elaborate."
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Line"
+msgstr "Riga"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Provider"
+msgstr "Provider"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Alerts"
+msgstr "Allerte"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Area (ha)"
+msgstr "Area (ha)"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Message"
+msgstr "Messaggio"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+#, python-format
+msgid "Alerts for %s"
+msgstr "Allerte per %s"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+#, python-format
+msgid "...and %(count)s more alert(s)."
+msgstr "...e altre %(count)s allerte."
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Alert ID"
+msgstr "ID allerta"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Date"
+msgstr "Data"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Start date"
+msgstr "Data iniziale"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "End date"
+msgstr "Data finale"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Confidence"
+msgstr "Affidabilit\u00e0"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
+msgid "Intensity"
+msgstr "Intensit\u00e0"

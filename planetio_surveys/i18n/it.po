@@ -1,0 +1,69 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#       * planetio_surveys
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 14.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-16 21:58+0000\n"
+"PO-Revision-Date: 2025-09-16 21:58+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: planetio_surveys
+#: model:ir.actions.act_window,name:planetio_surveys.action_eudr_declaration_survey_user_input
+#: model_terms:ir.ui.view,arch_db:planetio_surveys.view_eudr_declaration_form_inherit_surveys
+msgid "Questionnaires"
+msgstr "Questionari"
+
+#. module: planetio_surveys
+#: model:ir.model.fields,field_description:planetio_surveys.field_eudr_declaration__survey_user_input_ids
+#: model:ir.model.fields,field_description:planetio_surveys.field_eudr_declaration__survey_user_input_count
+msgid "Questionnaires"
+msgstr "Questionari"
+
+#. module: planetio_surveys
+#: model:ir.model.fields,field_description:planetio_surveys.field_survey_user_input__declaration_id
+msgid "Declaration"
+msgstr "Dichiarazione"
+
+#. module: planetio_surveys
+#: model:survey.survey,title:planetio_surveys.survey_eudr_questionnaire
+msgid "EUDR Test Survey"
+msgstr "Questionario di prova EUDR"
+
+#. module: planetio_surveys
+#: model:survey.survey,description:planetio_surveys.survey_eudr_questionnaire
+msgid "Minimal survey to test loading."
+msgstr "Questionario minimale per testare il caricamento."
+
+#. module: planetio_surveys
+#: model:survey.question,title:planetio_surveys.survey_eudr_page_intro
+msgid "Introduction Page"
+msgstr "Pagina introduttiva"
+
+#. module: planetio_surveys
+#: model:survey.question,title:planetio_surveys.survey_eudr_q_test
+msgid "Do you see this question?"
+msgstr "Visualizzi questa domanda?"
+
+#. module: planetio_surveys
+#: model:survey.question,constr_error_msg:planetio_surveys.survey_eudr_q_test
+msgid "Please choose an option."
+msgstr "Seleziona un'opzione."
+
+#. module: planetio_surveys
+#: model:survey.question.answer,value:planetio_surveys.survey_eudr_q_test_yes
+msgid "Yes"
+msgstr "S\u00ec"
+
+#. module: planetio_surveys
+#: model:survey.question.answer,value:planetio_surveys.survey_eudr_q_test_no
+msgid "No"
+msgstr "No"

@@ -1,0 +1,31 @@
+<odoo>
+    <record id="view_eudr_declaration_form_inherit_ai_smart" model="ir.ui.view">
+        <field name="name">eudr.declaration.form.planetio.surveys</field>
+        <field name="model">eudr.declaration</field>
+        <field name="inherit_id" ref="planetio.view_eudr_declaration_form"/>
+            <field name="arch" type="xml">
+               <div class="oe_button_box" position="inside">
+                  <button name="action_ai_analyze"
+                          type="object"
+                          string="AI Analyze"
+                          class="oe_highlight btn-info"
+                          icon="fa-magic"/>
+                    </div>
+            </field>
+    </record>
+
+  <record id="view_eudr_declaration_form_ai" model="ir.ui.view">
+    <field name="name">eudr.declaration.form.ai</field>
+    <field name="model">eudr.declaration</field>
+    <field name="inherit_id" ref="planetio.view_eudr_declaration_form"/>
+    <field name="arch" type="xml">
+    <xpath expr="//field[@name='attachment_ids']" position="before">
+        <button name="action_ai_analyze"
+                type="object"
+                string="AI Analyze"
+                class="oe_highlight btn-info"
+                icon="fa-magic"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>

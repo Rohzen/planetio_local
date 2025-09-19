@@ -1,0 +1,61 @@
+<odoo>
+  <record id="view_ai_request_tree" model="ir.ui.view">
+    <field name="name">ai.request.tree</field>
+    <field name="model">ai.request</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+        <field name="provider"/>
+        <field name="task_type"/>
+        <field name="status"/>
+        <field name="tokens_in"/>
+        <field name="tokens_out"/>
+        <field name="duration_ms"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_ai_request_form" model="ir.ui.view">
+    <field name="name">ai.request.form</field>
+    <field name="model">ai.request</field>
+    <field name="arch" type="xml">
+      <form string="AI Request">
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="provider"/>
+            <field name="task_type"/>
+            <field name="model_ref"/>
+            <field name="attachment_ids" widget="many2many_binary"/>
+            <field name="payload" widget="text"/>
+            <field name="status" readonly="1"/>
+            <field name="error_message" readonly="1"/>
+          </group>
+          <notebook>
+            <page string="Risposta">
+              <field name="response_text" widget="text" readonly="1"/>
+            </page>
+            <page string="Metriche">
+              <group>
+                <field name="tokens_in"/>
+                <field name="tokens_out"/>
+                <field name="duration_ms"/>
+                <field name="cost_estimate"/>
+              </group>
+              <field name="meta" widget="text" readonly="1"/>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_ai_request" model="ir.actions.act_window">
+    <field name="name">AI Requests</field>
+    <field name="res_model">ai.request</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <menuitem id="menu_ai_root" name="AI" sequence="10" web_icon="ai_gateway,static/description/icon.png"/>
+  <menuitem id="menu_ai_requests" name="Requests" parent="menu_ai_root" action="action_ai_request" sequence="10"/>
+</odoo>

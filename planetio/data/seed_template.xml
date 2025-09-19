@@ -1,0 +1,81 @@
+
+<odoo>
+  <!-- EUDR Declaration template with initial fields -->
+  <record id="tmpl_eudr_declaration" model="excel.import.template">
+    <field name="name">EUDR Declaration</field>
+    <field name="model_id" ref="model_eudr_declaration"/>
+    <field name="strictness_level">medium</field>
+  </record>
+
+  <!-- Fields -->
+  <record id="tmpl_field_name" model="excel.import.template.field">
+    <field name="template_id" ref="tmpl_eudr_declaration"/>
+    <field name="field_id" ref="field_eudr_declaration__name"/>
+    <field name="required">1</field>
+    <field name="transformer">identity</field>
+    <field name="selector_policy">by_ai</field>
+  </record>
+
+  <record id="tmpl_field_farmer_name" model="excel.import.template.field">
+    <field name="template_id" ref="tmpl_eudr_declaration"/>
+    <field name="field_id" ref="field_eudr_declaration__farmer_name"/>
+    <field name="required">1</field>
+    <field name="transformer">identity</field>
+  </record>
+
+  <record id="tmpl_field_farmer_id" model="excel.import.template.field">
+    <field name="template_id" ref="tmpl_eudr_declaration"/>
+    <field name="field_id" ref="field_eudr_declaration__farmer_id_code"/>
+    <field name="transformer">identity</field>
+  </record>
+
+  <record id="tmpl_field_tax_code" model="excel.import.template.field">
+    <field name="template_id" ref="tmpl_eudr_declaration"/>
+    <field name="field_id" ref="field_eudr_declaration__tax_code"/>
+    <field name="transformer">identity</field>
+  </record>
+
+  <record id="tmpl_field_country" model="excel.import.template.field">
+    <field name="template_id" ref="tmpl_eudr_declaration"/>
+    <field name="field_id" ref="field_eudr_declaration__country"/>
+    <field name="required">1</field>
+    <field name="transformer">identity</field>
+  </record>
+
+  <record id="tmpl_field_region" model="excel.import.template.field">
+    <field name="template_id" ref="tmpl_eudr_declaration"/>
+    <field name="field_id" ref="field_eudr_declaration__region"/>
+    <field name="transformer">identity</field>
+  </record>
+
+  <record id="tmpl_field_municipality" model="excel.import.template.field">
+    <field name="template_id" ref="tmpl_eudr_declaration"/>
+    <field name="field_id" ref="field_eudr_declaration__municipality"/>
+    <field name="transformer">identity</field>
+  </record>
+
+  <record id="tmpl_field_farm_name" model="excel.import.template.field">
+    <field name="template_id" ref="tmpl_eudr_declaration"/>
+    <field name="field_id" ref="field_eudr_declaration__farm_name"/>
+    <field name="transformer">identity</field>
+  </record>
+
+  <record id="tmpl_field_area" model="excel.import.template.field">
+    <field name="template_id" ref="tmpl_eudr_declaration"/>
+    <field name="field_id" ref="field_eudr_declaration__area_ha"/>
+    <field name="transformer">to_float</field>
+  </record>
+
+<!--  <record id="tmpl_field_geometry" model="excel.import.template.field">-->
+<!--    <field name="template_id" ref="tmpl_eudr_declaration"/>-->
+<!--    <field name="field_id" ref="field_eudr_declaration__geometry"/>-->
+<!--    <field name="transformer">geo_polygon</field>-->
+<!--  </record>-->
+
+<!--  <record id="tmpl_field_geo_type" model="excel.import.template.field">-->
+<!--    <field name="template_id" ref="tmpl_eudr_declaration"/>-->
+<!--    <field name="field_id" ref="field_eudr_declaration__geo_type"/>-->
+<!--    <field name="transformer">identity</field>-->
+<!--  </record>-->
+
+</odoo>

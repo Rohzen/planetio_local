@@ -1,0 +1,807 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#       * planetio
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 14.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-16 21:58+0000\n"
+"PO-Revision-Date: 2025-09-16 21:58+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_eudr_stage
+msgid "CRM Stages"
+msgstr "Fasi CRM"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_eudr_declaration
+msgid "EUDR Declaration"
+msgstr "Dichiarazione EUDR"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_eudr_declaration_line
+msgid "EUDR Declaration Line"
+msgstr "Riga dichiarazione EUDR"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_excel_import_template
+msgid "Excel Import Template"
+msgstr "Template import Excel"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_excel_import_template_field
+msgid "Excel Import Template Field"
+msgstr "Campo del template di importazione Excel"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_excel_import_service
+msgid "Excel Import Service (EUDR-aware)"
+msgstr "Servizio di importazione Excel (compatibile EUDR)"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_excel_import_wizard
+msgid "Excel Import Wizard"
+msgstr "Procedura guidata import Excel"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_excel_import_transformers
+msgid "Excel Import Transformers"
+msgstr "Trasformatori importazione Excel"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_deforestation_service
+msgid "Deforestation Service Orchestrator"
+msgstr "Orchestratore servizio deforestazione"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_deforestation_provider_base
+msgid "Base provider interface"
+msgstr "Interfaccia provider di base"
+
+#. module: planetio
+#: model:ir.model,name:planetio.model_deforestation_provider_gfw
+msgid "Deforestation Provider - GFW"
+msgstr "Provider deforestazione - GFW"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_stage__name
+msgid "Stage Name"
+msgstr "Nome fase"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_stage__sequence
+msgid "Sequence"
+msgstr "Sequenza"
+
+#. module: planetio
+#: model:ir.model.fields,help:planetio.field_eudr_stage__sequence
+msgid "Used to order stages. Lower is better."
+msgstr "Utilizzato per ordinare le fasi. I valori più bassi hanno priorit\u00e0."
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__datestamp
+msgid "Datestamp"
+msgstr "Data e ora"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__partner_id
+msgid "Partner"
+msgstr "Partner"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__dds_identifier
+msgid "DDS Identifier (UUID)"
+msgstr "Id trasmissione"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__stage_id
+msgid "Stage"
+msgstr "Fase"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__line_ids
+msgid "Lines"
+msgstr "Righe"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__attachment_ids
+msgid "Attachments"
+msgstr "Allegati"
+
+#. module: planetio
+#: model:ir.model.fields,help:planetio.field_eudr_declaration__attachment_ids
+msgid "Files linked to this declaration."
+msgstr "File collegati a questa dichiarazione."
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__eudr_company_type
+msgid "Company Type"
+msgstr "Tipologia azienda"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__eudr_type_override
+msgid "Operator"
+msgstr "Operatore"
+
+#. module: planetio
+#: model:ir.model.fields,help:planetio.field_eudr_declaration__eudr_type_override
+msgid "Specify whether you're acting as Trader or Operator for this batch."
+msgstr "Specifica se operi come Trader o Operatore per questo lotto."
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__eudr_third_party_client_id
+msgid "Client (3rd Party Trader)"
+msgstr "Cliente (trader terza parte)"
+
+#. module: planetio
+#: model:ir.model.fields,help:planetio.field_eudr_declaration__eudr_third_party_client_id
+msgid "Client on behalf of whom the DDS is being submitted."
+msgstr "Cliente per conto del quale viene inviata la DDS."
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__activity_type
+msgid "Activity"
+msgstr "Attività"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__operator_name
+msgid "Operator"
+msgstr "Operatore"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__extra_info
+msgid "Additional info"
+msgstr "Informazioni aggiuntive"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__hs_code
+msgid "HS Code"
+msgstr "Codice HS"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__product_id
+msgid "Product"
+msgstr "Prodotto"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__product_description
+msgid "Description of raw materials or products"
+msgstr "Descrizione delle materie prime o dei prodotti"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__net_mass_kg
+msgid "Net weight"
+msgstr "Peso netto"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__common_name
+msgid "Common name"
+msgstr "Nome comune"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__producer_name
+msgid "Producer name"
+msgstr "Nome del produttore"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__coffee_species
+msgid "Product"
+msgstr "Prodotto"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration_line__defor_provider
+msgid "Deforestation Provider"
+msgstr "Provider deforestazione"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration_line__defor_alerts
+msgid "Deforestation Alerts"
+msgstr "Allerte deforestazione"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration_line__defor_area_ha
+msgid "Deforestation Area (ha)"
+msgstr "Area deforestazione (ha)"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration_line__defor_details_json
+msgid "Deforestation Details (JSON)"
+msgstr "Dettagli deforestazione (JSON)"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_excel_import_template__strictness_level
+msgid "Strictness Level"
+msgstr "Livello di rigidit\u00e0"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_excel_import_wizard__file_data
+msgid "File"
+msgstr "File"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_excel_import_wizard__file_name
+msgid "Filename"
+msgstr "Nome file"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__debug_import
+msgid "Debug Excel Import"
+msgstr "Debug import Excel"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__gfw_email
+msgid "GFW Email"
+msgstr "Email GFW"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__gfw_password
+msgid "GFW Password"
+msgstr "Password GFW"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__gfw_org
+msgid "GFW Organization"
+msgstr "Organizzazione GFW"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__gfw_alias
+msgid "GFW API Alias"
+msgstr "Alias API GFW"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__gfw_api_key
+msgid "GFW API Key"
+msgstr "Chiave API GFW"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__eudr_endpoint
+msgid "EUDR Endpoint"
+msgstr "Endpoint EUDR"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__eudr_user
+msgid "EUDR User"
+msgstr "Utente EUDR"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__eudr_apikey
+msgid "api-key"
+msgstr "Chiave API"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__eudr_wsse_mode
+msgid "WSSE mode"
+msgstr "Modalit\u00e0 WSSE"
+
+#. module: planetio
+#: model:ir.model.fields,field_description:planetio.field_res_config_settings__eudr_webservice_client_id
+msgid "Client ID"
+msgstr "ID client"
+
+#. module: planetio
+#: selection:eudr.declaration,eudr_company_type
+msgid "Trader"
+msgstr "Trader"
+
+#. module: planetio
+#: selection:eudr.declaration,eudr_company_type
+msgid "Operator"
+msgstr "Operatore"
+
+#. module: planetio
+#: selection:eudr.declaration,eudr_company_type
+msgid "Mixed"
+msgstr "Misto"
+
+#. module: planetio
+#: selection:eudr.declaration,eudr_company_type
+msgid "Third-party Trader"
+msgstr "Trader di terze parti"
+
+#. module: planetio
+#: selection:eudr.declaration,eudr_type_override
+msgid "Trader"
+msgstr "Trader"
+
+#. module: planetio
+#: selection:eudr.declaration,eudr_type_override
+msgid "Operator"
+msgstr "Operatore"
+
+#. module: planetio
+#: selection:eudr.declaration,activity_type
+msgid "Import"
+msgstr "Importazione"
+
+#. module: planetio
+#: selection:eudr.declaration,activity_type
+msgid "Export"
+msgstr "Esportazione"
+
+#. module: planetio
+#: selection:eudr.declaration,activity_type
+msgid "Domestic"
+msgstr "Mercato interno"
+
+#. module: planetio
+#: selection:eudr.declaration,hs_code
+msgid "0901 \u2013 Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes containing coffee"
+msgstr "0901 \u2013 Caff\u00e8, tostato o meno, decaffeinato o meno; cascami e bucce di caff\u00e8; surrogati contenenti caff\u00e8"
+
+#. module: planetio
+#: selection:eudr.declaration,hs_code
+msgid "0901 11 \u2013 non-decaffeinated"
+msgstr "0901 11 \u2013 non decaffeinato"
+
+#. module: planetio
+#: selection:eudr.declaration,hs_code
+msgid "0901 12 \u2013 decaffeinated"
+msgstr "0901 12 \u2013 decaffeinato"
+
+#. module: planetio
+#: selection:eudr.declaration,hs_code
+msgid "0901 21 \u2013 non-decaffeinated"
+msgstr "0901 21 \u2013 non decaffeinato"
+
+#. module: planetio
+#: selection:eudr.declaration,hs_code
+msgid "0901 22 \u2013 decaffeinated"
+msgstr "0901 22 \u2013 decaffeinato"
+
+#. module: planetio
+#: selection:eudr.declaration,hs_code
+msgid "0901 90 \u2013 others"
+msgstr "0901 90 \u2013 altri"
+
+#. module: planetio
+#: selection:eudr.declaration.line,geo_type
+msgid "Point"
+msgstr "Punto"
+
+#. module: planetio
+#: selection:eudr.declaration.line,geo_type
+msgid "Polygon"
+msgstr "Poligono"
+
+#. module: planetio
+#: selection:eudr.declaration.line,external_status
+msgid "OK"
+msgstr "OK"
+
+#. module: planetio
+#: selection:eudr.declaration.line,external_status
+msgid "Pass"
+msgstr "Superato"
+
+#. module: planetio
+#: selection:eudr.declaration.line,external_status
+msgid "Fail"
+msgstr "Non superato"
+
+#. module: planetio
+#: selection:eudr.declaration.line,external_status
+msgid "Error"
+msgstr "Errore"
+
+#. module: planetio
+#: selection:excel.import.template,strictness_level
+msgid "Low"
+msgstr "Basso"
+
+#. module: planetio
+#: selection:excel.import.template,strictness_level
+msgid "Medium"
+msgstr "Medio"
+
+#. module: planetio
+#: selection:excel.import.template,strictness_level
+msgid "High"
+msgstr "Alto"
+
+#. module: planetio
+#: selection:excel.import.template.field,selector_policy
+msgid "By Header"
+msgstr "Per intestazione"
+
+#. module: planetio
+#: selection:excel.import.template.field,selector_policy
+msgid "By Regex"
+msgstr "Per regex"
+
+#. module: planetio
+#: selection:excel.import.template.field,selector_policy
+msgid "By AI"
+msgstr "Con IA"
+
+#. module: planetio
+#: selection:excel.import.wizard,step
+msgid "Upload"
+msgstr "Caricamento"
+
+#. module: planetio
+#: selection:excel.import.wizard,step
+msgid "Mapping"
+msgstr "Mappatura"
+
+#. module: planetio
+#: selection:excel.import.wizard,step
+msgid "Validate"
+msgstr "Convalida"
+
+#. module: planetio
+#: selection:excel.import.wizard,step
+msgid "Confirm"
+msgstr "Conferma"
+
+#. module: planetio
+#: model:eudr.stage,name:planetio.eudr_stage_draft
+msgid "Draft"
+msgstr "Bozza"
+
+#. module: planetio
+#: model:eudr.stage,name:planetio.eudr_stage_validated
+msgid "Validated"
+msgstr "Validata"
+
+#. module: planetio
+#: model:eudr.stage,name:planetio.eudr_stage_sent
+msgid "Sent"
+msgstr "Inviata"
+
+#. module: planetio
+#: model:eudr.stage,name:planetio.eudr_stage_completed
+msgid "Completed"
+msgstr "Completata"
+
+#. module: planetio
+#: model:excel.import.template,name:planetio.tmpl_eudr_declaration
+#: model:ir.sequence,name:planetio.seq_eudr_declaration
+msgid "EUDR Declaration"
+msgstr "Dichiarazione EUDR"
+
+#. module: planetio
+#: model:ir.actions.act_window,name:planetio.action_eudr_declaration
+msgid "EUDR Declarations"
+msgstr "Dichiarazioni EUDR"
+
+#. module: planetio
+#: model:ir.actions.act_window,name:planetio.action_eudr_stage
+msgid "EUDR Stages"
+msgstr "Fasi EUDR"
+
+#. module: planetio
+#: model:ir.ui.menu,name:planetio.menu_eudr_ai_root
+msgid "Planetio"
+msgstr "Planetio"
+
+#. module: planetio
+#: model:ir.ui.menu,name:planetio.menu_eudr_declarations
+msgid "Declarations"
+msgstr "Dichiarazioni"
+
+#. module: planetio
+#: model:ir.ui.menu,name:planetio.menu_eudr_stage_root
+msgid "Stage"
+msgstr "Fase"
+
+#. module: planetio
+#: model:ir.actions.act_window,name:planetio.action_excel_import_template
+msgid "Import Templates"
+msgstr "Template di importazione"
+
+#. module: planetio
+#: model:ir.ui.menu,name:planetio.menu_eudr_settings
+msgid "Settings"
+msgstr "Impostazioni"
+
+#. module: planetio
+#: model:ir.ui.menu,name:planetio.menu_templates
+msgid "Templates"
+msgstr "Template"
+
+#. module: planetio
+#: model:ir.actions.act_window,name:planetio.action_excel_import_wizard
+msgid "Excel Import Wizard"
+msgstr "Procedura guidata import Excel"
+
+#. module: planetio
+#: model:ir.actions.act_window,name:planetio.action_planetio_config_settings
+msgid "Planetio Settings"
+msgstr "Impostazioni Planetio"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "EUDR Declaration"
+msgstr "Dichiarazione EUDR"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Import"
+msgstr "Import"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Deforestation analysis"
+msgstr "Analisi deforestazione"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Trasmit DDS"
+msgstr "Trasmetti DDS"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Eudr sequence"
+msgstr "Sequenza EUDR"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Creation date"
+msgstr "Data creazione"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "EUDR Reference"
+msgstr "Riferimento EUDR"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Internal Ref"
+msgstr "Rif. interno"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Details"
+msgstr "Dettagli"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Message"
+msgstr "Messaggio"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Show point on map"
+msgstr "Mostra punto sulla mappa"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Show area on map"
+msgstr "Mostra area sulla mappa"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Farm data"
+msgstr "Dati azienda agricola"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Geo data"
+msgstr "Dati geografici"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Additional api data"
+msgstr "Dati API aggiuntivi"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "External Message (full)"
+msgstr "Messaggio esterno (completo)"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Documents"
+msgstr "Documenti"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Attachments"
+msgstr "Allegati"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Attachment"
+msgstr "Allegato"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_eudr_declaration_form
+msgid "Additional info"
+msgstr "Informazioni aggiuntive"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_template_form
+msgid "Import Template"
+msgstr "Template di importazione"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_template_form
+msgid "Fields"
+msgstr "Campi"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_template_tree
+msgid "Import Templates"
+msgstr "Template di importazione"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "Excel Import"
+msgstr "Importazione Excel"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "Proposed Mapping"
+msgstr "Mappatura proposta"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "Preview (first rows)"
+msgstr "Anteprima (prime righe)"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "Validation Result"
+msgstr "Risultato della convalida"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "Analyze &amp; Map"
+msgstr "Analizza e mappa"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "Validate"
+msgstr "Convalida"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "Create Records"
+msgstr "Crea record"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "Cancel"
+msgstr "Annulla"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "External Analysis (per row)"
+msgstr "Analisi esterna (per riga)"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.view_excel_import_wizard_form
+msgid "Close"
+msgstr "Chiudi"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "Planetio"
+msgstr "Planetio"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "Debug Excel Import"
+msgstr "Debug import Excel"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "Global Forest Watch API"
+msgstr "API Global Forest Watch"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "GreenForestWatch User"
+msgstr "Utente GreenForestWatch"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "GreenForestWatch Password"
+msgstr "Password GreenForestWatch"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "Organization"
+msgstr "Organizzazione"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "Alias"
+msgstr "Alias"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "API Key"
+msgstr "Chiave API"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "Genera/Aggiorna API key"
+msgstr "Genera/Aggiorna API key"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "TRACES EUDR API"
+msgstr "API TRACES EUDR"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "User TRACES EUDR"
+msgstr "Utente TRACES EUDR"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "Authentication Key TRACES EUDR"
+msgstr "Chiave di autenticazione TRACES EUDR"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "Webservice access identifier TRACES EUDR"
+msgstr "Identificativo accesso webservice TRACES EUDR"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "Endpoint URL TRACES EUDR"
+msgstr "URL endpoint TRACES EUDR"
+
+#. module: planetio
+#: model_terms:ir.ui.view,arch_db:planetio.planetio_res_config_settings_view
+msgid "DDS submission WSDL Method TRACES EUDR"
+msgstr "Metodo WSDL invio DDS TRACES EUDR"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_models.py:0
+#, python-format
+msgid "New"
+msgstr "Nuovo"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_models.py:0
+msgid "OTP sent to the phone number entered during certification."
+msgstr "OTP inviato al numero di telefono indicato durante la certificazione."
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:0
+#, python-format
+msgid "Data API HTTP %(code)s: step=%(s)s; body=%(b)s"
+msgstr "API dati HTTP %(code)s: step=%(s)s; body=%(b)s"
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:0
+#, python-format
+msgid "Submission for %s on %s by %s"
+msgstr "Invio per %s il %s da %s"
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:0
+msgid "net_weight must be a valid number (kg)"
+msgstr "net_weight deve essere un numero valido (kg)"
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:0
+msgid "net_weight must be > 0 kg"
+msgstr "net_weight deve essere > 0 kg"
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:0
+msgid "OK"
+msgstr "OK"
+
+#. module: planetio
+#: code:addons/planetio/wizards/import_wizard.py:0
+#, python-format
+msgid "Invalid GeoJSON file: %s"
+msgstr "File GeoJSON non valido: %s"
+
+#. module: planetio
+#: code:addons/planetio/wizards/import_wizard.py:0
+msgid "Invalid GeoJSON file"
+msgstr "File GeoJSON non valido"

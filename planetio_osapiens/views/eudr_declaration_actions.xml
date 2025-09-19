@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_eudr_send_geojson_to_osapiens" model="ir.actions.server">
+        <field name="name">Send GeoJSON to oSapiens</field>
+        <field name="model_id" ref="planetio.model_eudr_declaration"/>
+        <field name="binding_model_id" ref="planetio.model_eudr_declaration"/>
+        <field name="binding_type">action</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_osapiens_send_geojson()</field>
+    </record>
+</odoo>
