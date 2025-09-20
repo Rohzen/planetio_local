@@ -6,7 +6,9 @@
     'license': 'LGPL-3',
     'depends': ['ai_gateway', 'planetio', 'mail'],
     'data': [
+        'data/ai_data_defaults.xml',
         'security/ir.model.access.csv',
+        'views/res_config_settings_views.xml',
         'views/summarize_documents_wizard_views.xml',
         'report/ai_summary_report.xml',
     ],

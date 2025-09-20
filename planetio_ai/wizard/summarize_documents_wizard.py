@@ -27,6 +27,20 @@ except Exception:  # pragma: no cover - handled gracefully at runtime
 _logger = logging.getLogger(__name__)
 
 
+DEFAULT_DEFORESTATION_PROMPT = (
+    "Analizza tutti i documenti allegati relativi alla dichiarazione EUDR e "
+    "riassumi le informazioni utili a valutare lo stato della deforestazione. "
+    "La risposta finale deve includere bullet point chiari, lo stato della "
+    "deforestazione, eventuali rischi o anomalie e, se disponibili dati "
+    "numerici, una tabella in formato testo con gli indicatori principali."
+)
+
+DEFAULT_CORRECTIVE_ACTIONS_PROMPT = (
+    "Indica le azioni correttive consigliate per mitigare i rischi individuati, "
+    "specificando priorità, tempistiche e responsabilità quando possibile."
+)
+
+
 class PlanetioSummarizeWizard(models.Model):
     _inherit = "eudr.declaration"
 
@@ -611,12 +625,26 @@ class PlanetioSummarizeWizard(models.Model):
         """
 
         AiRequest = self.env["ai.request"]
+        icp = self.env["ir.config_parameter"].sudo()
         default_provider = (
-            self.env["ir.config_parameter"].sudo().get_param(
-                "ai_gateway.default_provider", "gemini"
-            )
-            or "gemini"
+            icp.get_param("ai_gateway.default_provider", "gemini") or "gemini"
         )
+
+        deforestation_prompt = (
+            icp.get_param("planetio_ai.prompt_deforestation_critical_issues")
+            or DEFAULT_DEFORESTATION_PROMPT
+        )
+        corrective_prompt = (
+            icp.get_param("planetio_ai.prompt_corrective_actions")
+            or DEFAULT_CORRECTIVE_ACTIONS_PROMPT
+        )
+
+        payload_parts = [
+            (deforestation_prompt or "").strip(),
+            (corrective_prompt or "").strip(),
+        ]
+        payload_parts = [part for part in payload_parts if part]
+        payload_text = "\n\n".join(payload_parts) if payload_parts else DEFAULT_DEFORESTATION_PROMPT
         for rec in self:
             if not rec.attachment_ids:
                 continue
@@ -628,13 +656,7 @@ class PlanetioSummarizeWizard(models.Model):
                     "task_type": "summarize",
                     "attachment_ids": [(6, 0, rec.attachment_ids.ids)],
                     "model_ref": f"{rec._name},{rec.id}",
-                    "payload": (
-                        "Analizza tutti i documenti allegati relativi alla dichiarazione EUDR e "
-                        "riassumi le informazioni utili a valutare lo stato della deforestazione. "
-                        "La risposta finale deve includere bullet point chiari, lo stato della "
-                        "deforestazione, eventuali rischi o anomalie e, se disponibili dati "
-                        "numerici, una tabella in formato testo con gli indicatori principali."
-                    ),
+                    "payload": payload_text,
                 }
             )
 
