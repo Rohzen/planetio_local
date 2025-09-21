@@ -1,0 +1,142 @@
+<odoo>
+    <data>
+        <record id="action_report_eudr_declaration" model="ir.actions.report">
+            <field name="name">EUDR Declaration</field>
+            <field name="model">eudr.declaration</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">planetio.report_eudr_declaration_document</field>
+            <field name="report_file">planetio.report_eudr_declaration_document</field>
+            <field name="print_report_name">'EUDR Declaration - %s' % (object.name or object.id)</field>
+        </record>
+
+        <template id="report_eudr_declaration_document">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="doc">
+                    <t t-set="field_info" t-value="doc.fields_get(['eudr_company_type', 'activity_type'])"/>
+                    <t t-set="company_selection" t-value="dict(field_info.get('eudr_company_type', {}).get('selection', []))"/>
+                    <t t-set="activity_selection" t-value="dict(field_info.get('activity_type', {}).get('selection', []))"/>
+                    <div class="page">
+                        <div class="row">
+                            <div class="col-6">
+                                <h2>EUDR Declaration</h2>
+                                <p>
+                                    <strong>Reference:</strong>
+                                    <span t-esc="doc.name or doc.display_name"/>
+                                </p>
+                                <p>
+                                    <strong>Partner:</strong>
+                                    <span t-esc="doc.partner_id.display_name or '-'"/>
+                                </p>
+                                <p>
+                                    <strong>Creation Date:</strong>
+                                    <span t-field="doc.datestamp"/>
+                                </p>
+                                <p>
+                                    <strong>Company Type:</strong>
+                                    <span t-esc="company_selection.get(doc.eudr_company_type, '-') if doc.eudr_company_type else '-'"/>
+                                </p>
+                                <p>
+                                    <strong>Activity:</strong>
+                                    <span t-esc="activity_selection.get(doc.activity_type, '-') if doc.activity_type else '-'"/>
+                                </p>
+                                <p>
+                                    <strong>DDS Identifier:</strong>
+                                    <span t-esc="doc.dds_identifier or '-'"/>
+                                </p>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm o_main_table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Operator</th>
+                                            <td><span t-esc="doc.operator_name or '-'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Product</th>
+                                            <td>
+                                                <t t-if="doc.product_id">
+                                                    <span t-esc="doc.product_id.display_name"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span t-esc="doc.product_description or '-'"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>HS Code</th>
+                                            <td><span t-esc="doc.hs_code or '-'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Net Mass (Kg)</th>
+                                            <td><span t-field="doc.net_mass_kg"/></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total Area (Ha)</th>
+                                            <td><span t-esc="doc.area_ha_display or '-'"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <h3>Declaration Lines</h3>
+                        <table class="table table-sm o_main_table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Farmer / Farm</th>
+                                    <th>Country</th>
+                                    <th>Region</th>
+                                    <th>Municipality</th>
+                                    <th>Area (Ha)</th>
+                                    <th>Geo Type</th>
+                                    <th>External Status</th>
+                                    <th>Deforestation Provider</th>
+                                    <th>Deforestation Alerts</th>
+                                    <th>Deforestation Area (Ha)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="not doc.line_ids">
+                                    <tr>
+                                        <td colspan="11" class="text-center">No lines available</td>
+                                    </tr>
+                                </t>
+                                <t t-foreach="doc.line_ids" t-as="line" t-foreach-index="index">
+                                    <tr>
+                                        <td><span t-esc="index + 1"/></td>
+                                        <td>
+                                            <div><strong t-esc="line.farmer_name or line.name or '-'"/></div>
+                                            <div t-if="line.farm_name">(<span t-esc="line.farm_name"/>)</div>
+                                        </td>
+                                        <td><span t-esc="line.country or '-'"/></td>
+                                        <td><span t-esc="line.region or '-'"/></td>
+                                        <td><span t-esc="line.municipality or '-'"/></td>
+                                        <td><span t-esc="line.area_ha or '-'"/></td>
+                                        <td><span t-esc="line.geo_type or '-'"/></td>
+                                        <td><span t-esc="line.external_status or '-'"/></td>
+                                        <td><span t-esc="line.defor_provider or '-'"/></td>
+                                        <td><span t-esc="line.defor_alerts if line.defor_alerts is not None else '-'"/></td>
+                                        <td><span t-esc="line.defor_area_ha if line.defor_area_ha is not None else '-'"/></td>
+                                    </tr>
+                                    <tr t-if="line.defor_details_json">
+                                        <td></td>
+                                        <td colspan="10">
+                                            <strong>Deforestation Details:</strong>
+                                            <pre style="white-space: pre-wrap;" t-esc="line.defor_details_json"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <t t-if="doc.extra_info">
+                            <h3>Additional Information</h3>
+                            <p t-esc="doc.extra_info"/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
