@@ -11,8 +11,35 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(repo_root))
 
 
+# Provide a minimal package structure so that relative imports succeed.
+planetio_pkg = sys.modules.setdefault('planetio', types.ModuleType('planetio'))
+setattr(planetio_pkg, '__path__', [str(repo_root / 'planetio')])
+services_pkg = sys.modules.setdefault('planetio.services', types.ModuleType('planetio.services'))
+adapter_mod = sys.modules.setdefault(
+    'planetio.services.eudr_adapter_odoo',
+    types.ModuleType('planetio.services.eudr_adapter_odoo'),
+)
+
+
+def _stub_action(*args, **kwargs):  # pragma: no cover - simple stub
+    return None
+
+
+setattr(adapter_mod, 'action_retrieve_dds_numbers', _stub_action)
+
+
+class FakeConfigParameter:
+    def sudo(self):
+        return self
+
+    def get_param(self, key, default=None):
+        if key == 'planetio.eudr_point_area_ha':
+            return '0.0004'
+        return default
+
+
 module_path = repo_root / 'planetio' / 'models' / 'eudr_models.py'
-spec = importlib.util.spec_from_file_location('eudr_models', module_path)
+spec = importlib.util.spec_from_file_location('planetio.models.eudr_models', module_path)
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
@@ -28,6 +55,7 @@ def _make_record(lines):
     rec = EUDRDeclaration()
     rec.line_ids = lines
     rec.area_ha = 0.0
+    rec.env = {'ir.config_parameter': FakeConfigParameter()}
     return rec
 
 
