@@ -50,6 +50,8 @@
                   string="Deforestation GeoJSON" icon="fa-download"/>
           <button name="action_create_geojson" type="object" class="btn-secondary"
                   string="Traces GeoJSON" icon="fa-save"/>
+          <button name="%(planetio.action_report_eudr_declaration)d" type="action" class="btn-secondary"
+                  string="Print Declaration" icon="fa-print"/>
           <button name="action_transmit_dds" type="object" class="oe_highlight"
                   string="Trasmit DDS" icon="fa-paper-plane"/>
           <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>

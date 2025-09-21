@@ -13,6 +13,7 @@
         'data/eudr_stages.xml',
         'data/seed_template.xml',
         'data/sequence.xml',
+        'report/eudr_declaration_report.xml',
     ],
     'external_dependencies': {
         'python' : ['pandas', 'requests', 'google-generativeai', 'pyproj', 'shapely'],
