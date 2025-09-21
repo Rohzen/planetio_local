@@ -1,13 +1,5 @@
 <odoo>
     <data>
-        <record id="action_report_eudr_declaration" model="ir.actions.report">
-            <field name="name">EUDR Declaration</field>
-            <field name="model">eudr.declaration</field>
-            <field name="report_type">qweb-pdf</field>
-            <field name="report_name">planetio.report_eudr_declaration_document</field>
-            <field name="report_file">planetio.report_eudr_declaration_document</field>
-            <field name="print_report_name">'EUDR Declaration - %s' % (object.name or object.id)</field>
-        </record>
 
         <template id="report_eudr_declaration_document">
             <t t-call="web.html_container">
@@ -102,28 +94,31 @@
                                         <td colspan="11" class="text-center">No lines available</td>
                                     </tr>
                                 </t>
-                                <t t-foreach="doc.line_ids" t-as="line" t-foreach-index="index">
+
+                                <!-- usa enumerate per avere (indice, record) -->
+                                <t t-foreach="enumerate(doc.line_ids)" t-as="it">
                                     <tr>
-                                        <td><span t-esc="index + 1"/></td>
+                                        <td><span t-esc="it[0] + 1"/></td>
                                         <td>
-                                            <div><strong t-esc="line.farmer_name or line.name or '-'"/></div>
-                                            <div t-if="line.farm_name">(<span t-esc="line.farm_name"/>)</div>
+                                            <div><strong t-esc="it[1].farmer_name or it[1].name or '-'"/></div>
+                                            <div t-if="it[1].farm_name">(<span t-esc="it[1].farm_name"/>)</div>
                                         </td>
-                                        <td><span t-esc="line.country or '-'"/></td>
-                                        <td><span t-esc="line.region or '-'"/></td>
-                                        <td><span t-esc="line.municipality or '-'"/></td>
-                                        <td><span t-esc="line.area_ha or '-'"/></td>
-                                        <td><span t-esc="line.geo_type or '-'"/></td>
-                                        <td><span t-esc="line.external_status or '-'"/></td>
-                                        <td><span t-esc="line.defor_provider or '-'"/></td>
-                                        <td><span t-esc="line.defor_alerts if line.defor_alerts is not None else '-'"/></td>
-                                        <td><span t-esc="line.defor_area_ha if line.defor_area_ha is not None else '-'"/></td>
+                                        <td><span t-esc="it[1].country or '-'"/></td>
+                                        <td><span t-esc="it[1].region or '-'"/></td>
+                                        <td><span t-esc="it[1].municipality or '-'"/></td>
+                                        <td><span t-esc="it[1].area_ha or '-'"/></td>
+                                        <td><span t-esc="it[1].geo_type or '-'"/></td>
+                                        <td><span t-esc="it[1].external_status or '-'"/></td>
+                                        <td><span t-esc="it[1].defor_provider or '-'"/></td>
+                                        <td><span t-esc="it[1].defor_alerts if it[1].defor_alerts is not None else '-'"/></td>
+                                        <td><span t-esc="it[1].defor_area_ha if it[1].defor_area_ha is not None else '-'"/></td>
                                     </tr>
-                                    <tr t-if="line.defor_details_json">
+
+                                    <tr t-if="it[1].defor_details_json">
                                         <td></td>
                                         <td colspan="10">
                                             <strong>Deforestation Details:</strong>
-                                            <pre style="white-space: pre-wrap;" t-esc="line.defor_details_json"/>
+                                            <pre style="white-space: pre-wrap;" t-esc="it[1].defor_details_json"/>
                                         </td>
                                     </tr>
                                 </t>
@@ -138,5 +133,15 @@
                 </t>
             </t>
         </template>
+
+        <report
+            id="action_report_eudr_declaration"
+            model="eudr.declaration"
+            string="EUDR Declaration"
+            report_type="qweb-pdf"
+            name="planetio.report_eudr_declaration_document"
+            file="planetio.report_eudr_declaration_document"
+            print_report_name="'EUDR Declaration - %s' % (object.name or object.id)"
+        />
     </data>
 </odoo>

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/planetio.iml" filepath="$PROJECT_DIR$/.idea/planetio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../encodata/14/modules/planetio_todo/.idea/planetio_todo.iml" filepath="$PROJECT_DIR$/../encodata/14/modules/planetio_todo/.idea/planetio_todo.iml" />
     </modules>
   </component>
 </project>

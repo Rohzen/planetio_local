@@ -42,16 +42,12 @@
       <header>
           <button name="action_open_import_wizard" type="object"
                   string="Import" class="btn-secondary" icon="fa-upload"/>
-<!--          <button name="action_export_geojson" type="object"-->
-<!--                  string="Export GeoJSON" class="oe_highlight" icon="fa-download"/>-->
           <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success"
                   string="Deforestation analysis" icon="fa-tree"/>
           <button name="action_create_deforestation_geojson" type="object" class="btn-secondary"
                   string="Deforestation GeoJSON" icon="fa-download"/>
           <button name="action_create_geojson" type="object" class="btn-secondary"
                   string="Traces GeoJSON" icon="fa-save"/>
-          <button name="%(planetio.action_report_eudr_declaration)d" type="action" class="btn-secondary"
-                  string="Print Declaration" icon="fa-print"/>
           <button name="action_transmit_dds" type="object" class="oe_highlight"
                   string="Trasmit DDS" icon="fa-paper-plane"/>
           <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
