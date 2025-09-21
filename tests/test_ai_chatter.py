@@ -42,9 +42,21 @@ class FakeAttachmentModel:
     def create(self, vals):
         return vals
 
+
+class FakeConfigParameter:
+    def sudo(self):
+        return self
+
+    def get_param(self, key, default=None):
+        return default
+
 class FakeDeclaration(mod.PlanetioSummarizeWizard):
     def __init__(self):
-        self.env = FakeEnv({'ai.request': FakeAiRequestModel(), 'ir.attachment': FakeAttachmentModel()})
+        self.env = FakeEnv({
+            'ai.request': FakeAiRequestModel(),
+            'ir.attachment': FakeAttachmentModel(),
+            'ir.config_parameter': FakeConfigParameter(),
+        })
         self.attachment_ids = DummyAttachments([1])
         self._name = 'eudr.declaration'
         self.id = 1

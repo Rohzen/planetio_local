@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import math
+import re
 import requests
 import traceback
 from datetime import date, timedelta
@@ -8,6 +9,281 @@ from collections import defaultdict
 
 from odoo import models, fields, api, _, tools
 from odoo.exceptions import UserError
+
+
+def _coerce_int(value):
+    if value in (None, ""):
+        return None
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        if math.isnan(value):
+            return None
+        return int(round(value))
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw or raw.lower() in {"nan", "none", "null"}:
+            return None
+        cleaned = re.sub(r"[^0-9.+-]", "", raw)
+        if not cleaned:
+            return None
+        try:
+            return int(round(float(cleaned)))
+        except Exception:
+            return None
+    return None
+
+
+def _coerce_float(value):
+    if value in (None, ""):
+        return None
+    if isinstance(value, bool):
+        return float(value)
+    if isinstance(value, (int, float)):
+        if isinstance(value, float) and math.isnan(value):
+            return None
+        return float(value)
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw or raw.lower() in {"nan", "none", "null"}:
+            return None
+        cleaned = re.sub(r"[^0-9.+-]", "", raw)
+        if not cleaned:
+            return None
+        try:
+            return float(cleaned)
+        except Exception:
+            return None
+    return None
+
+
+def parse_deforestation_external_properties(raw_props):
+    if not raw_props:
+        return None
+
+    if isinstance(raw_props, (bytes, bytearray)):
+        try:
+            raw_props = raw_props.decode("utf-8")
+        except Exception:
+            return None
+
+    data = raw_props
+    if isinstance(raw_props, str):
+        try:
+            data = json.loads(raw_props)
+        except Exception:
+            return None
+
+    if isinstance(data, list):
+        for item in data:
+            if isinstance(item, dict):
+                parsed = parse_deforestation_external_properties(item)
+                if parsed:
+                    return parsed
+        return None
+
+    if not isinstance(data, dict):
+        return None
+
+    candidates = [data]
+    if isinstance(data.get("properties"), dict):
+        candidates.append(data["properties"])
+
+    known_keys = {
+        "alert_count",
+        "alertcount",
+        "alert_count_total",
+        "alert_count_7d",
+        "alert_count_30d",
+        "alerts",
+        "alerts_total",
+        "alerts_7d",
+        "alerts_30d",
+        "alertcount30d",
+        "risk_level",
+        "risk",
+        "period",
+        "last_alert",
+        "last_alert_date",
+    }
+
+    chosen = None
+    metrics_payload = {}
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        metrics_candidate = candidate.get("metrics") if isinstance(candidate.get("metrics"), dict) else {}
+        if any(key in candidate for key in known_keys) or metrics_candidate:
+            chosen = candidate
+            metrics_payload = metrics_candidate
+            break
+
+    if not chosen:
+        return None
+
+    count_keys = [
+        "alert_count",
+        "alert_count_total",
+        "alerts_total",
+        "alert_count_30d",
+        "alerts_30d",
+        "alert_count_7d",
+        "alerts_7d",
+        "alertcount",
+        "alerts",
+        "alertcount30d",
+    ]
+
+    counts = {}
+    for key in count_keys:
+        parsed = _coerce_int(chosen.get(key))
+        if parsed is not None:
+            counts[key] = parsed
+            continue
+        if key in metrics_payload:
+            parsed = _coerce_int(metrics_payload.get(key))
+            if parsed is not None:
+                counts[key] = parsed
+
+    risk_raw = chosen.get("risk_level") or chosen.get("risk") or metrics_payload.get("risk_level") or metrics_payload.get("risk")
+    risk_label = str(risk_raw).strip() if risk_raw not in (None, "") else ""
+    risk_token = risk_label.lower().replace(" ", "_").replace("-", "_") if risk_label else ""
+
+    last_alert = (
+        chosen.get("last_alert_date")
+        or chosen.get("last_alert")
+        or metrics_payload.get("last_alert_date")
+        or metrics_payload.get("last_alert")
+    )
+    period = (
+        chosen.get("period")
+        or chosen.get("date_range")
+        or metrics_payload.get("period")
+        or metrics_payload.get("date_range")
+    )
+
+    if not counts and not (risk_label or last_alert or period):
+        return None
+
+    preferred_order = [
+        "alert_count",
+        "alert_count_total",
+        "alerts_total",
+        "alert_count_30d",
+        "alerts_30d",
+        "alert_count_7d",
+        "alerts_7d",
+        "alertcount",
+        "alerts",
+        "alertcount30d",
+    ]
+
+    alert_count = None
+    alert_count_key = None
+    for key in preferred_order:
+        if key in counts:
+            alert_count = counts[key]
+            alert_count_key = key
+            break
+    if alert_count is None and counts:
+        alert_count_key, alert_count = max(counts.items(), key=lambda item: item[1])
+
+    area_keys = [
+        "area_ha_total",
+        "alert_area_ha",
+        "area_ha",
+        "area_hectares",
+        "affected_area_ha",
+    ]
+
+    area_val = None
+    for key in area_keys:
+        parsed = _coerce_float(chosen.get(key))
+        if parsed is None and key in metrics_payload:
+            parsed = _coerce_float(metrics_payload.get(key))
+        if parsed is not None:
+            area_val = parsed
+            break
+
+    metrics = {}
+    for key, value in counts.items():
+        metrics[key] = value
+    metrics['alert_count'] = alert_count or 0
+    metrics['area_ha_total'] = area_val if area_val is not None else 0.0
+
+    source = (
+        chosen.get("source")
+        or chosen.get("provider")
+        or metrics_payload.get("source")
+        or metrics_payload.get("provider")
+    )
+    confidence = chosen.get("confidence") or metrics_payload.get("confidence")
+    primary_drivers = chosen.get("primary_drivers") or metrics_payload.get("primary_drivers")
+    notes = chosen.get("notes") or metrics_payload.get("notes")
+
+    risky_levels = {
+        "critical",
+        "very_high",
+        "veryhigh",
+        "high",
+        "medium",
+        "elevated",
+        "extreme",
+        "very_high_risk",
+    }
+    risk_flag = False
+    if alert_count and alert_count > 0:
+        risk_flag = True
+    elif risk_token in risky_levels:
+        risk_flag = True
+
+    info_parts = []
+    if alert_count is not None:
+        info_parts.append(_("alerts: %(count)s") % {"count": alert_count})
+    if risk_label:
+        info_parts.append(_("risk: %(risk)s") % {"risk": risk_label})
+    if period:
+        info_parts.append(_("period: %(period)s") % {"period": period})
+    if last_alert:
+        info_parts.append(_("last alert: %(last)s") % {"last": last_alert})
+
+    if info_parts:
+        message = _("GeoJSON deforestation data (%(details)s)") % {"details": "; ".join(info_parts)}
+    else:
+        message = _("GeoJSON deforestation data")
+
+    meta = {"provider": "gfw", "risk_flag": bool(risk_flag)}
+    if source:
+        meta["source"] = source
+    if risk_token:
+        meta["risk_level"] = risk_token
+    if risk_label and risk_label.lower() != risk_token:
+        meta["risk_level_label"] = risk_label
+    if alert_count_key:
+        meta["alert_count_key"] = alert_count_key
+    if period:
+        meta["period"] = period
+    if last_alert:
+        meta["last_alert_date"] = last_alert
+    if confidence:
+        meta["confidence"] = confidence
+    if primary_drivers:
+        meta["primary_drivers"] = primary_drivers
+    if notes:
+        meta["notes"] = notes
+
+    details = {"externalProperties": chosen}
+    if counts:
+        details["alertCounts"] = counts
+
+    return {
+        "message": message,
+        "metrics": metrics,
+        "meta": meta,
+        "details": details,
+    }
 
 
 class EUDRDeclarationLineDeforestation(models.Model):
@@ -185,13 +461,17 @@ class EUDRDeclarationLineDeforestation(models.Model):
 
         for line in lines:
             try:
-                svc = line.env.get('planetio.deforestation.service') or line.env.get('deforestation.service')
-                if svc and hasattr(svc, 'analyze_line'):
-                    status = svc.analyze_line(line)
-                elif svc and hasattr(svc, 'analyze_geojson'):
-                    status = svc.analyze_geojson(line._line_geometry() or {})
-                else:
-                    status = line._gfw_analyze_fallback()
+                status = parse_deforestation_external_properties(
+                    getattr(line, 'external_properties_json', None)
+                )
+                if not status:
+                    svc = line.env.get('planetio.deforestation.service') or line.env.get('deforestation.service')
+                    if svc and hasattr(svc, 'analyze_line'):
+                        status = svc.analyze_line(line)
+                    elif svc and hasattr(svc, 'analyze_geojson'):
+                        status = svc.analyze_geojson(line._line_geometry() or {})
+                    else:
+                        status = line._gfw_analyze_fallback()
 
                 # write computed fields if present
                 if isinstance(status, dict):
@@ -208,10 +488,13 @@ class EUDRDeclarationLineDeforestation(models.Model):
                             vals['defor_details_json'] = json.dumps(status, ensure_ascii=False)
                         except Exception:
                             vals['defor_details_json'] = tools.ustr(status)
-                    if 'external_ok' in line._fields and metrics.get('alert_count', 0) > 0:
-                        vals['external_ok'] = False
-                    else:
-                        vals['external_ok'] = True
+                    if 'external_ok' in line._fields:
+                        risk_flag = False
+                        if metrics.get('alert_count', 0) > 0:
+                            risk_flag = True
+                        elif isinstance(status.get('meta'), dict):
+                            risk_flag = bool(status['meta'].get('risk_flag'))
+                        vals['external_ok'] = not risk_flag
                     if vals:
                         line.write(vals)
 
