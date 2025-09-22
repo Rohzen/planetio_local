@@ -3,6 +3,7 @@ import base64
 import io
 import json
 import logging
+import re
 
 try:  # pragma: no cover - optional dependency
     from reportlab.lib import colors
@@ -38,6 +39,15 @@ DEFAULT_DEFORESTATION_PROMPT = (
 DEFAULT_CORRECTIVE_ACTIONS_PROMPT = (
     "Indica le azioni correttive consigliate per mitigare i rischi individuati, "
     "specificando priorità, tempistiche e responsabilità quando possibile."
+)
+
+
+STRUCTURED_RESPONSE_INSTRUCTION = (
+    "Restituisci esclusivamente JSON valido con la seguente struttura: "
+    "{\"alerts\": [{\"field_id\": \"...\", \"field_label\": \"...\", \"description\": \"...\"}], "
+    "\"actions\": [{\"field_id\": \"...\", \"field_label\": \"...\", \"description\": \"...\"}]}. "
+    "Utilizza liste (anche vuote) per entrambi i campi, imposta field_id a null "
+    "quando non disponibile e fornisci descrizioni chiare in forma di paragrafo."
 )
 
 
@@ -349,6 +359,341 @@ class PlanetioSummarizeWizard(models.Model):
                 return True
         return False
 
+    def _parse_ai_structured_response(self, text):
+        """Try to extract structured alerts/actions from ``text``."""
+
+        alerts = []
+        actions = []
+        if text in (None, "", False):
+            return {"alerts": alerts, "actions": actions}
+
+        if isinstance(text, (bytes, bytearray)):
+            try:
+                text = text.decode("utf-8")
+            except Exception:
+                text = text.decode("utf-8", errors="ignore")
+        elif not isinstance(text, str):
+            text = str(text)
+
+        parsed = None
+        try:
+            parsed = json.loads(text)
+        except Exception:
+            parsed = None
+
+        if isinstance(parsed, dict):
+            candidates = [parsed]
+            for key in ("data", "result", "response"):
+                nested = parsed.get(key)
+                if isinstance(nested, dict):
+                    candidates.append(nested)
+            for candidate in candidates:
+                alerts = self._normalize_structured_entries(candidate.get("alerts"))
+                actions = self._normalize_structured_entries(candidate.get("actions"))
+                if alerts or actions:
+                    return {"alerts": alerts, "actions": actions}
+        elif isinstance(parsed, list):
+            alerts = self._normalize_structured_entries(parsed)
+            if alerts:
+                return {"alerts": alerts, "actions": []}
+
+        return self._parse_structured_from_text(text)
+
+    def _normalize_structured_entries(self, entries):
+        """Normalise a list of entries into ``field_id``/``description`` dicts."""
+
+        if not isinstance(entries, list):
+            return []
+
+        normalised = []
+        for index, entry in enumerate(entries, start=1):
+            normalised_entry = self._normalize_structured_entry(entry)
+            if not normalised_entry:
+                continue
+            normalised_entry.setdefault("sequence", index * 10)
+            normalised.append(normalised_entry)
+        return normalised
+
+    def _normalize_structured_entry(self, entry):
+        """Turn ``entry`` into a dict with ``description`` and identifiers."""
+
+        if entry in (None, "", [], {}):
+            return {}
+
+        result = {}
+
+        if isinstance(entry, dict):
+            description = (
+                entry.get("description")
+                or entry.get("paragraph")
+                or entry.get("text")
+                or entry.get("value")
+                or entry.get("summary")
+            )
+            if description:
+                result["description"] = str(description).strip()
+
+            for key in (
+                "field_id",
+                "field",
+                "id",
+                "line_id",
+                "line",
+                "identifier",
+            ):
+                value = entry.get(key)
+                if value not in (None, ""):
+                    result["field_id"] = value
+                    break
+
+            for key in (
+                "field_label",
+                "label",
+                "field_name",
+                "name",
+                "line_name",
+                "title",
+            ):
+                value = entry.get(key)
+                if value not in (None, ""):
+                    result["field_label"] = value
+                    break
+
+            if entry.get("sequence") not in (None, ""):
+                result["sequence"] = entry.get("sequence")
+
+        elif isinstance(entry, (list, tuple)):
+            if not entry:
+                return {}
+            field_id = entry[0]
+            description_parts = [
+                str(part) for part in entry[1:] if part not in (None, "")
+            ]
+            description = " ".join(description_parts).strip()
+            if description:
+                result["description"] = description
+            if field_id not in (None, ""):
+                result["field_id"] = field_id
+
+        else:
+            cleaned = str(entry).strip()
+            if not cleaned:
+                return {}
+            cleaned = cleaned.lstrip("-*• ").strip()
+            match = re.match(
+                r"^(?P<label>[^:]+?)\s*[:\-–—]\s*(?P<body>.+)$",
+                cleaned,
+            )
+            if match:
+                label = match.group("label").strip()
+                body = match.group("body").strip()
+                if label:
+                    result["field_id"] = label
+                if body:
+                    result["description"] = body
+            else:
+                result["description"] = cleaned
+
+        if not result.get("description"):
+            return {}
+
+        return result
+
+    def _parse_structured_from_text(self, text):
+        """Fallback parser when the AI did not return JSON."""
+
+        alerts = []
+        actions = []
+        if not text:
+            return {"alerts": alerts, "actions": actions}
+
+        current = None
+        for raw_line in text.replace("\r\n", "\n").split("\n"):
+            line = raw_line.strip()
+            if not line:
+                continue
+
+            heading = line.rstrip(":").strip()
+            heading_upper = heading.upper()
+            if heading_upper in {
+                "ALERTS",
+                "DEFORESTATION ALERTS",
+                "ALLERTE",
+                "ALLERTA",
+            } or (
+                "ALERT" in heading_upper and len(heading_upper.split()) <= 5
+            ):
+                current = "alerts"
+                continue
+
+            if heading_upper in {
+                "CORRECTIVE ACTIONS",
+                "ACTIONS",
+                "AZIONI CORRETTIVE",
+            } or "CORRECTIVE" in heading_upper:
+                current = "actions"
+                continue
+
+            entry = self._normalize_structured_entry(line)
+            if not entry:
+                continue
+
+            if current == "actions":
+                target = actions
+            else:
+                target = alerts
+            entry.setdefault("sequence", len(target) * 10 + 10)
+            target.append(entry)
+
+        return {"alerts": alerts, "actions": actions}
+
+    def _match_declaration_line(self, record, *identifiers):
+        """Try to find a declaration line that matches the given identifiers."""
+
+        lines = getattr(record, "line_ids", None)
+        if not lines:
+            return self.env["eudr.declaration.line"]
+
+        try:
+            line_list = list(lines)
+        except TypeError:
+            line_list = [lines]
+
+        for identifier in identifiers:
+            line = self._match_line_identifier(line_list, identifier)
+            if line:
+                return line
+
+        return self.env["eudr.declaration.line"]
+
+    @staticmethod
+    def _match_line_identifier(lines, identifier):
+        if identifier in (None, "", False):
+            return None
+
+        if isinstance(identifier, (int, float)):
+            try:
+                numeric_id = int(identifier)
+            except Exception:
+                numeric_id = None
+            else:
+                for line in lines:
+                    if getattr(line, "id", None) == numeric_id:
+                        return line
+
+        identifier_str = str(identifier).strip()
+        if not identifier_str:
+            return None
+
+        try:
+            numeric_id = int(float(identifier_str))
+        except Exception:
+            numeric_id = None
+        else:
+            for line in lines:
+                if getattr(line, "id", None) == numeric_id:
+                    return line
+
+        lowered = identifier_str.lower()
+        for attr in (
+            "external_uid",
+            "farmer_id_code",
+            "name",
+            "display_name",
+            "line_label",
+        ):
+            for line in lines:
+                value = getattr(line, attr, None)
+                if not value:
+                    continue
+                if str(value).strip().lower() == lowered:
+                    return line
+
+        return None
+
+    def _prepare_feedback_records(self, record, entries):
+        prepared = []
+        for index, entry in enumerate(entries, start=1):
+            description = (entry.get("description") or "").strip()
+            if not description:
+                continue
+
+            identifier = entry.get("field_id")
+            label = entry.get("field_label")
+            line = self._match_declaration_line(record, identifier, label)
+
+            values = {
+                "sequence": entry.get("sequence") or index * 10,
+                "description": description,
+            }
+
+            if identifier not in (None, "", False):
+                values["field_identifier"] = str(identifier)
+
+            if label not in (None, "", False):
+                values["line_label"] = str(label)
+
+            if line and getattr(line, "id", None):
+                values["line_id"] = line.id
+                if not values.get("line_label"):
+                    values["line_label"] = getattr(line, "display_name", None) or getattr(
+                        line, "name", None
+                    )
+
+            display_label = values.get("line_label") or values.get("field_identifier") or ""
+            prepared.append({"vals": values, "label": display_label})
+
+        return prepared
+
+    def _store_ai_feedback(self, record, alerts, actions):
+        alert_prepared = self._prepare_feedback_records(record, alerts)
+        action_prepared = self._prepare_feedback_records(record, actions)
+
+        vals = {}
+        if hasattr(record, "ai_alert_ids"):
+            commands = [(5, 0, 0)]
+            commands.extend((0, 0, item["vals"]) for item in alert_prepared)
+            vals["ai_alert_ids"] = commands
+
+        if hasattr(record, "ai_action_ids"):
+            commands = [(5, 0, 0)]
+            commands.extend((0, 0, item["vals"]) for item in action_prepared)
+            vals["ai_action_ids"] = commands
+
+        if vals:
+            record.write(vals)
+
+        return alert_prepared, action_prepared
+
+    def _format_structured_summary(self, alerts, actions):
+        sections = []
+
+        if alerts:
+            lines = [_("Detected alerts")]
+            for item in alerts:
+                vals = item.get("vals", {})
+                label = item.get("label") or vals.get("line_label") or vals.get("field_identifier")
+                description = vals.get("description") or ""
+                if label:
+                    lines.append(f"- {label}: {description}")
+                else:
+                    lines.append(f"- {description}")
+            sections.append("\n".join(lines))
+
+        if actions:
+            lines = [_("Suggested corrective actions")]
+            for item in actions:
+                vals = item.get("vals", {})
+                label = item.get("label") or vals.get("line_label") or vals.get("field_identifier")
+                description = vals.get("description") or ""
+                if label:
+                    lines.append(f"- {label}: {description}")
+                else:
+                    lines.append(f"- {description}")
+            sections.append("\n".join(lines))
+
+        return "\n\n".join(section for section in sections if section).strip()
+
     def _prepare_deforestation_feedback(self, record):
         """Collect deforestation alerts linked to the declaration ``record``."""
 
@@ -639,12 +984,17 @@ class PlanetioSummarizeWizard(models.Model):
             or DEFAULT_CORRECTIVE_ACTIONS_PROMPT
         )
 
-        payload_parts = [
-            (deforestation_prompt or "").strip(),
-            (corrective_prompt or "").strip(),
-        ]
+        payload_parts = [STRUCTURED_RESPONSE_INSTRUCTION]
+        cleaned_deforestation = (deforestation_prompt or "").strip()
+        cleaned_actions = (corrective_prompt or "").strip()
+        if cleaned_deforestation:
+            payload_parts.append("### Deforestation alerts")
+            payload_parts.append(cleaned_deforestation)
+        if cleaned_actions:
+            payload_parts.append("### Corrective actions")
+            payload_parts.append(cleaned_actions)
         payload_parts = [part for part in payload_parts if part]
-        payload_text = "\n\n".join(payload_parts) if payload_parts else DEFAULT_DEFORESTATION_PROMPT
+        payload_text = "\n\n".join(payload_parts)
         for rec in self:
             if not rec.attachment_ids:
                 continue
@@ -666,10 +1016,31 @@ class PlanetioSummarizeWizard(models.Model):
                 continue
 
             summary = req.response_text or ""
-            if not summary:
+            structured = self._parse_ai_structured_response(summary)
+            alerts = structured.get("alerts") or []
+            actions = structured.get("actions") or []
+            alert_prepared, action_prepared = self._store_ai_feedback(
+                rec, alerts, actions
+            )
+
+            formatted_text = self._format_structured_summary(
+                alert_prepared, action_prepared
+            )
+            combined_text = summary
+            if formatted_text:
+                formatted_text = formatted_text.strip()
+                if summary and formatted_text and formatted_text != summary.strip():
+                    combined_text = (
+                        f"{formatted_text}\n\n{_('Original AI response')}\n{summary}"
+                    )
+                else:
+                    combined_text = formatted_text or summary
+
+            combined_text = (combined_text or "").strip()
+            if not combined_text:
                 continue
 
-            pdf_bytes, mimetype = self._summary_to_pdf(summary, rec)
+            pdf_bytes, mimetype = self._summary_to_pdf(combined_text, rec)
 
             self.env["ir.attachment"].create(
                 {
