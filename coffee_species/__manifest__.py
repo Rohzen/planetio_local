@@ -6,7 +6,7 @@
     "category": "Productivity",
     "author": "Roberto + AI",
     "license": "LGPL-3",
-    "depends": ["base", "product"],
+    "depends": ["base", "sale", "product"],
     "data": [
         "security/ir.model.access.csv",
         "views/coffee_species_views.xml",
