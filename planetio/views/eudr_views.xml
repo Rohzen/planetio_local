@@ -117,6 +117,13 @@
                 <field name="farmer_name" attrs="{'invisible': [('farmer_name', '=', False)]}" optional="show"/>
                 <field name="farm_name" attrs="{'invisible': [('farm_name', '=', False)]}"/>
                 <field name="country"/>
+                <field name="country_id" invisible="1"/>
+                <field name="country_flag_bin"
+                       widget="image"
+                       readonly="1"
+                       nolabel="1"
+                       options="{'size': [18, 18]}"
+                       attrs="{'invisible': [('country_flag_bin','=',False)]}"/>
                 <field name="region"/>
                 <field name="municipality" attrs="{'invisible': [('municipality', '=', False)]}"/>
                 <field name="area_ha" invisible="0"/>

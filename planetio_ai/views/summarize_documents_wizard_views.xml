@@ -26,7 +26,7 @@
                 class="oe_highlight btn-info"
                 icon="fa-magic"/>
       </xpath>
-      <xpath expr="//notebook/page[@string='Documents']" position="before">
+      <xpath expr="//notebook" position="inside">
         <page string="AI Alerts">
           <field name="ai_alert_ids" context="{'default_declaration_id': active_id}">
             <tree editable="bottom">

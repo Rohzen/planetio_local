@@ -1,4 +1,5 @@
 
+import base64
 from odoo import models, fields, api, _
 from odoo.tools.misc import formatLang
 from odoo.exceptions import UserError
@@ -6,6 +7,7 @@ from ..services.eudr_adapter_odoo import action_retrieve_dds_numbers
 import json
 import math
 import urllib.parse
+from odoo.modules.module import get_module_resource
 
 try:
     from shapely.geometry import Point, mapping
@@ -491,6 +493,52 @@ class EUDRDeclarationLine(models.Model):
     farmer_id_code = fields.Char()
     tax_code = fields.Char()
     country = fields.Char()
+    country_id = fields.Many2one('res.country', string='Country (M2O)')
+
+    country_flag_bin = fields.Binary(
+        string="Flag",
+        compute="_compute_country_flag_bin",
+        store=False,
+    )
+
+    @api.depends('country', 'country_id')
+    def _compute_country_flag_bin(self):
+        """Carica il file bandiera da base/static in base al codice ISO a due lettere."""
+        for rec in self:
+            rec.country_flag_bin = False
+            # 1) prova con M2O se presente
+            iso_code = False
+            if rec.country_id and rec.country_id.code:
+                iso_code = rec.country_id.code
+            else:
+                # 2) fallback: se hai solo il Char, prova a risalire al paese per nome o codice
+                if rec.country:
+                    # cerca prima per codice (es. "IT"), poi per nome (es. "Italy")
+                    Country = self.env['res.country'].sudo()
+                    country_rec = Country.search([
+                        '|',
+                        ('code', '=ilike', rec.country.strip()),
+                        ('name', '=ilike', rec.country.strip()),
+                    ], limit=1)
+                    if country_rec:
+                        iso_code = country_rec.code
+
+            if not iso_code:
+                continue
+
+            fname = f"{iso_code.lower()}.png"
+            # path tipici delle bandiere core (variano per build)
+            path = get_module_resource('base', 'static/img/country_flags', fname)
+            if not path:
+                path = get_module_resource('base', 'static/img/flags', fname)
+
+            if path:
+                try:
+                    with open(path, 'rb') as f:
+                        rec.country_flag_bin = base64.b64encode(f.read())
+                except Exception:
+                    rec.country_flag_bin = False
+
     region = fields.Char()
     municipality = fields.Char()
     farm_name = fields.Char()
