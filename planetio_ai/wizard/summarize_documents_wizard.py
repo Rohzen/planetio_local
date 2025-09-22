@@ -343,6 +343,39 @@ class PlanetioSummarizeWizard(models.Model):
         return True
 
     @staticmethod
+    def _strip_ai_markup(text):
+        """Remove simple Markdown markers used by the AI provider."""
+
+        if text in (None, "", False):
+            return ""
+        if not isinstance(text, str):
+            text = str(text)
+        cleaned = text.replace("**", "").replace("__", "")
+        cleaned = re.sub(r"`([^`]+)`", r"\\1", cleaned)
+        return cleaned
+
+    @classmethod
+    def _clean_entry_text(cls, text):
+        """Normalise raw AI text for display/storage purposes."""
+
+        cleaned = cls._strip_ai_markup(text)
+        if not cleaned:
+            return ""
+        cleaned = re.sub(r"\s+", " ", cleaned)
+        return cleaned.strip()
+
+    @classmethod
+    def _normalize_heading_token(cls, text):
+        """Prepare a heading string for comparisons."""
+
+        cleaned = cls._clean_entry_text(text)
+        if not cleaned:
+            return ""
+        cleaned = cleaned.strip("# ")
+        cleaned = cleaned.strip("-*• ")
+        return cleaned.strip()
+
+    @staticmethod
     def _is_header_line(line):
         """Return ``True`` when a line should be styled as a header."""
 
@@ -430,8 +463,9 @@ class PlanetioSummarizeWizard(models.Model):
                 or entry.get("value")
                 or entry.get("summary")
             )
+            description = self._clean_entry_text(description)
             if description:
-                result["description"] = str(description).strip()
+                result["description"] = description
 
             for key in (
                 "field_id",
@@ -441,7 +475,7 @@ class PlanetioSummarizeWizard(models.Model):
                 "line",
                 "identifier",
             ):
-                value = entry.get(key)
+                value = self._clean_entry_text(entry.get(key))
                 if value not in (None, ""):
                     result["field_id"] = value
                     break
@@ -454,7 +488,7 @@ class PlanetioSummarizeWizard(models.Model):
                 "line_name",
                 "title",
             ):
-                value = entry.get(key)
+                value = self._clean_entry_text(entry.get(key))
                 if value not in (None, ""):
                     result["field_label"] = value
                     break
@@ -465,18 +499,20 @@ class PlanetioSummarizeWizard(models.Model):
         elif isinstance(entry, (list, tuple)):
             if not entry:
                 return {}
-            field_id = entry[0]
+            field_id = self._clean_entry_text(entry[0])
             description_parts = [
-                str(part) for part in entry[1:] if part not in (None, "")
+                self._clean_entry_text(part)
+                for part in entry[1:]
+                if part not in (None, "")
             ]
-            description = " ".join(description_parts).strip()
+            description = " ".join(part for part in description_parts if part).strip()
             if description:
                 result["description"] = description
             if field_id not in (None, ""):
                 result["field_id"] = field_id
 
         else:
-            cleaned = str(entry).strip()
+            cleaned = self._clean_entry_text(entry)
             if not cleaned:
                 return {}
             cleaned = cleaned.lstrip("-*• ").strip()
@@ -513,8 +549,13 @@ class PlanetioSummarizeWizard(models.Model):
             if not line:
                 continue
 
-            heading = line.rstrip(":").strip()
+            plain_line = self._strip_ai_markup(line)
+            heading = self._normalize_heading_token(plain_line.rstrip(":"))
             heading_upper = heading.upper()
+            heading_words = [
+                word for word in re.split(r"\W+", heading_upper) if word
+            ]
+            heading_word_set = set(heading_words)
             if heading_upper in {
                 "ALERTS",
                 "DEFORESTATION ALERTS",
@@ -530,11 +571,17 @@ class PlanetioSummarizeWizard(models.Model):
                 "CORRECTIVE ACTIONS",
                 "ACTIONS",
                 "AZIONI CORRETTIVE",
-            } or "CORRECTIVE" in heading_upper:
+            } or (
+                {"CORRECTIVE", "CORRETTIVE"} & heading_word_set
+                or (
+                    {"ACTION", "ACTIONS", "AZIONI", "AZIONE"} & heading_word_set
+                    and len(heading_word_set) <= 5
+                )
+            ):
                 current = "actions"
                 continue
 
-            entry = self._normalize_structured_entry(line)
+            entry = self._normalize_structured_entry(plain_line)
             if not entry:
                 continue
 
