@@ -26,6 +26,52 @@
                 class="oe_highlight btn-info"
                 icon="fa-magic"/>
       </xpath>
+      <xpath expr="//notebook/page[@string='Documents']" position="before">
+        <page string="AI Alerts">
+          <field name="ai_alert_ids" context="{'default_declaration_id': active_id}">
+            <tree editable="bottom">
+              <field name="sequence" widget="handle"/>
+              <field name="line_id" optional="show"/>
+              <field name="line_label" optional="show"/>
+              <field name="field_identifier" optional="show"/>
+              <field name="description" widget="text"/>
+            </tree>
+            <form string="AI Alert">
+              <group>
+                <field name="sequence"/>
+                <field name="line_id"/>
+                <field name="line_label"/>
+                <field name="field_identifier"/>
+              </group>
+              <group>
+                <field name="description" widget="text"/>
+              </group>
+            </form>
+          </field>
+        </page>
+        <page string="AI Corrective Actions">
+          <field name="ai_action_ids" context="{'default_declaration_id': active_id}">
+            <tree editable="bottom">
+              <field name="sequence" widget="handle"/>
+              <field name="line_id" optional="show"/>
+              <field name="line_label" optional="show"/>
+              <field name="field_identifier" optional="show"/>
+              <field name="description" widget="text"/>
+            </tree>
+            <form string="Corrective Action">
+              <group>
+                <field name="sequence"/>
+                <field name="line_id"/>
+                <field name="line_label"/>
+                <field name="field_identifier"/>
+              </group>
+              <group>
+                <field name="description" widget="text"/>
+              </group>
+            </form>
+          </field>
+        </page>
+      </xpath>
     </field>
   </record>
 </odoo>
