@@ -38,6 +38,9 @@
 
               <span class="o_form_label">API Key</span>
               <div class="text-muted"><field name="gfw_api_key" readonly="1"/></div>
+
+              <span class="o_form_label">Alert lookback window</span>
+              <div class="text-muted"><field name="gfw_alert_years"/></div>
             </div>
 
             <div class="o_setting_right_pane">

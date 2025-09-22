@@ -4,7 +4,7 @@ import math
 import re
 import requests
 import traceback
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from collections import defaultdict
 
 from odoo import models, fields, api, _, tools
@@ -286,6 +286,31 @@ def parse_deforestation_external_properties(raw_props):
     }
 
 
+class EUDRDeclarationLineAlert(models.Model):
+    _name = "eudr.declaration.line.alert"
+    _description = "EUDR Declaration Line Deforestation Alert"
+    _order = "alert_date desc, id desc"
+
+    name = fields.Char(string="Description")
+    line_id = fields.Many2one(
+        "eudr.declaration.line",
+        string="Declaration Line",
+        required=True,
+        ondelete="cascade",
+        index=True,
+    )
+    provider = fields.Char(string="Provider")
+    alert_identifier = fields.Char(string="Alert Identifier")
+    alert_date = fields.Date(string="Alert Date")
+    alert_date_raw = fields.Char(string="Alert Date (raw)")
+    risk_level = fields.Char(string="Risk Level")
+    confidence = fields.Char(string="Confidence")
+    area_ha = fields.Float(string="Area (ha)")
+    latitude = fields.Float(string="Latitude")
+    longitude = fields.Float(string="Longitude")
+    payload_json = fields.Text(string="Raw Payload", readonly=True)
+
+
 class EUDRDeclarationLineDeforestation(models.Model):
     _inherit = "eudr.declaration.line"
 
@@ -293,6 +318,12 @@ class EUDRDeclarationLineDeforestation(models.Model):
     defor_alerts = fields.Integer(string="Deforestation Alerts", readonly=True)
     defor_area_ha = fields.Float(string="Deforestation Area (ha)", readonly=True)
     defor_details_json = fields.Text(string="Deforestation Details (JSON)", readonly=True)
+    alert_ids = fields.One2many(
+        "eudr.declaration.line.alert",
+        "line_id",
+        string="Deforestation Alerts",
+        readonly=True,
+    )
 
     # ---------- Geometry helpers ----------
     def _line_geometry(self):
@@ -375,10 +406,20 @@ class EUDRDeclarationLineDeforestation(models.Model):
         if not api_key:
             raise UserError(_('Configura planetio.gfw_api_key'))
         origin = (ICP.get_param('planetio.gfw_api_origin') or 'http://localhost').strip()
+        raw_years = ICP.get_param('planetio.gfw_alert_years')
         try:
-            days_back = int(ICP.get_param('planetio.gfw_days_back') or 365)
+            years_back = int(raw_years) if raw_years else 0
         except Exception:
-            days_back = 365
+            years_back = 0
+        if years_back <= 0:
+            raw_days = ICP.get_param('planetio.gfw_days_back')
+            try:
+                days_val = int(raw_days) if raw_days else 365
+            except Exception:
+                days_val = 365
+            years_back = max(1, int(math.ceil(days_val / 365.0)))
+        years_back = max(1, min(5, years_back))
+        days_back = years_back * 365
         date_from = (date.today() - timedelta(days=days_back)).isoformat()
 
         geom = self._line_geometry()
@@ -497,7 +538,8 @@ class EUDRDeclarationLineDeforestation(models.Model):
                         vals['external_ok'] = not risk_flag
                     if vals:
                         line.write(vals)
-
+                    line._sync_alert_records_from_status(status)
+                
                 # friendly, short per-line snippet for later batching
                 if isinstance(status, dict):
                     msg = status.get('message') or tools.ustr(status)
@@ -550,6 +592,229 @@ class EUDRDeclarationLineDeforestation(models.Model):
         if declarations:
             declarations._set_stage_from_xmlid('planetio.eudr_stage_validated')
         return True
+
+    # ---------- Alerts helpers ----------
+    def _sync_alert_records_from_status(self, status):
+        if not isinstance(status, dict):
+            return
+
+        alerts_payload = self._extract_alerts_from_payload(status)
+        if alerts_payload is None:
+            return
+
+        self.alert_ids.unlink()
+        if not alerts_payload:
+            return
+
+        provider = None
+        if isinstance(status.get('meta'), dict):
+            provider = status['meta'].get('provider')
+
+        Alert = self.env['eudr.declaration.line.alert']
+        create_vals = []
+        for alert in alerts_payload:
+            vals = self._prepare_alert_vals(alert, provider)
+            if vals:
+                create_vals.append(vals)
+
+        if create_vals:
+            Alert.create(create_vals)
+
+    def _extract_alerts_from_payload(self, payload):
+        def _search(node):
+            if isinstance(node, dict):
+                alerts = node.get('alerts')
+                if isinstance(alerts, list):
+                    if alerts and all(isinstance(item, dict) for item in alerts):
+                        return alerts
+                    if not alerts:
+                        return []
+                for value in node.values():
+                    found = _search(value)
+                    if found is not None:
+                        return found
+            elif isinstance(node, list):
+                for item in node:
+                    found = _search(item)
+                    if found is not None:
+                        return found
+            return None
+
+        result = _search(payload)
+        if isinstance(result, list):
+            return result
+        return None
+
+    def _prepare_alert_vals(self, alert, provider):
+        if not isinstance(alert, dict):
+            return None
+
+        provider_name = alert.get('provider') or alert.get('source') or provider or 'gfw'
+
+        identifier = None
+        for key in ('id', 'alert_id', 'alertId', 'glad_id', 'gladId', 'identifier'):
+            if alert.get(key):
+                identifier = tools.ustr(alert.get(key))
+                break
+
+        name = None
+        for key in ('name', 'title', 'label'):
+            if alert.get(key):
+                name = tools.ustr(alert.get(key))
+                break
+        if not name and identifier:
+            name = identifier
+
+        alert_date, alert_date_raw = self._normalize_alert_date(alert)
+
+        area_val = None
+        for key in ('area_ha', 'areaHa', 'alert_area_ha', 'areaHaTotal'):
+            if key in alert:
+                area_val = _coerce_float(alert.get(key))
+                if area_val is not None:
+                    break
+
+        lat = None
+        lon = None
+        for key in ('latitude', 'lat'):
+            if alert.get(key) not in (None, ''):
+                lat = _coerce_float(alert.get(key))
+                if lat is not None:
+                    break
+        for key in ('longitude', 'lon', 'lng'):
+            if alert.get(key) not in (None, ''):
+                lon = _coerce_float(alert.get(key))
+                if lon is not None:
+                    break
+
+        if (lat is None or lon is None) and isinstance(alert.get('coordinates'), (list, tuple)):
+            coords = alert.get('coordinates')
+            if len(coords) >= 2:
+                lon = _coerce_float(coords[0]) if lon is None else lon
+                lat = _coerce_float(coords[1]) if lat is None else lat
+
+        if (lat is None or lon is None) and isinstance(alert.get('geometry'), dict):
+            geom = alert['geometry']
+            coords = geom.get('coordinates') if isinstance(geom, dict) else None
+            if isinstance(coords, (list, tuple)) and len(coords) >= 2:
+                lon = _coerce_float(coords[0]) if lon is None else lon
+                lat = _coerce_float(coords[1]) if lat is None else lat
+
+        risk_level = None
+        for key in ('risk_level', 'riskLevel', 'risk'):
+            if alert.get(key):
+                risk_level = tools.ustr(alert.get(key))
+                break
+
+        confidence = None
+        for key in ('confidence', 'confidence_level', 'confidenceLevel'):
+            if alert.get(key):
+                confidence = tools.ustr(alert.get(key))
+                break
+
+        try:
+            payload_json = json.dumps(alert, ensure_ascii=False)
+        except Exception:
+            payload_json = tools.ustr(alert)
+
+        vals = {
+            'line_id': self.id,
+            'provider': provider_name,
+            'alert_identifier': identifier,
+            'name': name,
+            'alert_date': alert_date,
+            'alert_date_raw': alert_date_raw,
+            'risk_level': risk_level,
+            'confidence': confidence,
+            'area_ha': area_val or 0.0,
+            'latitude': lat,
+            'longitude': lon,
+            'payload_json': payload_json,
+        }
+
+        # Remove keys with None to keep the record clean, but keep False/0
+        vals = {key: value for key, value in vals.items() if value not in (None, '')}
+        vals['line_id'] = self.id
+        vals['provider'] = provider_name
+        vals['area_ha'] = vals.get('area_ha', 0.0)
+        vals['payload_json'] = payload_json
+
+        if alert_date_raw and 'alert_date_raw' not in vals:
+            vals['alert_date_raw'] = alert_date_raw
+
+        if 'name' not in vals:
+            fallback = alert_date_raw or identifier or provider_name
+            if fallback:
+                vals['name'] = tools.ustr(fallback)
+
+        return vals
+
+    def _normalize_alert_date(self, alert):
+        candidates = []
+        if isinstance(alert, dict):
+            for key in (
+                'alert_date',
+                'alertDate',
+                'date',
+                'detected_on',
+                'detectedOn',
+                'start_date',
+                'startDate',
+                'last_seen',
+            ):
+                if alert.get(key) not in (None, ''):
+                    candidates.append(alert.get(key))
+        elif alert not in (None, ''):
+            candidates.append(alert)
+
+        for candidate in candidates:
+            parsed, raw = self._parse_alert_date_value(candidate)
+            if raw:
+                return parsed, raw
+        return None, None
+
+    def _parse_alert_date_value(self, value):
+        if isinstance(value, date):
+            return value, value.isoformat()
+        if isinstance(value, datetime):
+            return value.date(), value.isoformat()
+        if isinstance(value, (int, float)):
+            try:
+                dt = datetime.utcfromtimestamp(float(value))
+                return dt.date(), dt.date().isoformat()
+            except Exception:
+                return None, str(value)
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return None, None
+            text = raw
+            if 'T' in text:
+                text = text.split('T', 1)[0]
+            text = text.replace('/', '-')
+            match = re.match(r"^(\d{4})-(\d{2})-(\d{2})", text)
+            if match:
+                try:
+                    return date(
+                        int(match.group(1)),
+                        int(match.group(2)),
+                        int(match.group(3)),
+                    ), raw
+                except ValueError:
+                    return None, raw
+            match = re.match(r"^(\d{8})", re.sub(r"[^0-9]", "", text))
+            if match:
+                token = match.group(1)
+                try:
+                    return date(
+                        int(token[0:4]),
+                        int(token[4:6]),
+                        int(token[6:8]),
+                    ), raw
+                except ValueError:
+                    return None, raw
+            return None, raw
+        return None, None
 
 
 class EUDRDeclarationDeforestation(models.Model):

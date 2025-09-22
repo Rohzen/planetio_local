@@ -25,7 +25,18 @@ def _ensure_odoo_stub():
             pass
 
     fields_ns = getattr(odoo, 'fields', types.SimpleNamespace())
-    for attr in ('Binary', 'Char', 'Integer', 'Float', 'Text', 'Boolean', 'Many2one'):
+    for attr in (
+        'Binary',
+        'Char',
+        'Integer',
+        'Float',
+        'Text',
+        'Boolean',
+        'Many2one',
+        'One2many',
+        'Date',
+        'Selection',
+    ):
         setattr(fields_ns, attr, _Field)
     odoo.fields = fields_ns
 

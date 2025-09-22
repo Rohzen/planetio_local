@@ -138,33 +138,74 @@
                   <button name="action_visualize_area_on_map" type="object" class="oe_highlight"
                   string="Show area on map" icon="fa-globe" help="Se presente un solo punto viene ipotizzata un'area di 50mq intorno allo stesso"/>
                 </header>
-                  <group>
-                    <group string="Farm data">
-                      <field name="name"/>
-                      <field name="farmer_name"/>
-                      <field name="farmer_id_code"/>
-                      <field name="tax_code"/>
-                      <field name="country"/>
-                      <field name="region"/>
-                      <field name="municipality"/>
-                      <field name="farm_name"/>
-                    </group>
-                    <group string="Geo data">
-                      <field name="area_ha"/>
-                      <field name="geo_type"/>
-                      <field name="geo_type_raw"/>
+                <notebook>
+                  <page string="Details">
+                    <group>
+                      <group string="Farm data">
+                        <field name="name"/>
+                        <field name="farmer_name"/>
+                        <field name="farmer_id_code"/>
+                        <field name="tax_code"/>
+                        <field name="country"/>
+                        <field name="region"/>
+                        <field name="municipality"/>
+                        <field name="farm_name"/>
+                      </group>
+                      <group string="Geo data">
+                        <field name="area_ha"/>
+                        <field name="geo_type"/>
+                        <field name="geo_type_raw"/>
 <!--                      <field name="defor_detail_json"/>-->
-                      <field name="geometry" widget="text" invisible="0"/>
+                        <field name="geometry" widget="text" invisible="0"/>
+                      </group>
+                      <group string="Additional api data">
+                        <field name="external_ok" widget="boolean_toggle" readonly="1"/>
+                        <field name="external_status"/>
+                        <field name="external_http_code"/>
+                        <field name="external_uid"/>
+                        <field name="external_message" widget="text" string="External Message (full)"/>
+                        <field name="external_properties_json" widget="text"/>
+                      </group>
                     </group>
-                    <group string="Additional api data">
-                      <field name="external_ok" widget="boolean_toggle" readonly="1"/>
-                      <field name="external_status"/>
-                      <field name="external_http_code"/>
-                      <field name="external_uid"/>
-                      <field name="external_message" widget="text" string="External Message (full)"/>
-                      <field name="external_properties_json" widget="text"/>
-                    </group>
-                  </group>
+                  </page>
+                  <page string="Deforestation Alerts">
+                    <field name="alert_ids" readonly="1">
+                      <tree string="Alerts" create="0" edit="0" delete="0">
+                        <field name="name"/>
+                        <field name="alert_date"/>
+                        <field name="alert_date_raw" optional="hide"/>
+                        <field name="alert_identifier" optional="show"/>
+                        <field name="provider" optional="show"/>
+                        <field name="risk_level" optional="show"/>
+                        <field name="confidence" optional="show"/>
+                        <field name="area_ha" optional="show"/>
+                        <field name="latitude" optional="show"/>
+                        <field name="longitude" optional="show"/>
+                      </tree>
+                      <form string="Alert" create="0" edit="0" delete="0">
+                        <group>
+                          <group>
+                            <field name="name"/>
+                            <field name="alert_identifier"/>
+                            <field name="provider"/>
+                            <field name="alert_date"/>
+                            <field name="alert_date_raw"/>
+                            <field name="risk_level"/>
+                            <field name="confidence"/>
+                            <field name="area_ha"/>
+                          </group>
+                          <group>
+                            <field name="latitude"/>
+                            <field name="longitude"/>
+                          </group>
+                        </group>
+                        <group>
+                          <field name="payload_json" widget="text" readonly="1"/>
+                        </group>
+                      </form>
+                    </field>
+                  </page>
+                </notebook>
               </form>
             </field>
           </page>
