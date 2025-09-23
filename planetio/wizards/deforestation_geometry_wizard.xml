@@ -5,6 +5,37 @@
         <field name="model">deforestation.geometry.wizard</field>
         <field name="arch" type="xml">
             <form string="Deforestation Geometry Check">
+                <div>
+                    <p>Insert a GeoJSON geometry to check for deforestation risk.</p>
+                    <p>The analysis will be performed using the selected provider.</p>
+                      <pre style="white-space: pre; font-family: monospace; overflow: auto; max-height: 350px;">
+                                {
+                                  "type": "Feature",
+                                  "properties": {
+                                    "name": "Sample Area"
+                                  },
+                                  "geometry": {
+                                    "type": "Polygon",
+                                    "coordinates": [
+                                      [
+                                        [12.4923, 41.8902],
+                                        [12.4930, 41.8902],
+                                        [12.4930, 41.8908],
+                                        [12.4923, 41.8908],
+                                        [12.4923, 41.8902]
+                                      ]
+                                    ]
+                                  }
+                                }
+                      </pre>
+                    OR
+                      <pre style="white-space: pre; font-family: monospace; overflow: auto; max-height: 350px;">
+                    {
+                        "type": "Point",
+                        "coordinates": [12.4923, 41.8902]
+                    }
+                    </pre>
+                </div>
                 <group>
                     <field name="provider_code"/>
                     <field name="geojson_input" widget="text"/>

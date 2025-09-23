@@ -27,7 +27,7 @@
                 icon="fa-magic"/>
       </xpath>
       <xpath expr="//notebook" position="inside">
-        <page string="AI Alerts">
+        <page string="Alerts (AI)">
           <field name="ai_alert_ids" context="{'default_declaration_id': active_id}">
             <tree editable="bottom">
               <field name="sequence" widget="handle"/>
@@ -49,7 +49,7 @@
             </form>
           </field>
         </page>
-        <page string="AI Corrective Actions">
+        <page string="Azioni correttive (AI)">
           <field name="ai_action_ids" context="{'default_declaration_id': active_id}">
             <tree editable="bottom">
               <field name="sequence" widget="handle"/>
