@@ -9,6 +9,7 @@
         'views/eudr_views.xml',
         'views/template_views.xml',
         'wizards/import_wizard.xml',
+        'wizards/deforestation_geometry_wizard.xml',
         'views/res_config_settings_view.xml',
         'data/eudr_stages.xml',
         'data/seed_template.xml',
