@@ -14,6 +14,11 @@ class DeforestationService(models.AbstractModel):
 
     def get_enabled_providers(self):
         ICP = self.env['ir.config_parameter'].sudo()
+        # New single-provider selector takes precedence when set
+        selected = (ICP.get_param('planetio.deforestation_provider') or '').strip()
+        if selected and selected in self._REGISTRY:
+            return [selected]
+
         raw = (ICP.get_param('deforestation.providers') or '').strip()
         if not raw:
             return ['gfw']  # default e preferito
@@ -23,6 +28,39 @@ class DeforestationService(models.AbstractModel):
         if 'gfw' in items:
             items = ['gfw'] + [p for p in items if p != 'gfw']
         return items or ['gfw']
+
+    def analyze_line(self, line):
+        providers = self.get_enabled_providers()
+        if not providers:
+            raise UserError(_("Nessun provider di deforestazione configurato."))
+
+        errors = []
+        for provider_code in providers:
+            provider = self.env[self._REGISTRY[provider_code]]
+            try:
+                provider.check_prerequisites()
+            except UserError as ue:
+                errors.append(_('Provider %(p)s: %(m)s') % {'p': provider_code, 'm': str(ue)})
+                continue
+
+            try:
+                result = provider.analyze_line(line)
+            except UserError as ue:
+                errors.append(_('Provider %(p)s: %(m)s') % {'p': provider_code, 'm': str(ue)})
+                continue
+            except Exception as ex:
+                _logger.exception("Provider %s failed during analyze_line", provider_code)
+                errors.append(_('Provider %(p)s errore inatteso: %(m)s') % {'p': provider_code, 'm': str(ex)})
+                continue
+
+            if isinstance(result, dict):
+                meta = result.setdefault('meta', {})
+                meta.setdefault('provider', provider_code)
+            return result
+
+        if errors:
+            raise UserError(_('Analisi deforestazione non riuscita: %s') % '; '.join(errors))
+        raise UserError(_("Analisi deforestazione non riuscita: nessun provider disponibile."))
 
     def analyze_records(self, eudr_import_rec, providers):
         errors, details = [], []
@@ -41,6 +79,9 @@ class DeforestationService(models.AbstractModel):
             for line in lines:
                 try:
                     res = provider.analyze_line(line)
+                    if isinstance(res, dict):
+                        meta = res.setdefault('meta', {})
+                        meta.setdefault('provider', provider_code)
                     line.external_message = res.get('message') or _("OK")
                     details.append({'provider':provider_code,'line_id':line.id,'result':res})
                 except UserError as ue:
