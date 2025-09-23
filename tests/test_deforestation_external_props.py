@@ -118,3 +118,41 @@ def test_parse_external_properties_medium_risk_from_string():
 
 def test_parse_external_properties_no_signal():
     assert mod.parse_deforestation_external_properties({"foo": "bar"}) is None
+
+
+def test_extract_alerts_from_summary_payload():
+    payload = {
+        "risk_level": "elevated",
+        "primary_drivers": ["smallholder clearing", "selective logging"],
+        "gfw_layer": "GLAD-L + GLAD-S2 (optical)",
+        "state": "Amazonas",
+        "source": "Global Forest Watch",
+        "alert_count_30d": 271,
+        "notes": "Northern AOI with intermittent alert pockets; watch mining pressure regionally.",
+        "period": "2025-08-01 to 2025-09-21",
+        "confidence": "lower (intermittent signal)",
+        "last_alert_date": "2025-09-15",
+    }
+
+    status = mod.parse_deforestation_external_properties(payload)
+    assert status is not None
+
+    line = mod.EUDRDeclarationLineDeforestation()
+    line.id = 123
+
+    alerts = line._extract_alerts_from_payload(status)
+    assert isinstance(alerts, list)
+    assert len(alerts) == 1
+
+    alert = alerts[0]
+    assert alert["risk_level"] == "elevated"
+    assert alert["alert_count"] == 271
+    assert alert["last_alert_date"] == "2025-09-15"
+
+    provider = (status.get("meta") or {}).get("provider")
+    vals = line._prepare_alert_vals(alert, provider)
+    assert vals["line_id"] == 123
+    assert vals["provider"] == "gfw"
+    assert vals["risk_level"] == "elevated"
+    assert vals["alert_date_raw"] == "2025-09-15"
+    assert vals["area_ha"] == 0.0

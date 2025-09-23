@@ -643,7 +643,194 @@ class EUDRDeclarationLineDeforestation(models.Model):
         result = _search(payload)
         if isinstance(result, list):
             return result
+        summary_alert = self._build_summary_alert_from_payload(payload)
+        if summary_alert:
+            return [summary_alert]
         return None
+
+    def _build_summary_alert_from_payload(self, payload):
+        if not isinstance(payload, dict):
+            return None
+
+        meta = payload.get('meta') if isinstance(payload.get('meta'), dict) else {}
+        metrics = payload.get('metrics') if isinstance(payload.get('metrics'), dict) else {}
+        details = payload.get('details') if isinstance(payload.get('details'), dict) else {}
+
+        props_candidates = []
+        if isinstance(details, dict):
+            for key in (
+                'externalProperties',
+                'properties',
+                'props',
+                'data',
+                'attributes',
+            ):
+                candidate = details.get(key)
+                if isinstance(candidate, dict):
+                    props_candidates.append(candidate)
+
+        for key in ('properties', 'props', 'data', 'attributes'):
+            candidate = payload.get(key)
+            if isinstance(candidate, dict):
+                props_candidates.append(candidate)
+
+        props_candidates.append(payload)
+
+        props = {}
+        for candidate in props_candidates:
+            if isinstance(candidate, dict) and candidate:
+                props = candidate
+                break
+
+        def _pick(*keys, source=None):
+            src = source if isinstance(source, dict) else props
+            for key in keys:
+                if isinstance(src, dict) and src.get(key) not in (None, ''):
+                    return src.get(key)
+            return None
+
+        risk = _pick('risk_level_label', 'risk_level', 'risk', source=meta) or _pick(
+            'risk_level_label', 'risk_level', 'risk'
+        )
+        if risk not in (None, ''):
+            risk = tools.ustr(risk).strip()
+        else:
+            risk = ''
+
+        confidence = _pick('confidence', source=meta) or _pick('confidence')
+        if confidence not in (None, ''):
+            confidence = tools.ustr(confidence)
+
+        last_alert = (
+            _pick('last_alert_date', 'last_alert', source=meta)
+            or _pick('last_alert_date', 'last_alert')
+        )
+        if last_alert not in (None, ''):
+            last_alert = tools.ustr(last_alert)
+
+        period = _pick('period', 'date_range', source=meta) or _pick('period', 'date_range')
+        if period not in (None, ''):
+            period = tools.ustr(period)
+
+        notes = _pick('notes', source=meta) or _pick('notes')
+        if notes not in (None, ''):
+            notes = tools.ustr(notes)
+
+        primary_drivers = _pick('primary_drivers', source=meta) or _pick('primary_drivers')
+
+        source = _pick('source', 'provider', source=meta) or _pick('source', 'provider')
+        if source not in (None, ''):
+            source = tools.ustr(source)
+
+        provider = tools.ustr(meta.get('provider')) if meta.get('provider') else None
+        if not provider and props.get('provider'):
+            provider = tools.ustr(props.get('provider'))
+        if not provider and source:
+            provider = source
+
+        alert_count = None
+        for key in (
+            'alert_count',
+            'alert_count_total',
+            'alerts_total',
+            'alert_count_30d',
+            'alerts_30d',
+            'alert_count_7d',
+            'alerts_7d',
+            'alertcount',
+            'alerts',
+            'alertcount30d',
+        ):
+            if key in metrics and metrics.get(key) not in (None, ''):
+                alert_count = metrics.get(key)
+                break
+            if key in props and props.get(key) not in (None, ''):
+                alert_count = props.get(key)
+                break
+        if alert_count not in (None, ''):
+            coerced_count = _coerce_int(alert_count)
+            alert_count = coerced_count if coerced_count is not None else alert_count
+
+        area_val = None
+        for key in (
+            'area_ha_total',
+            'alert_area_ha',
+            'area_ha',
+            'area_hectares',
+            'affected_area_ha',
+        ):
+            if key in metrics and metrics.get(key) not in (None, ''):
+                area_val = metrics.get(key)
+                break
+            if key in props and props.get(key) not in (None, ''):
+                area_val = props.get(key)
+                break
+        if area_val not in (None, ''):
+            coerced_area = _coerce_float(area_val)
+            area_val = coerced_area if coerced_area is not None else area_val
+
+        location = None
+        for key in ('name', 'title', 'label', 'state', 'region', 'location'):
+            if props.get(key) not in (None, ''):
+                location = tools.ustr(props.get(key))
+                break
+
+        interesting_values = [
+            risk,
+            confidence,
+            last_alert,
+            period,
+            notes,
+            primary_drivers,
+            source,
+            alert_count,
+            area_val,
+            location,
+        ]
+        has_interesting_data = any(
+            value not in (None, '', []) for value in interesting_values
+        )
+        if not has_interesting_data:
+            return None
+
+        summary = {}
+        if location:
+            summary['name'] = location
+        if provider:
+            summary['provider'] = provider
+        if source:
+            summary['source'] = source
+        if risk:
+            summary['risk_level'] = risk
+        if confidence not in (None, ''):
+            summary['confidence'] = confidence
+        if alert_count not in (None, ''):
+            summary['alert_count'] = alert_count
+        if area_val not in (None, ''):
+            summary['alert_area_ha'] = area_val
+        if last_alert:
+            summary['last_alert_date'] = last_alert
+        if period:
+            summary['period'] = period
+        if notes:
+            summary['notes'] = notes
+        if primary_drivers not in (None, ''):
+            summary['primary_drivers'] = primary_drivers
+
+        identifier = (
+            props.get('id')
+            or props.get('identifier')
+            or props.get('glad_id')
+            or props.get('gladId')
+            or (period and f"period:{period}")
+            or (last_alert and f"last:{last_alert}")
+            or (location and location.lower())
+            or provider
+        )
+        if identifier not in (None, ''):
+            summary['id'] = tools.ustr(identifier)
+
+        return summary
 
     def _prepare_alert_vals(self, alert, provider):
         if not isinstance(alert, dict):
@@ -758,6 +945,8 @@ class EUDRDeclarationLineDeforestation(models.Model):
                 'date',
                 'detected_on',
                 'detectedOn',
+                'last_alert_date',
+                'lastAlertDate',
                 'start_date',
                 'startDate',
                 'last_seen',
