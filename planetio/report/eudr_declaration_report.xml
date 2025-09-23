@@ -146,17 +146,17 @@
                 <h3>Declaration Lines</h3>
                 <table class="eudr-table table-bordered o_main_table">
                     <colgroup>
-                        <col style="width:4%">
-                        <col style="width:18%">
-                        <col style="width:9%">
-                        <col style="width:12%">
-                        <col style="width:12%">
-                        <col style="width:8%">
-                        <col style="width:8%">
-                        <col style="width:9%">
-                        <col style="width:10%">
-                        <col style="width:10%">
-                        <col style="width:12%">
+                        <col style="width:4%"/>
+                        <col style="width:18%"/>
+                        <col style="width:9%"/>
+                        <col style="width:12%"/>
+                        <col style="width:12%"/>
+                        <col style="width:8%"/>
+                        <col style="width:8%"/>
+                        <col style="width:9%"/>
+                        <col style="width:10%"/>
+                        <col style="width:10%"/>
+                        <col style="width:12%"/>
                     </colgroup>
                     <thead>
                         <tr>

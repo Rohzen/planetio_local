@@ -562,6 +562,106 @@ class EUDRDeclarationLine(models.Model):
         string="OK",
         readonly=True,
     )
+    area_ha_float = fields.Float(string="Area (ha)", compute="_compute_area_ha_float", store=True)
+
+    @api.onchange('area_ha_float')
+    def _sync_area_char(self):
+        for rec in self:
+            if rec.area_ha_float and rec.area_ha_float > 0:
+                rec.area_ha = f"{rec.area_ha_float:.4f}"
+            else:
+                rec.area_ha = "0.0000"
+
+    @staticmethod
+    def _maybe_swap_lonlat(seq):
+        # Heuristic: if median |first| looks like latitude (>|lon|) or any |lon|>180, swap
+        xs = [p[0] for p in seq if isinstance(p, (list, tuple)) and len(p) >= 2]
+        ys = [p[1] for p in seq if isinstance(p, (list, tuple)) and len(p) >= 2]
+        if not xs or not ys:
+            return seq
+        import statistics
+        mx = statistics.median(xs)
+        my = statistics.median(ys)
+        if abs(mx) > 180 or abs(my) > 90 or abs(my) > abs(mx):
+            return [[p[1], p[0]] for p in seq]  # swap to [lon, lat]
+        return seq
+
+    @staticmethod
+    def _normalize_rings_ccw(polygons_rings):
+        # Ensure exterior rings CCW and holes CW (what pyproj.Geod expects for positive area)
+        # We don’t require Shapely; do a simple signed shoelace on lon/lat for winding.
+        def ring_area(r):
+            a = 0.0
+            for i in range(len(r)):
+                x1, y1 = r[i]
+                x2, y2 = r[(i+1) % len(r)]
+                a += x1*y2 - x2*y1
+            return a / 2.0  # sign only matters
+        out = []
+        for rings in polygons_rings:
+            if not rings:
+                continue
+            ext = rings[0]
+            ext = EUDRDeclarationLine._maybe_swap_lonlat(ext)
+            if ring_area(ext) < 0:  # clockwise → reverse to CCW
+                ext = list(reversed(ext))
+            fixed = [ext]
+            for hole in rings[1:]:
+                hole = EUDRDeclarationLine._maybe_swap_lonlat(hole)
+                if ring_area(hole) > 0:  # holes should be CW
+                    hole = list(reversed(hole))
+                fixed.append(hole)
+            out.append(fixed)
+        return out
+
+    @api.depends('geometry')
+    def _compute_area_ha_float(self):
+        GeodLocal = Geod if Geod else None
+        for rec in self:
+            rec.area_ha_float = 0.0
+            if not rec.geometry:
+                continue
+            try:
+                gobj = json.loads(rec.geometry)
+            except Exception:
+                continue
+
+            # gather polygon rings
+            polys = []
+            t = gobj.get("type")
+            coords = gobj.get("coordinates")
+            if t == "Polygon":
+                polys = [coords]
+            elif t == "MultiPolygon":
+                polys = coords or []
+            else:
+                # points get handled elsewhere (fallback area per point)
+                rec.area_ha_float = 0.0
+                continue
+
+            # normalize winding & lon/lat order
+            polys = self._normalize_rings_ccw(polys)
+
+            # geodesic area on WGS84, always positive after holes subtraction
+            if GeodLocal:
+                geod = GeodLocal(ellps="WGS84")
+                total = 0.0
+                for rings in polys:
+                    if not rings:
+                        continue
+                    ex = rings[0]
+                    lon_ex, lat_ex = zip(*ex)
+                    a_ex, _ = geod.polygon_area_perimeter(lon_ex, lat_ex)
+                    poly_area = abs(a_ex)
+                    for hole in rings[1:]:
+                        lon_h, lat_h = zip(*hole)
+                        a_h, _ = geod.polygon_area_perimeter(lon_h, lat_h)
+                        poly_area -= abs(a_h)
+                    total += max(poly_area, 0.0)
+                rec.area_ha_float = total / 10000.0
+            else:
+                rec.area_ha_float = 0.0
+
 
     def action_visualize_area_on_map(self):
         """

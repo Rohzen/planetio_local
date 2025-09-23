@@ -114,7 +114,7 @@
                 <field name="external_message" invisible="1"/>
                 <field name="name" attrs="{'invisible': [('name', '=', False)]}" optional="show"/>
                 <field name="farmer_id_code" attrs="{'invisible': [('farmer_id_code', '=', False)]}"/>
-                <field name="farmer_name" attrs="{'invisible': [('farmer_name', '=', False)]}" optional="show"/>
+                <field name="farmer_name" attrs="{'invisible': [('farmer_name', '=', False)]}" optional="hide"/>
                 <field name="farm_name" attrs="{'invisible': [('farm_name', '=', False)]}"/>
                 <field name="country"/>
                 <field name="country_id" invisible="1"/>
@@ -129,7 +129,7 @@
                 <field name="area_ha" invisible="0"/>
                 <field name="external_status" invisible="1"/>
                 <field name="external_message_short" string="Message" invisible="1"/>
-                <field name="geometry" invisible="0" optional="show"/>
+                <field name="geometry" invisible="0" optional="hide"/>
               </tree>
               <form>
                 <header>
