@@ -157,12 +157,14 @@ class ExcelImportService(models.AbstractModel):
         df, sheet_name = self._load_normalized_dataframe(job.attachment_id, getattr(job, 'sheet_name', None))
         headers = list(df.columns)
         mapping = self._propose_mapping_from_headers(job.template_id, headers)
-        if self._is_mapping_poor(mapping) and self._ai_enabled():
-            try:
-                mapping = self._propose_mapping_with_ai(headers, df.head(5).to_dict(orient='records'))
-                mapping['_source'] = 'ai'
-            except Exception as e:
-                self._log(job, f'AI mapping failed: {e}')
+        if self._is_mapping_poor(mapping):
+            ai_mapper = getattr(self, '_propose_mapping_with_ai', None)
+            if callable(ai_mapper):
+                try:
+                    mapping = ai_mapper(headers, df.head(5).to_dict(orient='records'))
+                    mapping['_source'] = 'ai'
+                except Exception as e:
+                    self._log(job, f'AI mapping failed: {e}')
         preview = df.head(20).to_dict(orient='records')
         return mapping, preview
 
