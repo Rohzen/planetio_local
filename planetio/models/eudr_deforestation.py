@@ -490,6 +490,14 @@ class EUDRDeclarationLineDeforestation(models.Model):
             'meta': {'provider': 'gfw', 'date_from': date_from, 'step': step},
         }
 
+    def _get_deforestation_service(self):
+        self.ensure_one()
+        ICP = self.env['ir.config_parameter'].sudo()
+        provider_code = (ICP.get_param('planetio.deforestation_provider') or 'gfw').strip() or 'gfw'
+        if 'deforestation.service' in self.env:
+            return self.env['deforestation.service'].with_context(deforestation_providers_override=[provider_code])
+        return None
+
     # ---------- Public: invoked by button on line ----------
     def action_analyze_deforestation(self):
         # self can be either lines or declarations; normalize to lines
@@ -506,12 +514,10 @@ class EUDRDeclarationLineDeforestation(models.Model):
                     getattr(line, 'external_properties_json', None)
                 )
                 if not status:
-                    svc = line.env.get('planetio.deforestation.service') or line.env.get('deforestation.service')
-                    if svc:
-                        svc = svc.with_context(deforestation_providers_override=['gfw'])
-                    if svc and hasattr(svc, 'analyze_line'):
+                    svc = line._get_deforestation_service()
+                    if svc is not None and hasattr(svc, 'analyze_line'):
                         status = svc.analyze_line(line)
-                    elif svc and hasattr(svc, 'analyze_geojson'):
+                    elif svc is not None and hasattr(svc, 'analyze_geojson'):
                         status = svc.analyze_geojson(line._line_geometry() or {})
                     else:
                         status = line._gfw_analyze_fallback()

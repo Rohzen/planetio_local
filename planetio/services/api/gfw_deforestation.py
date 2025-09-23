@@ -1,24 +1,79 @@
-from odoo import models, _
-from odoo.exceptions import UserError
+# -*- coding: utf-8 -*-
+import math
 import requests
+from datetime import date, timedelta
+from odoo import models, _, tools
+from odoo.exceptions import UserError
 import json
+
 
 class DeforestationProviderGFW(models.AbstractModel):
     _name = 'deforestation.provider.gfw'
     _inherit = 'deforestation.provider.base'
     _description = 'Deforestation Provider - GFW'
 
-    def _get_token(self):
-        return self.env['ir.config_parameter'].sudo().get_param('deforestation.gfw.token')
+    # Single source of truth
+    def _get_api_key(self):
+        icp = self.env['ir.config_parameter'].sudo()
+        key = (icp.get_param('planetio.gfw_api_key') or '').strip()
+        return key or None
 
     def check_prerequisites(self):
-        if not self._get_token():
-            raise UserError(_("Token API GFW mancante. Inseriscilo in Impostazioni > Deforestazione."))
+        if not self._get_api_key():
+            raise UserError(_("GFW API Key mancante. Imposta 'GFW API Key' nelle Impostazioni."))
 
+    # ----- helpers -----
+    def _expand_point_to_bbox(self, geom):
+        """Se la geom è un Point, espandi a un piccolo bbox (coerente col fallback)."""
+        if not isinstance(geom, dict) or geom.get('type') != 'Point':
+            return None
+        coords = geom.get('coordinates') or []
+        if len(coords) < 2:
+            return None
+        lon, lat = coords[0], coords[1]
+        try:
+            dlat = 0.2 / 111.0
+            dlon = 0.2 / (111.0 * max(0.1, abs(math.cos(math.radians(lat)))))
+        except Exception:
+            return None
+        return {
+            'type': 'Polygon',
+            'coordinates': [[
+                [lon - dlon, lat - dlat],
+                [lon + dlon, lat - dlat],
+                [lon + dlon, lat + dlat],
+                [lon - dlon, lat + dlat],
+                [lon - dlon, lat - dlat],
+            ]]
+        }
+
+    def _compute_date_from(self):
+        ICP = self.env['ir.config_parameter'].sudo()
+        raw_years = ICP.get_param('planetio.gfw_alert_years')
+        try:
+            years_back = int(raw_years) if raw_years else 0
+        except Exception:
+            years_back = 0
+        if years_back <= 0:
+            raw_days = ICP.get_param('planetio.gfw_days_back')
+            try:
+                days_val = int(raw_days) if raw_days else 365
+            except Exception:
+                days_val = 365
+            years_back = max(1, int(math.ceil(days_val / 365.0)))
+        years_back = max(1, min(5, years_back))
+        days_back = years_back * 365
+        return (date.today() - timedelta(days=days_back)).isoformat()
+
+    # ----- main API -----
     def analyze_line(self, line):
-        token = self._get_token()
+        """Conta le allerte GFW sulla geometry della riga, usando il Data API (no gfw_client)."""
+        self.check_prerequisites()
+        api_key = self._get_api_key()
+        ICP = self.env['ir.config_parameter'].sudo()
+        origin = (ICP.get_param('planetio.gfw_api_origin') or 'http://localhost').strip()
 
-        # determine geometry from the line
+        # 1) geometry
         geom = None
         if hasattr(line, '_line_geometry'):
             try:
@@ -26,66 +81,71 @@ class DeforestationProviderGFW(models.AbstractModel):
             except Exception:
                 geom = None
         if not geom:
-            raw = getattr(line, 'geojson', None)
+            raw = getattr(line, 'geojson', None) or getattr(line, 'geometry_geojson', None)
             if raw:
                 try:
                     geom = json.loads(raw) if isinstance(raw, str) else raw
                 except Exception:
                     geom = None
-        if not geom or not isinstance(geom, dict):
-            raise UserError(_("Geometria mancante sulla riga %s") % (getattr(line, 'display_name', line.id)))
+        if not isinstance(geom, dict) or not geom.get('type'):
+            raise UserError(_("Manca geometria (GeoJSON o lat/lon) sulla riga %s") %
+                            (getattr(line, 'display_name', None) or line.id))
 
-        payload = {}
-        if geom.get('type') == 'Point':
-            coords = geom.get('coordinates') or []
-            if len(coords) < 2:
-                raise UserError(_("Geometria Point non valida sulla riga %s") % (getattr(line, 'display_name', line.id)))
-            payload['lat'] = coords[1]
-            payload['lon'] = coords[0]
-        else:
-            payload['geometry'] = geom
+        # 2) normalizza Point -> bbox
+        step = 'latest/original'
+        bbox = self._expand_point_to_bbox(geom) if geom.get('type') == 'Point' else None
+        geom_req = bbox if bbox else geom
+        if bbox:
+            step = 'latest/bbox'
 
-        headers = {
-            'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json',
-        }
+        # 3) finestra temporale
+        date_from = self._compute_date_from()
+
+        # 4) call Data API (stessa sequenza del fallback)
+        url_latest = 'https://data-api.globalforestwatch.org/dataset/gfw_integrated_alerts/latest/query/json'
+        sql = "SELECT COUNT(*) AS cnt FROM results WHERE gfw_integrated_alerts__date >= '%s'" % date_from
+        headers = {'x-api-key': api_key, 'Content-Type': 'application/json', 'Origin': origin}
+
+        # try 1
+        body = {'sql': sql, 'geometry': geom_req}
         try:
-            r = requests.post(
-                "https://data-api.globalforestwatch.org/deforestation-alerts/check",
-                json=payload,
-                headers=headers,
-                timeout=60,
-            )
+            r = requests.post(url_latest, headers=headers, json=body, timeout=60)
         except requests.exceptions.RequestException as ex:
-            raise UserError(_("Connessione a GFW non riuscita: %s") % str(ex))
+            raise UserError(_("Connessione a GFW non riuscita: %s") % tools.ustr(ex))
 
-        if r.status_code == 401:
-            raise UserError(_("Token GFW non valido o scaduto."))
+        # try 2: se 500, prova 90 giorni
         if r.status_code >= 500:
-            raise UserError(_("GFW ha risposto con errore temporaneo (%s).") % r.status_code)
+            short_from = (date.today() - timedelta(days=90)).isoformat()
+            sql_short = "SELECT COUNT(*) AS cnt FROM results WHERE gfw_integrated_alerts__date >= '%s'" % short_from
+            r = requests.post(url_latest, headers=headers, json={'sql': sql_short, 'geometry': geom_req}, timeout=60)
+            step = step + '/90d'
+
+        # try 3: versione fissa se ancora 500
+        if r.status_code >= 500:
+            url_ver = 'https://data-api.globalforestwatch.org/dataset/gfw_integrated_alerts/v20250909/query/json'
+            r = requests.post(url_ver, headers=headers, json={'sql': sql, 'geometry': geom_req}, timeout=60)
+            step = 'version/' + ('bbox' if bbox else 'original')
+
         if r.status_code >= 400:
-            detail = None
-            if r.headers.get('Content-Type', '').startswith('application/json'):
-                try:
-                    detail = r.json().get('detail')
-                except Exception:
-                    detail = None
-            raise UserError(_("Richiesta rifiutata da GFW: %s") % (detail or r.text))
+            snippet = (r.text or '')[:300]
+            raise UserError(_("Provider gfw: Richiesta rifiutata da GFW: %s") % tools.ustr(snippet or r.status_code))
 
         try:
             data = r.json()
         except Exception:
-            data = {}
+            data = {'data': []}
 
-        alerts = (data.get('data') or {}).get('alerts') or []
-        summary = (data.get('data') or {}).get('summary') or {}
-        alert_count = summary.get('alert_count') or len(alerts)
-        area_ha = summary.get('area_ha') or summary.get('areaHa') or 0.0
-        message = _("GFW: %(cnt)s allerta/e") % {'cnt': alert_count}
+        rows = data.get('data') or []
+        cnt = 0
+        if rows and isinstance(rows[0], dict):
+            try:
+                cnt = int(rows[0].get('cnt') or 0)
+            except Exception:
+                cnt = 0
 
+        # 5) risposta standardizzata (coerente col resto del modulo)
         return {
-            'message': message,
-            'alerts': alerts,
-            'metrics': {'alert_count': alert_count, 'area_ha_total': area_ha},
-            'meta': {'provider': 'gfw'},
+            'message': _("GFW Data API: %(n)s allerta/e (da %(d)s)") % {'n': cnt, 'd': date_from},
+            'metrics': {'alert_count': cnt, 'area_ha_total': 0.0},
+            'meta': {'provider': 'gfw', 'date_from': date_from, 'step': step},
         }
