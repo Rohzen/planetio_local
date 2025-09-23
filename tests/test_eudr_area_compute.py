@@ -20,6 +20,63 @@ adapter_mod = sys.modules.setdefault(
     types.ModuleType('planetio.services.eudr_adapter_odoo'),
 )
 
+odoo_pkg = sys.modules.setdefault('odoo', types.ModuleType('odoo'))
+modules_pkg = sys.modules.setdefault('odoo.modules', types.ModuleType('odoo.modules'))
+module_mod = sys.modules.setdefault('odoo.modules.module', types.ModuleType('odoo.modules.module'))
+setattr(modules_pkg, 'module', module_mod)
+
+models_ns = getattr(odoo_pkg, 'models', types.SimpleNamespace())
+for attr in ('Model', 'AbstractModel', 'TransientModel'):
+    if not hasattr(models_ns, attr):
+        setattr(models_ns, attr, object)
+odoo_pkg.models = models_ns
+
+
+class _Field:
+    def __init__(self, *args, **kwargs):
+        pass
+
+
+fields_ns = getattr(odoo_pkg, 'fields', types.SimpleNamespace())
+for attr in (
+    'Binary',
+    'Char',
+    'Integer',
+    'Float',
+    'Text',
+    'Boolean',
+    'Many2one',
+    'One2many',
+    'Date',
+    'Datetime',
+    'Selection',
+):
+    if not hasattr(fields_ns, attr):
+        setattr(fields_ns, attr, _Field)
+odoo_pkg.fields = fields_ns
+
+if not hasattr(odoo_pkg, 'api'):
+    odoo_pkg.api = types.SimpleNamespace()
+
+odoo_pkg._ = getattr(odoo_pkg, '_', lambda value: value)
+
+tools_mod = sys.modules.setdefault('odoo.tools', types.ModuleType('odoo.tools'))
+misc_mod = sys.modules.setdefault('odoo.tools.misc', types.ModuleType('odoo.tools.misc'))
+setattr(misc_mod, 'formatLang', lambda env, value, digits=None: value)
+setattr(tools_mod, 'misc', misc_mod)
+odoo_pkg.tools = tools_mod
+
+exceptions_mod = sys.modules.setdefault('odoo.exceptions', types.ModuleType('odoo.exceptions'))
+setattr(exceptions_mod, 'UserError', Exception)
+odoo_pkg.exceptions = exceptions_mod
+
+
+def _fake_get_module_resource(*args, **kwargs):  # pragma: no cover - simple stub
+    return None
+
+
+setattr(module_mod, 'get_module_resource', _fake_get_module_resource)
+
 
 def _stub_action(*args, **kwargs):  # pragma: no cover - simple stub
     return None
