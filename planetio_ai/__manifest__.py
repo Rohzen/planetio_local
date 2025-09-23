@@ -11,6 +11,7 @@
         'views/res_config_settings_views.xml',
         'views/summarize_documents_wizard_views.xml',
         'report/ai_summary_report.xml',
+        'report/eudr_declaration_ai_report.xml',
     ],
     'installable': True,
 }
