@@ -69,6 +69,22 @@
             .col-6 + .col-6 { padding-right: 0; padding-left: 8px; }
 
             .muted { color: #666; }
+
+            .eudr-subtable {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 6px;
+            }
+            .eudr-subtable th, .eudr-subtable td {
+                border: 1px solid #bbb;
+                padding: 4px 6px;
+                font-size: 11px;
+                vertical-align: top;
+            }
+            .eudr-subtable thead th {
+                background: #f3f6f4;
+                color: #2e7d32;
+            }
         </style>
 
         <t t-foreach="docs" t-as="doc">
@@ -215,6 +231,97 @@
                         <p t-esc="doc.extra_info"/>
                     </div>
                 </t>
+
+                <h3>Declaration Lines &amp; Alerts Overview</h3>
+                <table class="eudr-table table-bordered o_main_table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Farmer / Farm</th>
+                            <th>Country</th>
+                            <th>Region</th>
+                            <th>Municipality</th>
+                            <th>Area (Ha)</th>
+                            <th>Geo Type</th>
+                            <th>External Status</th>
+                            <th>Deforestation Provider</th>
+                            <th>Deforestation Alerts</th>
+                            <th>Deforestation Area (Ha)</th>
+                            <th>Related Alerts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-if="not doc.line_ids">
+                            <tr class="eudr-row">
+                                <td colspan="12" style="text-align:center;">No lines available</td>
+                            </tr>
+                        </t>
+                        <t t-foreach="enumerate(doc.line_ids)" t-as="line_iter">
+                            <t t-set="line" t-value="line_iter[1]"/>
+                            <tr class="eudr-row">
+                                <td class="eudr-num"><span t-esc="line_iter[0] + 1"/></td>
+                                <td>
+                                    <div><span t-esc="line.farmer_name or line.name or '-'"/></div>
+                                    <div t-if="line.farm_name" class="muted">(<span t-esc="line.farm_name"/>)</div>
+                                </td>
+                                <td><span t-esc="line.country or '-'"/></td>
+                                <td><span t-esc="line.region or '-'"/></td>
+                                <td><span t-esc="line.municipality or '-'"/></td>
+                                <td class="eudr-num"><span t-esc="line.area_ha or '-'"/></td>
+                                <td><span t-esc="line.geo_type or '-'"/></td>
+                                <td><span t-esc="line.external_status or '-'"/></td>
+                                <td><span t-esc="line.defor_provider or '-'"/></td>
+                                <td class="eudr-num"><span t-esc="line.defor_alerts if line.defor_alerts is not None else '-'"/></td>
+                                <td class="eudr-num"><span t-esc="line.defor_area_ha if line.defor_area_ha is not None else '-'"/></td>
+                                <td>
+                                    <t t-if="line.alert_ids">
+                                        <table class="eudr-subtable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Provider</th>
+                                                    <th>Identifier</th>
+                                                    <th>Date</th>
+                                                    <th>Risk Level</th>
+                                                    <th>Confidence</th>
+                                                    <th>Area (Ha)</th>
+                                                    <th>Coordinates</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="line.alert_ids" t-as="alert">
+                                                    <tr>
+                                                        <td><span t-esc="alert.provider or '-'"/></td>
+                                                        <td><span t-esc="alert.alert_identifier or '-'"/></td>
+                                                        <td>
+                                                            <t t-if="alert.alert_date">
+                                                                <span t-field="alert.alert_date"/>
+                                                            </t>
+                                                            <t t-elif="alert.alert_date_raw">
+                                                                <span t-esc="alert.alert_date_raw"/>
+                                                            </t>
+                                                            <t t-else="">
+                                                                <span>-</span>
+                                                            </t>
+                                                        </td>
+                                                        <td><span t-esc="alert.risk_level or '-'"/></td>
+                                                        <td><span t-esc="alert.confidence or '-'"/></td>
+                                                        <td class="eudr-num"><span t-esc="alert.area_ha if alert.area_ha not in (None, False) else '-'"/></td>
+                                                        <td>
+                                                            <span t-esc="('%0.5f, %0.5f' % (alert.latitude, alert.longitude)) if (alert.latitude not in (None, False) and alert.longitude not in (None, False)) else '-'"/>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="muted">No alerts</span>
+                                    </t>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
             </div>
         </t>
     </t>

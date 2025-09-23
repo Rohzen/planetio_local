@@ -1,0 +1,220 @@
+<odoo>
+    <data>
+
+        <template id="report_eudr_declaration_ai_document">
+            <t t-call="web.html_container">
+                <!-- Reuse EUDR declaration styling for consistency -->
+                <style type="text/css">
+                    .eudr-report * { box-sizing: border-box; }
+                    .eudr-report { font-size: 12px; color: #222; }
+                    .eudr-report h2, .eudr-report h3 {
+                        color: #2e7d32;
+                        margin: 0 0 8px 0;
+                        line-height: 1.2;
+                    }
+                    .eudr-report h2 { font-size: 20px; }
+                    .eudr-report h3 { font-size: 16px; margin-top: 18px; }
+
+                    .eudr-meta { margin-bottom: 10px; }
+                    .eudr-meta p { margin: 2px 0; }
+
+                    .eudr-card {
+                        border: 1px solid #ccc;
+                        border-radius: 4px;
+                        padding: 10px;
+                    }
+
+                    .eudr-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 8px 0 16px 0;
+                        table-layout: fixed;
+                    }
+                    .eudr-table th, .eudr-table td {
+                        border: 1px solid #999;
+                        padding: 6px 8px;
+                        vertical-align: top;
+                        word-wrap: break-word;
+                    }
+                    .eudr-table thead th {
+                        background: #f3f6f4;
+                        color: #2e7d32;
+                        font-weight: 600;
+                    }
+                    .eudr-table tbody tr:nth-child(even) { background: #fafafa; }
+
+                    .eudr-num { text-align: right; white-space: nowrap; }
+
+                    .eudr-inline-table th {
+                        width: 38%;
+                        background: #f7f9f7;
+                        font-weight: 600;
+                    }
+
+                    .eudr-row { page-break-inside: avoid; }
+                    .eudr-pre {
+                        white-space: pre-wrap;
+                        background: #f8f8f8;
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        border-radius: 3px;
+                        margin-top: 6px;
+                    }
+
+                    .grid { display: table; width: 100%; table-layout: fixed; }
+                    .col { display: table-cell; vertical-align: top; }
+                    .col-6 { width: 50%; padding-right: 8px; }
+                    .col-6 + .col-6 { padding-right: 0; padding-left: 8px; }
+
+                    .muted { color: #666; }
+                </style>
+
+                <t t-foreach="docs" t-as="doc">
+                    <t t-set="field_info" t-value="doc.fields_get(['eudr_company_type', 'activity_type'])"/>
+                    <t t-set="company_selection" t-value="dict(field_info.get('eudr_company_type', {}).get('selection', []))"/>
+                    <t t-set="activity_selection" t-value="dict(field_info.get('activity_type', {}).get('selection', []))"/>
+
+                    <div class="page eudr-report">
+                        <div class="grid">
+                            <div class="col col-6">
+                                <h2>EUDR Declaration</h2>
+                                <div class="eudr-card eudr-meta">
+                                    <p>
+                                        <span class="muted">Reference:</span>
+                                        <span t-esc="doc.name or doc.display_name"/>
+                                    </p>
+                                    <p>
+                                        <span class="muted">Partner:</span>
+                                        <span t-esc="doc.partner_id.display_name or '-'"/>
+                                    </p>
+                                    <p>
+                                        <span class="muted">Creation Date:</span>
+                                        <span t-field="doc.datestamp"/>
+                                    </p>
+                                    <p>
+                                        <span class="muted">Company Type:</span>
+                                        <span t-esc="company_selection.get(doc.eudr_company_type, '-') if doc.eudr_company_type else '-'"/>
+                                    </p>
+                                    <p>
+                                        <span class="muted">Activity:</span>
+                                        <span t-esc="activity_selection.get(doc.activity_type, '-') if doc.activity_type else '-'"/>
+                                    </p>
+                                    <p>
+                                        <span class="muted">DDS Identifier:</span>
+                                        <span t-esc="doc.dds_identifier or '-'"/>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="col col-6">
+                                <table class="eudr-table eudr-inline-table eudr-row">
+                                    <tbody>
+                                        <tr>
+                                            <th>Operator</th>
+                                            <td><span t-esc="doc.operator_name or '-'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Product</th>
+                                            <td>
+                                                <t t-if="doc.product_id">
+                                                    <span t-esc="doc.product_id.display_name"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span t-esc="doc.product_description or '-'"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>HS Code</th>
+                                            <td><span t-esc="doc.hs_code or '-'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Net Mass (Kg)</th>
+                                            <td class="eudr-num"><span t-field="doc.net_mass_kg"/></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total Area (Ha)</th>
+                                            <td class="eudr-num"><span t-esc="doc.area_ha_display or '-'"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <h3>AI Alerts</h3>
+                        <table class="eudr-table table-bordered o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Field</th>
+                                    <th>Field Identifier</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="not doc.ai_alert_ids">
+                                    <tr class="eudr-row">
+                                        <td colspan="4" style="text-align:center;">No alerts available</td>
+                                    </tr>
+                                </t>
+                                <t t-foreach="enumerate(doc.ai_alert_ids)" t-as="alert_iter">
+                                    <t t-set="alert" t-value="alert_iter[1]"/>
+                                    <tr class="eudr-row">
+                                        <td class="eudr-num"><span t-esc="alert_iter[0] + 1"/></td>
+                                        <td>
+                                            <div><span t-esc="alert.line_label or alert.field_identifier or '-'"/></div>
+                                            <div t-if="alert.line_id" class="muted">Line: <span t-esc="alert.line_id.display_name"/></div>
+                                        </td>
+                                        <td><span t-esc="alert.field_identifier or '-'"/></td>
+                                        <td><div class="eudr-pre" t-esc="alert.description"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <h3>Corrective Actions</h3>
+                        <table class="eudr-table table-bordered o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Field</th>
+                                    <th>Field Identifier</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="not doc.ai_action_ids">
+                                    <tr class="eudr-row">
+                                        <td colspan="4" style="text-align:center;">No corrective actions available</td>
+                                    </tr>
+                                </t>
+                                <t t-foreach="enumerate(doc.ai_action_ids)" t-as="action_iter">
+                                    <t t-set="action" t-value="action_iter[1]"/>
+                                    <tr class="eudr-row">
+                                        <td class="eudr-num"><span t-esc="action_iter[0] + 1"/></td>
+                                        <td>
+                                            <div><span t-esc="action.line_label or action.field_identifier or '-'"/></div>
+                                            <div t-if="action.line_id" class="muted">Line: <span t-esc="action.line_id.display_name"/></div>
+                                        </td>
+                                        <td><span t-esc="action.field_identifier or '-'"/></td>
+                                        <td><div class="eudr-pre" t-esc="action.description"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </template>
+
+        <report
+            id="action_report_eudr_declaration_ai"
+            model="eudr.declaration"
+            string="EUDR Declaration - AI Feedback"
+            report_type="qweb-pdf"
+            name="planetio_ai.report_eudr_declaration_ai_document"
+            file="planetio_ai.report_eudr_declaration_ai_document"
+            print_report_name="'EUDR Declaration AI - %s' % (object.name or object.id)"
+        />
+    </data>
+</odoo>
