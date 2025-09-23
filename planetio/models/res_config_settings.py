@@ -68,7 +68,7 @@ class ResConfigSettings(models.TransientModel):
         domain = (parsed.netloc or '').split(':')[0] if parsed else ''
         allowed_domains = [domain] if domain else ['localhost']
 
-        from ..services.gfw_client import get_access_token, create_or_get_api_key
+        from ..services.api.gfw_client import get_access_token, create_or_get_api_key
 
         token = get_access_token(email, password)
         api_key = create_or_get_api_key(
