@@ -574,7 +574,7 @@ class EUDRDeclarationLine(models.Model):
             else:
                 rec.area_ha = "0.0000"
 
-    @api.depends('geometry')
+    @api.depends('geometry','farmer_id_code')
     def _compute_area_ha_float(self):
         geod = Geod(ellps="WGS84") if Geod else None
 
