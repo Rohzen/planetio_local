@@ -13,6 +13,18 @@ class DeforestationService(models.AbstractModel):
     }
 
     def get_enabled_providers(self):
+        ctx_override = self.env.context.get('deforestation_providers_override')
+        if ctx_override:
+            if isinstance(ctx_override, str):
+                forced = [ctx_override]
+            elif isinstance(ctx_override, (list, tuple, set)):
+                forced = list(ctx_override)
+            else:
+                forced = [ctx_override]
+            forced = [code for code in forced if code in self._REGISTRY]
+            if forced:
+                return forced
+
         ICP = self.env['ir.config_parameter'].sudo()
         # New single-provider selector takes precedence when set
         selected = (ICP.get_param('planetio.deforestation_provider') or '').strip()

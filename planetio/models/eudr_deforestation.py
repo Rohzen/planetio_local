@@ -507,6 +507,8 @@ class EUDRDeclarationLineDeforestation(models.Model):
                 )
                 if not status:
                     svc = line.env.get('planetio.deforestation.service') or line.env.get('deforestation.service')
+                    if svc:
+                        svc = svc.with_context(deforestation_providers_override=['gfw'])
                     if svc and hasattr(svc, 'analyze_line'):
                         status = svc.analyze_line(line)
                     elif svc and hasattr(svc, 'analyze_geojson'):
