@@ -1,6 +1,7 @@
 from odoo import models, _
 from odoo.exceptions import UserError
 import logging
+import json
 _logger = logging.getLogger(__name__)
 
 class DeforestationService(models.AbstractModel):
@@ -105,3 +106,91 @@ class DeforestationService(models.AbstractModel):
                     errors.append({'level':'error','provider':provider_code,'line_id':line.id,'message':str(ex)})
 
         return {'errors': errors, 'details': details}
+
+    # ----- GeoJSON utility -----
+    class _GeometryLineProxy:
+        """Minimal object exposing the attributes used by providers."""
+
+        def __init__(self, geometry, display_name=None):
+            self._geometry = geometry
+            self.display_name = display_name or _('GeoJSON geometry')
+            # Provide minimal attributes accessed by providers.
+            self.id = 0
+            try:
+                self.geojson = json.dumps(geometry, ensure_ascii=False)
+            except Exception:
+                self.geojson = None
+
+        def _line_geometry(self):
+            return self._geometry
+
+    def analyze_geojson(self, geometry, providers=None, display_name=None):
+        """Run the deforestation analysis on a raw GeoJSON geometry.
+
+        :param dict geometry: GeoJSON geometry (Point/Polygon/MultiPolygon).
+        :param providers: Optional provider code or list of codes.
+        :param display_name: Optional label for error messages.
+        :return: Provider result dictionary.
+        """
+
+        if not isinstance(geometry, dict):
+            raise UserError(_("La geometria deve essere un oggetto GeoJSON."))
+
+        # Accept Feature/FeatureCollection by extracting the first geometry.
+        geom = geometry
+        if geometry.get('type') == 'Feature':
+            geom = geometry.get('geometry') or {}
+        elif geometry.get('type') == 'FeatureCollection':
+            feats = geometry.get('features') or []
+            if feats and isinstance(feats[0], dict):
+                geom = feats[0].get('geometry') or {}
+
+        if not isinstance(geom, dict) or not geom.get('type'):
+            raise UserError(_("GeoJSON non valido: geometria mancante."))
+
+        geom_type = geom.get('type')
+        if geom_type not in ('Point', 'Polygon', 'MultiPolygon'):
+            raise UserError(_("Tipo GeoJSON non supportato: %s") % geom_type)
+
+        if providers is None:
+            providers = self.get_enabled_providers()
+        elif isinstance(providers, str):
+            providers = [providers]
+        elif not isinstance(providers, (list, tuple, set)):
+            providers = [providers]
+        else:
+            providers = list(providers)
+
+        providers = [p for p in providers if p in self._REGISTRY]
+        if not providers:
+            raise UserError(_("Nessun provider valido specificato per l'analisi."))
+
+        proxy = self._GeometryLineProxy(geom, display_name=display_name)
+
+        errors = []
+        for provider_code in providers:
+            provider = self.env[self._REGISTRY[provider_code]]
+            try:
+                provider.check_prerequisites()
+            except UserError as ue:
+                errors.append(_('Provider %(p)s: %(m)s') % {'p': provider_code, 'm': str(ue)})
+                continue
+
+            try:
+                result = provider.analyze_line(proxy)
+            except UserError as ue:
+                errors.append(_('Provider %(p)s: %(m)s') % {'p': provider_code, 'm': str(ue)})
+                continue
+            except Exception as ex:
+                _logger.exception("Provider %s failed during analyze_geojson", provider_code)
+                errors.append(_('Provider %(p)s errore inatteso: %(m)s') % {'p': provider_code, 'm': str(ex)})
+                continue
+
+            if isinstance(result, dict):
+                meta = result.setdefault('meta', {})
+                meta.setdefault('provider', provider_code)
+            return result
+
+        if errors:
+            raise UserError(_('Analisi deforestazione non riuscita: %s') % '; '.join(errors))
+        raise UserError(_("Analisi deforestazione non riuscita: nessun provider disponibile."))
