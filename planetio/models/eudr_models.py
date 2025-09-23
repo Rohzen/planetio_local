@@ -10,13 +10,15 @@ import urllib.parse
 from odoo.modules.module import get_module_resource
 
 try:
-    from shapely.geometry import Point, mapping
+    from shapely.geometry import Point, mapping, shape
     from shapely.ops import transform
-    from pyproj import CRS, Transformer
 except ImportError:
     # Se le librerie non sono installate, la funzionalità non sarà disponibile.
     # In un ambiente di produzione, sarebbe meglio loggare un avviso.
     Point = None
+    mapping = None
+    shape = None
+    transform = None
 
 
 try:
@@ -572,51 +574,10 @@ class EUDRDeclarationLine(models.Model):
             else:
                 rec.area_ha = "0.0000"
 
-    @staticmethod
-    def _maybe_swap_lonlat(seq):
-        # Heuristic: if median |first| looks like latitude (>|lon|) or any |lon|>180, swap
-        xs = [p[0] for p in seq if isinstance(p, (list, tuple)) and len(p) >= 2]
-        ys = [p[1] for p in seq if isinstance(p, (list, tuple)) and len(p) >= 2]
-        if not xs or not ys:
-            return seq
-        import statistics
-        mx = statistics.median(xs)
-        my = statistics.median(ys)
-        if abs(mx) > 180 or abs(my) > 90 or abs(my) > abs(mx):
-            return [[p[1], p[0]] for p in seq]  # swap to [lon, lat]
-        return seq
-
-    @staticmethod
-    def _normalize_rings_ccw(polygons_rings):
-        # Ensure exterior rings CCW and holes CW (what pyproj.Geod expects for positive area)
-        # We don’t require Shapely; do a simple signed shoelace on lon/lat for winding.
-        def ring_area(r):
-            a = 0.0
-            for i in range(len(r)):
-                x1, y1 = r[i]
-                x2, y2 = r[(i+1) % len(r)]
-                a += x1*y2 - x2*y1
-            return a / 2.0  # sign only matters
-        out = []
-        for rings in polygons_rings:
-            if not rings:
-                continue
-            ext = rings[0]
-            ext = EUDRDeclarationLine._maybe_swap_lonlat(ext)
-            if ring_area(ext) < 0:  # clockwise → reverse to CCW
-                ext = list(reversed(ext))
-            fixed = [ext]
-            for hole in rings[1:]:
-                hole = EUDRDeclarationLine._maybe_swap_lonlat(hole)
-                if ring_area(hole) > 0:  # holes should be CW
-                    hole = list(reversed(hole))
-                fixed.append(hole)
-            out.append(fixed)
-        return out
-
     @api.depends('geometry')
     def _compute_area_ha_float(self):
-        GeodLocal = Geod if Geod else None
+        geod = Geod(ellps="WGS84") if Geod else None
+
         for rec in self:
             rec.area_ha_float = 0.0
             if not rec.geometry:
@@ -625,42 +586,75 @@ class EUDRDeclarationLine(models.Model):
                 gobj = json.loads(rec.geometry)
             except Exception:
                 continue
-
-            # gather polygon rings
-            polys = []
-            t = gobj.get("type")
-            coords = gobj.get("coordinates")
-            if t == "Polygon":
-                polys = [coords]
-            elif t == "MultiPolygon":
-                polys = coords or []
-            else:
-                # points get handled elsewhere (fallback area per point)
-                rec.area_ha_float = 0.0
+            if not shape:
                 continue
 
-            # normalize winding & lon/lat order
-            polys = self._normalize_rings_ccw(polys)
+            def _collect_polygons(payload):
+                """Return a list of shapely Polygons from a GeoJSON payload."""
+                if not isinstance(payload, dict):
+                    return []
+                gtype = payload.get("type")
+                if gtype == "Feature":
+                    return _collect_polygons(payload.get("geometry"))
+                if gtype == "FeatureCollection":
+                    polygons = []
+                    for feature in payload.get("features") or []:
+                        polygons.extend(_collect_polygons((feature or {}).get("geometry")))
+                    return polygons
+                try:
+                    geom = shape(payload)
+                except Exception:
+                    return []
+                if transform:
+                    minx, miny, maxx, maxy = geom.bounds
+                    if maxy > 90 or miny < -90 or maxx > 180 or minx < -180:
+                        try:
+                            swapped = transform(lambda x, y, z=None: (y, x), geom)
+                        except Exception:
+                            swapped = None
+                        if swapped is not None and not swapped.is_empty:
+                            s_minx, s_miny, s_maxx, s_maxy = swapped.bounds
+                            if (
+                                -180 <= s_minx <= 180
+                                and -180 <= s_maxx <= 180
+                                and -90 <= s_miny <= 90
+                                and -90 <= s_maxy <= 90
+                            ):
+                                geom = swapped
+                if geom.is_empty:
+                    return []
+                if geom.geom_type == "Polygon":
+                    return [geom]
+                if geom.geom_type == "MultiPolygon":
+                    return list(geom.geoms)
+                return []
 
-            # geodesic area on WGS84, always positive after holes subtraction
-            if GeodLocal:
-                geod = GeodLocal(ellps="WGS84")
-                total = 0.0
-                for rings in polys:
-                    if not rings:
+            polygons = _collect_polygons(gobj)
+            if not polygons:
+                continue
+
+            area_m2 = 0.0
+            if geod:
+                for poly in polygons:
+                    try:
+                        area, _ = geod.geometry_area_perimeter(poly)
+                    except Exception:
                         continue
-                    ex = rings[0]
-                    lon_ex, lat_ex = zip(*ex)
-                    a_ex, _ = geod.polygon_area_perimeter(lon_ex, lat_ex)
-                    poly_area = abs(a_ex)
-                    for hole in rings[1:]:
-                        lon_h, lat_h = zip(*hole)
-                        a_h, _ = geod.polygon_area_perimeter(lon_h, lat_h)
-                        poly_area -= abs(a_h)
-                    total += max(poly_area, 0.0)
-                rec.area_ha_float = total / 10000.0
-            else:
-                rec.area_ha_float = 0.0
+                    area_m2 += abs(area)
+            elif Transformer and CRS and transform:
+                for poly in polygons:
+                    try:
+                        lon, lat = poly.representative_point().coords[0]
+                        zone = int((lon + 180) // 6) + 1
+                        epsg = 32600 + zone if lat >= 0 else 32700 + zone
+                        transformer = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg}", always_xy=True)
+                        projected = transform(transformer.transform, poly)
+                    except Exception:
+                        continue
+                    area_m2 += abs(projected.area)
+
+            if area_m2:
+                rec.area_ha_float = area_m2 / 10000.0
 
 
     def action_visualize_area_on_map(self):
