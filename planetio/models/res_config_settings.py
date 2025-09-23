@@ -19,6 +19,29 @@ class ResConfigSettings(models.TransientModel):
         help="Number of years back to include when fetching alerts from GFW (1-5 years).",
     )
 
+    deforestation_provider = fields.Selection(
+        selection=[
+            ('gfw', 'Global Forest Watch'),
+            ('plant4', 'Plant-for-the-Planet Farm Analysis'),
+        ],
+        string="Deforestation Provider",
+        config_parameter='planetio.deforestation_provider',
+        default='gfw',
+        help="Select the service used to run deforestation analysis on EUDR declarations.",
+    )
+
+    plant4_api_key = fields.Char(
+        string="Plant-for-the-Planet API Key",
+        config_parameter='deforestation.plant4.api_key',
+        readonly=False,
+    )
+    plant4_base_url = fields.Char(
+        string="Plant-for-the-Planet Base URL",
+        config_parameter='deforestation.plant4.base_url',
+        readonly=False,
+        default='https://farm.tracer.eco',
+    )
+
     eudr_endpoint = fields.Char(string="EUDR Endpoint", config_parameter='planetio.eudr_endpoint', readonly=False,
                                 placeholder="https://acceptance.eudr.webcloud.ec.europa.eu/tracesnt/ws/EUDRSubmissionServiceV1",
                                 default = "https://acceptance.eudr.webcloud.ec.europa.eu/tracesnt/ws/EUDRSubmissionServiceV1"
