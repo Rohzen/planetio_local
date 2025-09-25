@@ -499,6 +499,57 @@ class EUDRDeclarationLineDeforestation(models.Model):
         return None
 
     # ---------- Public: invoked by button on line ----------
+    def retrieve_deforestation_status(self):
+        """Return the latest deforestation status payload for the line.
+
+        The method is side-effect free and can be reused by callers that
+        need to inspect the alerts without triggering the chatter updates
+        performed by :meth:`action_analyze_deforestation`.
+        """
+
+        self.ensure_one()
+
+        status = parse_deforestation_external_properties(
+            getattr(self, 'external_properties_json', None)
+        )
+        if status:
+            return status
+
+        svc = self._get_deforestation_service()
+        if svc is not None and hasattr(svc, 'analyze_line'):
+            return svc.analyze_line(self)
+        if svc is not None and hasattr(svc, 'analyze_geojson'):
+            return svc.analyze_geojson(self._line_geometry() or {})
+        return self._gfw_analyze_fallback()
+
+    def _apply_deforestation_status(self, status):
+        if not isinstance(status, dict):
+            return
+
+        metrics = status.get('metrics') or {}
+        vals = {}
+        if 'defor_provider' in self._fields:
+            vals['defor_provider'] = (status.get('meta') or {}).get('provider', 'gfw')
+        if 'defor_alerts' in self._fields and 'alert_count' in metrics:
+            vals['defor_alerts'] = metrics.get('alert_count') or 0
+        if 'defor_area_ha' in self._fields and 'area_ha_total' in metrics:
+            vals['defor_area_ha'] = metrics.get('area_ha_total') or 0.0
+        if 'defor_details_json' in self._fields:
+            try:
+                vals['defor_details_json'] = json.dumps(status, ensure_ascii=False)
+            except Exception:
+                vals['defor_details_json'] = tools.ustr(status)
+        if 'external_ok' in self._fields:
+            risk_flag = False
+            if metrics.get('alert_count', 0) > 0:
+                risk_flag = True
+            elif isinstance(status.get('meta'), dict):
+                risk_flag = bool(status['meta'].get('risk_flag'))
+            vals['external_ok'] = not risk_flag
+        if vals:
+            self.write(vals)
+        self._sync_alert_records_from_status(status)
+
     def action_analyze_deforestation(self):
         # self can be either lines or declarations; normalize to lines
         lines = self
@@ -510,44 +561,10 @@ class EUDRDeclarationLineDeforestation(models.Model):
 
         for line in lines:
             try:
-                status = parse_deforestation_external_properties(
-                    getattr(line, 'external_properties_json', None)
-                )
-                if not status:
-                    svc = line._get_deforestation_service()
-                    if svc is not None and hasattr(svc, 'analyze_line'):
-                        status = svc.analyze_line(line)
-                    elif svc is not None and hasattr(svc, 'analyze_geojson'):
-                        status = svc.analyze_geojson(line._line_geometry() or {})
-                    else:
-                        status = line._gfw_analyze_fallback()
+                status = line.retrieve_deforestation_status()
 
-                # write computed fields if present
-                if isinstance(status, dict):
-                    metrics = status.get('metrics') or {}
-                    vals = {}
-                    if 'defor_provider' in line._fields:
-                        vals['defor_provider'] = (status.get('meta') or {}).get('provider', 'gfw')
-                    if 'defor_alerts' in line._fields and 'alert_count' in metrics:
-                        vals['defor_alerts'] = metrics.get('alert_count') or 0
-                    if 'defor_area_ha' in line._fields and 'area_ha_total' in metrics:
-                        vals['defor_area_ha'] = metrics.get('area_ha_total') or 0.0
-                    if 'defor_details_json' in line._fields:
-                        try:
-                            vals['defor_details_json'] = json.dumps(status, ensure_ascii=False)
-                        except Exception:
-                            vals['defor_details_json'] = tools.ustr(status)
-                    if 'external_ok' in line._fields:
-                        risk_flag = False
-                        if metrics.get('alert_count', 0) > 0:
-                            risk_flag = True
-                        elif isinstance(status.get('meta'), dict):
-                            risk_flag = bool(status['meta'].get('risk_flag'))
-                        vals['external_ok'] = not risk_flag
-                    if vals:
-                        line.write(vals)
-                    line._sync_alert_records_from_status(status)
-                
+                line._apply_deforestation_status(status)
+
                 # friendly, short per-line snippet for later batching
                 if isinstance(status, dict):
                     msg = status.get('message') or tools.ustr(status)
