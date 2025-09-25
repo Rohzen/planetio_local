@@ -5,36 +5,45 @@
         <field name="model">deforestation.geometry.wizard</field>
         <field name="arch" type="xml">
             <form string="Deforestation Geometry Check">
-                <div>
-                    <p>Insert a GeoJSON geometry to check for deforestation risk.</p>
-                    <p>The analysis will be performed using the selected provider.</p>
-                      <pre style="white-space: pre; font-family: monospace; overflow: auto; max-height: 350px;">
-                                {
-                                  "type": "Feature",
-                                  "properties": {
-                                    "name": "Sample Area"
-                                  },
-                                  "geometry": {
-                                    "type": "Polygon",
-                                    "coordinates": [
-                                      [
-                                        [12.4923, 41.8902],
-                                        [12.4930, 41.8902],
-                                        [12.4930, 41.8908],
-                                        [12.4923, 41.8908],
-                                        [12.4923, 41.8902]
-                                      ]
-                                    ]
-                                  }
-                                }
-                      </pre>
-                    OR
-                      <pre style="white-space: pre; font-family: monospace; overflow: auto; max-height: 350px;">
-                    {
-                        "type": "Point",
-                        "coordinates": [12.4923, 41.8902]
-                    }
-                    </pre>
+                <div style="background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:10px 12px; line-height:1.45; font-size:13px; color:#111827;">
+                  <p style="margin:0 0 4px 0;">Insert a GeoJSON geometry to check for deforestation risk.</p>
+                  <p style="margin:0 0 8px 0; color:#374151;">The analysis will be performed using the selected provider.</p>
+
+                  <pre aria-label="GeoJSON Polygon example"
+                       style="white-space:pre; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow:auto; max-height:220px; margin:0; padding:8px; background:#ffffff; border:1px solid #e5e7eb; border-radius:6px;">
+                {
+                  "type": "Feature",
+                  "properties": {
+                    "name": "Sample Area"
+                  },
+                  "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                      [
+                        [12.4923, 41.8902],
+                        [12.4930, 41.8902],
+                        [12.4930, 41.8908],
+                        [12.4923, 41.8908],
+                        [12.4923, 41.8902]
+                      ]
+                    ]
+                  }
+                }
+                  </pre>
+
+                  <div style="display:flex; align-items:center; gap:8px; margin:8px 0;">
+                    <div style="flex:1; height:1px; background:#e5e7eb;"></div>
+                    <span style="color:#6b7280; font-size:12px; white-space:nowrap;">OR</span>
+                    <div style="flex:1; height:1px; background:#e5e7eb;"></div>
+                  </div>
+
+                  <pre aria-label="GeoJSON Point example"
+                       style="white-space:pre; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow:auto; max-height:140px; margin:0; padding:8px; background:#ffffff; border:1px solid #e5e7eb; border-radius:6px;">
+                {
+                  "type": "Point",
+                  "coordinates": [12.4923, 41.8902]
+                }
+                  </pre>
                 </div>
                 <group>
                     <field name="provider_code"/>
