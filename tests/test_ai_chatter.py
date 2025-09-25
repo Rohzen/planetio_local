@@ -87,6 +87,7 @@ class FakeDeclaration(mod.PlanetioSummarizeWizard):
         self.id = 1
         self.display_name = 'Fake Declaration'
         self.messages = []
+        self._fields = {'ai_alert_ids': object(), 'ai_action_ids': object()}
         self.ai_alert_ids = []
         self.ai_action_ids = []
         self.line_ids = [
