@@ -703,6 +703,11 @@ class PlanetioSummarizeWizard(models.Model):
             commands.extend((0, 0, item["vals"]) for item in alert_prepared)
             vals["ai_alert_ids"] = commands
 
+        if "ai_action_ids" in record_fields or hasattr(record, "ai_action_ids"):
+            commands = [(5, 0, 0)]
+            commands.extend((0, 0, item["vals"]) for item in action_prepared)
+            vals["ai_action_ids"] = commands
+
         if vals:
             record.write(vals)
 
