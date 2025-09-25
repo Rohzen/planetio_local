@@ -464,6 +464,7 @@ class PlanetioSummarizeWizard(models.Model):
                 or entry.get("summary")
                 or entry.get("action")
                 or entry.get("actions")
+                or entry.get("azioni")
                 or entry.get("recommendation")
                 or entry.get("recommendations")
                 or entry.get("suggestion")
