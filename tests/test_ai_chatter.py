@@ -174,5 +174,9 @@ def test_structured_response_creates_records():
     assert len(rec.ai_alert_ids) == 2
     assert rec.ai_alert_ids[0]['field_identifier'] == 'F1'
     assert rec.ai_alert_ids[0]['line_id'] == 1
-    assert rec.ai_action_ids == []
+    assert len(rec.ai_action_ids) == 1
+    assert rec.ai_action_ids[0]['field_identifier'] == '2'
+    assert rec.ai_action_ids[0]['line_id'] == 2
+    assert rec.ai_action_ids[0]['line_label'] == 'Field Two'
+    assert rec.ai_action_ids[0]['description']
     assert rec.attachment_model.created, 'Expected a summary attachment to be created'
