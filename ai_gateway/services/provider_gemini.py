@@ -82,16 +82,28 @@ class GeminiProvider(object):
 
         add(model)
 
-        if model.endswith("-latest"):
-            bare = model[: -len("-latest")]
-            add(bare)
-            add(f"{bare}-001")
+        base = model
+        suffix = None
+        for ending in ("-latest", "-003", "-002", "-001"):
+            if base.endswith(ending):
+                suffix = ending
+                base = base[: -len(ending)]
+                break
+
+        if suffix == "-latest":
+            add(base)
+            add(f"{base}-001")
+        elif suffix in {"-003", "-002", "-001"}:
+            add(base)
+            add(f"{base}-latest")
+            if suffix != "-001":
+                add(f"{base}-001")
         else:
-            if model.endswith("-002"):
-                add(f"{model[:-4]}-001")
-            add(f"{model}-latest")
-            if "-00" not in model:
-                add(f"{model}-001")
+            add(f"{base}-latest")
+            add(f"{base}-001")
+
+        for preferred in self.PREFERRED_MODELS:
+            add(preferred)
 
         return candidates
 
