@@ -261,3 +261,29 @@ def test_actions_string_payload_is_preserved():
         rec.ai_action_ids[0]['description']
         == 'Maintain regular monitoring of compliance documentation.'
     )
+
+
+def test_corrective_actions_key_is_used_when_actions_missing():
+    request_model = FakeAiRequestModel()
+    request_model.status = 'done'
+    request_model.error_message = ''
+    request_model.response_text = json.dumps(
+        {
+            'alerts': [],
+            'corrective_actions': [
+                {
+                    'field_label': 'Plot C',
+                    'description': 'Implement buffer zones along the river banks.',
+                }
+            ],
+        }
+    )
+
+    rec = FakeDeclaration(request_model=request_model)
+    rec.action_ai_analyze()
+
+    assert rec.ai_action_ids, 'Expected corrective_actions data to be parsed as actions'
+    assert (
+        rec.ai_action_ids[0]['description']
+        == 'Implement buffer zones along the river banks.'
+    )
