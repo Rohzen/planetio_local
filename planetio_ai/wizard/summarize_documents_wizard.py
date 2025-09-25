@@ -392,6 +392,41 @@ class PlanetioSummarizeWizard(models.Model):
                 return True
         return False
 
+    _STRUCTURED_SECTION_KEY_ALIASES = {
+        "alerts": {
+            "alerts",
+            "alert",
+            "criticalalerts",
+            "criticalissues",
+            "criticalrisks",
+            "issues",
+            "risks",
+            "warnings",
+            "anomalies",
+            "findings",
+            "allerte",
+            "allerta",
+        },
+        "actions": {
+            "actions",
+            "action",
+            "actionitems",
+            "actionpoints",
+            "correctiveactions",
+            "correctiveaction",
+            "recommendedactions",
+            "recommendations",
+            "suggestions",
+            "nextsteps",
+            "mitigationactions",
+            "mitigationmeasures",
+            "remediationsteps",
+            "followupactions",
+            "azioni",
+            "azionicorrettive",
+        },
+    }
+
     def _parse_ai_structured_response(self, text):
         """Try to extract structured alerts/actions from ``text``."""
 
@@ -416,13 +451,17 @@ class PlanetioSummarizeWizard(models.Model):
 
         if isinstance(parsed, dict):
             candidates = [parsed]
-            for key in ("data", "result", "response"):
+            for key in ("data", "result", "response", "payload", "summary", "sections"):
                 nested = parsed.get(key)
                 if isinstance(nested, dict):
                     candidates.append(nested)
             for candidate in candidates:
-                alerts = self._normalize_structured_entries(candidate.get("alerts"))
-                actions = self._normalize_structured_entries(candidate.get("actions"))
+                alerts = self._normalize_structured_entries(
+                    self._extract_structured_entries(candidate, "alerts")
+                )
+                actions = self._normalize_structured_entries(
+                    self._extract_structured_entries(candidate, "actions")
+                )
                 if alerts or actions:
                     return {"alerts": alerts, "actions": actions}
         elif isinstance(parsed, list):
@@ -431,6 +470,33 @@ class PlanetioSummarizeWizard(models.Model):
                 return {"alerts": alerts, "actions": []}
 
         return self._parse_structured_from_text(text)
+
+    def _extract_structured_entries(self, container, section):
+        """Return the content of ``section`` from ``container`` handling aliases."""
+
+        if not isinstance(container, dict):
+            return []
+
+        aliases = self._STRUCTURED_SECTION_KEY_ALIASES.get(section, {section})
+        fallback = container.get(section)
+
+        for key, value in container.items():
+            if not isinstance(key, str):
+                continue
+            normalised = re.sub(r"[^a-z]", "", key.lower())
+            if normalised not in aliases:
+                continue
+            if value in (None, "", False):
+                continue
+            if isinstance(value, (list, tuple, dict)) and not value:
+                continue
+            return value
+
+        if fallback not in (None, "", False):
+            if not isinstance(fallback, (list, tuple, dict)) or fallback:
+                return fallback
+
+        return []
 
     def _normalize_structured_entries(self, entries):
         """Normalise a list of entries into ``field_id``/``description`` dicts."""
