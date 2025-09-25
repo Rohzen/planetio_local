@@ -208,3 +208,29 @@ def test_actions_with_recommendation_key_are_preserved():
 
     assert rec.ai_action_ids, 'Expected at least one action to be stored'
     assert rec.ai_action_ids[0]['description'] == 'Engage the farmer to review compliance plan.'
+
+
+def test_actions_dictionary_payload_is_parsed():
+    request_model = FakeAiRequestModel()
+    request_model.status = 'done'
+    request_model.error_message = ''
+    request_model.response_text = json.dumps(
+        {
+            'alerts': [],
+            'actions': {
+                'FIELD-1': 'Schedule a compliance review.',
+                'FIELD-2': {
+                    'field_label': 'Second Plot',
+                    'details': 'Engage local team for remediation.',
+                },
+            },
+        }
+    )
+
+    rec = FakeDeclaration(request_model=request_model)
+    rec.action_ai_analyze()
+
+    assert len(rec.ai_action_ids) == 2
+    descriptions = {item['description'] for item in rec.ai_action_ids}
+    assert 'Schedule a compliance review.' in descriptions
+    assert 'Engage local team for remediation.' in descriptions
