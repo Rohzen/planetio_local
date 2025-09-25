@@ -67,8 +67,35 @@ class GeminiProvider(object):
 
     # ---------------- REST fallback ----------------
 
+    def _rest_model_candidates(self):
+        model = self.model_name or self.PREFERRED_MODELS[0]
+        model = model.split("@")[0]
+
+        if "/" in model:
+            return [model]
+
+        candidates = []
+
+        def add(name):
+            if name and name not in candidates:
+                candidates.append(name)
+
+        add(model)
+
+        if model.endswith("-latest"):
+            bare = model[: -len("-latest")]
+            add(bare)
+            add(f"{bare}-001")
+        else:
+            if model.endswith("-002"):
+                add(f"{model[:-4]}-001")
+            add(f"{model}-latest")
+            if "-00" not in model:
+                add(f"{model}-001")
+
+        return candidates
+
     def _rest_generate(self, parts, **kwargs):
-        url = f"{self.REST_BASE}/models/{self.model_name}:generateContent?key={self.api_key}"
         payload = {"contents": [{"parts": [{"text": p} for p in parts]}]}
         # passa configurazioni opzionali se presenti (come da API)
         gen_cfg = kwargs.get("generation_config")
@@ -79,25 +106,39 @@ class GeminiProvider(object):
             payload["safetySettings"] = safety
 
         headers = {"Content-Type": "application/json"}
-        resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=60)
-        if resp.status_code == 404:
-            raise RuntimeError(
-                f"Model '{self.model_name}' non trovato (REST 404). "
-                f"Controlla 'ai_gateway.gemini_model' oppure prova uno tra: "
-                f"{', '.join(self.PREFERRED_MODELS)}. Body: {resp.text}"
-            )
-        if resp.status_code >= 400:
-            raise RuntimeError(f"AI request error (REST {resp.status_code}): {resp.text}")
-        data = resp.json()
-        # estrai testo primario
-        text = ""
-        try:
-            cands = data.get("candidates") or []
-            if cands and cands[0].get("content", {}).get("parts"):
-                text = "".join(part.get("text", "") for part in cands[0]["content"]["parts"])
-        except Exception:
+        last_error = None
+
+        for candidate in self._rest_model_candidates():
+            url = f"{self.REST_BASE}/models/{candidate}:generateContent?key={self.api_key}"
+            resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=60)
+            if resp.status_code == 404:
+                last_error = RuntimeError(
+                    f"Model '{candidate}' non trovato (REST 404). "
+                    f"Controlla 'ai_gateway.gemini_model' oppure prova uno tra: "
+                    f"{', '.join(self.PREFERRED_MODELS)}. Body: {resp.text}"
+                )
+                continue
+            if resp.status_code >= 400:
+                raise RuntimeError(f"AI request error (REST {resp.status_code}): {resp.text}")
+
+            data = resp.json()
+            # estrai testo primario
             text = ""
-        return {"text": text, "meta": data, "tokens_in": 0, "tokens_out": 0, "cost": 0.0}
+            try:
+                cands = data.get("candidates") or []
+                if cands and cands[0].get("content", {}).get("parts"):
+                    text = "".join(part.get("text", "") for part in cands[0]["content"]["parts"])
+            except Exception:
+                text = ""
+
+            if candidate != self.model_name:
+                self.model_name = candidate
+
+            return {"text": text, "meta": data, "tokens_in": 0, "tokens_out": 0, "cost": 0.0}
+
+        if last_error:
+            raise last_error
+        raise RuntimeError("AI request error: nessun modello REST disponibile")
 
     # ---------------- public API ----------------
 
