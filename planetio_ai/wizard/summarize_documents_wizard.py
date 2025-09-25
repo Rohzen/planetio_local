@@ -435,6 +435,21 @@ class PlanetioSummarizeWizard(models.Model):
     def _normalize_structured_entries(self, entries):
         """Normalise a list of entries into ``field_id``/``description`` dicts."""
 
+        if isinstance(entries, dict):
+            mapped_entries = []
+            for key, value in entries.items():
+                if isinstance(value, dict):
+                    entry = dict(value)
+                    entry.setdefault("field_id", key)
+                elif isinstance(value, (list, tuple)):
+                    entry = [key, *value]
+                else:
+                    entry = {"field_id": key, "description": value}
+                mapped_entries.append(entry)
+            entries = mapped_entries
+        elif isinstance(entries, tuple):
+            entries = list(entries)
+
         if not isinstance(entries, list):
             return []
 
