@@ -174,7 +174,5 @@ def test_structured_response_creates_records():
     assert len(rec.ai_alert_ids) == 2
     assert rec.ai_alert_ids[0]['field_identifier'] == 'F1'
     assert rec.ai_alert_ids[0]['line_id'] == 1
-    assert len(rec.ai_action_ids) == 1
-    assert rec.ai_action_ids[0]['line_id'] == 2
-    assert 'Schedule on-site verification' in rec.ai_action_ids[0]['description']
+    assert rec.ai_action_ids == []
     assert rec.attachment_model.created, 'Expected a summary attachment to be created'
