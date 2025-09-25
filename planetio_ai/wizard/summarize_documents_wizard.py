@@ -450,6 +450,15 @@ class PlanetioSummarizeWizard(models.Model):
         elif isinstance(entries, tuple):
             entries = list(entries)
 
+        if isinstance(entries, (bytes, bytearray)):
+            try:
+                entries = entries.decode("utf-8")
+            except Exception:
+                entries = entries.decode("utf-8", errors="ignore")
+
+        if isinstance(entries, str):
+            entries = [entries]
+
         if not isinstance(entries, list):
             return []
 

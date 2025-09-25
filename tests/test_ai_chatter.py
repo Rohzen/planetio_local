@@ -81,6 +81,7 @@ class FakeDeclaration(mod.PlanetioSummarizeWizard):
             'ai.request': request_model,
             'ir.attachment': attachment_model,
             'ir.config_parameter': FakeConfigParameter(),
+            'eudr.declaration.line': types.SimpleNamespace(),
         })
         self.attachment_ids = DummyAttachments([1])
         self._name = 'eudr.declaration'
@@ -234,3 +235,29 @@ def test_actions_dictionary_payload_is_parsed():
     descriptions = {item['description'] for item in rec.ai_action_ids}
     assert 'Schedule a compliance review.' in descriptions
     assert 'Engage local team for remediation.' in descriptions
+
+
+def test_actions_string_payload_is_preserved():
+    request_model = FakeAiRequestModel()
+    request_model.status = 'done'
+    request_model.error_message = ''
+    request_model.response_text = json.dumps(
+        {
+            'alerts': [
+                {
+                    'field_label': 'Field One',
+                    'description': 'Canopy loss observed in satellite imagery.',
+                }
+            ],
+            'actions': 'Maintain regular monitoring of compliance documentation.',
+        }
+    )
+
+    rec = FakeDeclaration(request_model=request_model)
+    rec.action_ai_analyze()
+
+    assert rec.ai_action_ids, 'Expected the string payload to create an action record'
+    assert (
+        rec.ai_action_ids[0]['description']
+        == 'Maintain regular monitoring of compliance documentation.'
+    )
