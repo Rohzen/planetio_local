@@ -180,3 +180,31 @@ def test_structured_response_creates_records():
     assert rec.ai_action_ids[0]['line_label'] == 'Field Two'
     assert rec.ai_action_ids[0]['description']
     assert rec.attachment_model.created, 'Expected a summary attachment to be created'
+
+
+def test_actions_with_recommendation_key_are_preserved():
+    request_model = FakeAiRequestModel()
+    request_model.status = 'done'
+    request_model.error_message = ''
+    request_model.response_text = json.dumps(
+        {
+            'alerts': [
+                {
+                    'field_label': 'Field One',
+                    'description': 'Canopy loss observed in satellite imagery.',
+                }
+            ],
+            'actions': [
+                {
+                    'field_id': 'FIELD-2',
+                    'recommendation': 'Engage the farmer to review compliance plan.',
+                }
+            ],
+        }
+    )
+
+    rec = FakeDeclaration(request_model=request_model)
+    rec.action_ai_analyze()
+
+    assert rec.ai_action_ids, 'Expected at least one action to be stored'
+    assert rec.ai_action_ids[0]['description'] == 'Engage the farmer to review compliance plan.'
