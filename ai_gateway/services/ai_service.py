@@ -79,10 +79,18 @@ def _attachment_to_text(env, att):
     import base64
 
     mimetype = (att.mimetype or "").lower()
+    if ";" in mimetype:
+        mimetype = mimetype.split(";", 1)[0].strip()
     name = (att.name or "").lower()
     raw = base64.b64decode(att.datas or b"")
 
-    if mimetype.startswith("text/") or mimetype in ("application/json", "application/xml"):
+    if (
+        mimetype.startswith("text/")
+        or mimetype in ("application/json", "application/xml")
+        or mimetype.endswith("+json")
+        or mimetype.endswith("+xml")
+        or name.endswith((".json", ".xml"))
+    ):
         return _decode_bytes(raw)
 
     if mimetype == "application/pdf" or name.endswith(".pdf"):
