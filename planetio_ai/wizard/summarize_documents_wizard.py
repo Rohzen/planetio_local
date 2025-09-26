@@ -1,4 +1,5 @@
 from odoo import _, fields, models
+import ast
 import base64
 import io
 import json
@@ -443,16 +444,47 @@ class PlanetioSummarizeWizard(models.Model):
         elif not isinstance(text, str):
             text = str(text)
 
-        parsed = None
-        try:
-            parsed = json.loads(text)
-        except Exception:
-            parsed = None
+        parsed = self._loads_json_like(text)
+        if parsed is not None:
+            structured = self._extract_structured_from_container(parsed)
+            if structured["alerts"] or structured["actions"]:
+                return structured
 
-        if isinstance(parsed, dict):
-            candidates = [parsed]
+        return self._parse_structured_from_text(text)
+
+    def _loads_json_like(self, text):
+        """Return Python data parsed from ``text`` when it resembles JSON."""
+
+        if not isinstance(text, str):
+            return None
+
+        cleaned = text.strip()
+        if not cleaned:
+            return None
+
+        fence_match = re.match(r"```(?:json)?\s*(.+?)\s*```$", cleaned, re.DOTALL)
+        if fence_match:
+            cleaned = fence_match.group(1).strip()
+
+        try:
+            return json.loads(cleaned)
+        except Exception:
+            pass
+
+        try:
+            return ast.literal_eval(cleaned)
+        except Exception:
+            return None
+
+    def _extract_structured_from_container(self, container):
+        """Search ``container`` for alert/action sections."""
+
+        empty = {"alerts": [], "actions": []}
+
+        if isinstance(container, dict):
+            candidates = [container]
             for key in ("data", "result", "response", "payload", "summary", "sections"):
-                nested = parsed.get(key)
+                nested = container.get(key)
                 if isinstance(nested, dict):
                     candidates.append(nested)
             for candidate in candidates:
@@ -464,12 +496,32 @@ class PlanetioSummarizeWizard(models.Model):
                 )
                 if alerts or actions:
                     return {"alerts": alerts, "actions": actions}
-        elif isinstance(parsed, list):
-            alerts = self._normalize_structured_entries(parsed)
+
+            for value in container.values():
+                nested = self._extract_structured_from_container(value)
+                if nested["alerts"] or nested["actions"]:
+                    return nested
+
+            return empty
+
+        if isinstance(container, list):
+            alerts = self._normalize_structured_entries(container)
             if alerts:
                 return {"alerts": alerts, "actions": []}
 
-        return self._parse_structured_from_text(text)
+            for item in container:
+                nested = self._extract_structured_from_container(item)
+                if nested["alerts"] or nested["actions"]:
+                    return nested
+
+            return empty
+
+        if isinstance(container, str):
+            nested = self._loads_json_like(container)
+            if nested is not None:
+                return self._extract_structured_from_container(nested)
+
+        return empty
 
     def _extract_structured_entries(self, container, section):
         """Return the content of ``section`` from ``container`` handling aliases."""
