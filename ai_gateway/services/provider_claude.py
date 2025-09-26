@@ -158,8 +158,9 @@ class ClaudeProvider(ProviderBase):
             partial_summaries.append((res.get('text') or '').strip())
 
         merged_prompt = (
-            "Unisci i seguenti riassunti parziali in un unico executive summary con bullet point "
-            "e una sezione 'Rischi/Anomalie'. Evita ripetizioni e mantieni i dati numerici:\n\n"
+            "Unisci i seguenti riassunti parziali in un unico executive summary con bullet point, "
+            "aggiungi una sezione 'Rischi/Anomalie' e una sezione 'Azioni correttive' con interventi "
+            "pratici e mirati. Evita ripetizioni e mantieni i dati numerici:\n\n"
             + "\n\n".join([s for s in partial_summaries if s])
         )
         final = self.generate(
