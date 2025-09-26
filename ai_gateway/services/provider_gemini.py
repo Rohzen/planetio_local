@@ -194,8 +194,9 @@ class GeminiProvider(object):
             partial_summaries.append(res["text"].strip())
 
         merged_prompt = (
-            "Unisci i seguenti riassunti parziali in un unico executive summary con bullet point "
-            "e una sezione 'Rischi/Anomalie'. Evita ripetizioni e mantieni i dati numerici:\n\n"
+            "Unisci i seguenti riassunti parziali in un unico executive summary con bullet point, "
+            "aggiungi una sezione 'Rischi/Anomalie' e una sezione 'Azioni correttive' con interventi "
+            "pratici e mirati. Evita ripetizioni e mantieni i dati numerici:\n\n"
             + "\n\n".join([s for s in partial_summaries if s])
         )
         final = self.generate(merged_prompt, system_instruction=system_instruction, **kwargs)
