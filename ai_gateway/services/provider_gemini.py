@@ -6,8 +6,19 @@ import google.generativeai as genai
 
 
 class GeminiProvider(object):
-    PREFERRED_MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]
-    REST_BASE = "https://generativelanguage.googleapis.com/v1beta"
+    # Prefer current, generally-available models
+    PREFERRED_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"]
+    # v1beta → v1
+    REST_BASE = "https://generativelanguage.googleapis.com/v1"
+
+    # map old → new for compatibility
+    _MODEL_COMPAT = {
+        "gemini-1.5-pro": "gemini-2.5-pro",
+        "gemini-1.5-flash": "gemini-2.5-flash",
+        "gemini-1.5-flash-8b": "gemini-2.5-flash-lite",
+        "gemini-1.5-pro-latest": "gemini-2.5-pro",
+        "gemini-pro": "gemini-2.0-flash",  # legacy alias, best-effort
+    }
 
     def __init__(self, env):
         self.env = env
@@ -18,25 +29,43 @@ class GeminiProvider(object):
         if not self.api_key:
             raise ValueError("Gemini API key mancante in Impostazioni")
 
-        # prova a configurare il client; se è vecchio useremo il fallback REST
+        # normalize and upgrade model id if needed
+        target = self._normalize_to_bare_id(raw_model)
+        self.model_name = self._MODEL_COMPAT.get(target, target)
+
         self._client_ok = False
         try:
             genai.configure(api_key=self.api_key)
-            self.model_name = self._normalize_to_bare_id(raw_model)
+            # If the installed client is modern enough, use it; else fall back to REST
             if hasattr(genai, "GenerativeModel"):
-                # alcune versioni vecchie hanno l'attributo ma poi 404 sui modelli gemini.
-                # useremo comunque un tentativo con REST come fallback in generate().
                 self._model = genai.GenerativeModel(self.model_name)
                 self._use_generate_text = False
                 self._client_ok = True
             else:
-                # client davvero legacy → usa REST
                 self._model = None
-                self._use_generate_text = True  # segnala percorso non-moderno
+                self._use_generate_text = True
         except Exception:
-            # in caso di errore di import/config → andremo direttamente in REST
             self._model = None
             self._use_generate_text = True
+
+    # optional: call during __init__ after computing self.model_name, to auto-heal bad IDs
+    def _maybe_select_available_model(self):
+        try:
+            import requests
+            resp = requests.get(
+                f"{self.REST_BASE}/models",
+                params={"key": self.api_key},
+                timeout=5,
+            )
+            resp.raise_for_status()
+            available = {m["name"].split("/", 1)[-1] for m in resp.json().get("models", [])}
+            if self.model_name not in available:
+                for pref in self.PREFERRED_MODELS:
+                    if pref in available:
+                        self.model_name = pref
+                        return
+        except Exception:
+            pass
 
     # ---------------- utils ----------------
 

@@ -251,6 +251,10 @@ def submit_dds_for_batch(record):
         (record.name or f'Batch-{record.id}'), fields.Date.today(),record.env.company.name,
         )
 
+    # Take the first line with geometry to determine producer country
+    line = next((l for l in record.line_ids if l.geometry), None)
+    producer_country = (line.country[:2] or 'PE').upper()
+
     submit_xml = client.build_statement_xml(
         internal_ref=record.name or f'Batch-{record.id}',
         activity_type=record.activity_type.upper(),
@@ -262,7 +266,7 @@ def submit_dds_for_batch(record):
         description_of_goods=(
             record.coffee_species.name if record.coffee_species else (record.product_id.display_name or '')),
         net_weight_kg=weight,
-        producer_country=(record.partner_id.country_id.code or 'BR').upper(),
+        producer_country=(producer_country or 'BR').upper(),
         producer_name=record.producer_name or 'Unknown Producer',
         geojson_b64=geojson_b64,
         operator_type=record.eudr_type_override or 'TRADER',
@@ -332,7 +336,7 @@ def submit_dds_for_batch(record):
             if wsid:
                 msg += _('\n\nWS_REQUEST_ID: %s') % wsid
             record.message_post(body=msg.replace("\n", "<br/>"))
-            raise UserError(msg)
+            # raise UserError(msg)
         else:
             wsid_only = client.parse_ws_request_id(text)
             base = _('Errore EUDR (%s): %s') % (status, (text or '')[:800])
@@ -340,7 +344,7 @@ def submit_dds_for_batch(record):
                 base += _('\n\nWS_REQUEST_ID: %s') % wsid_only
             record.message_post(
                 body=("Fault grezzo (parsing fallito):<br/><pre>%s</pre>" % (text or "")).replace("\n", "<br/>"))
-            raise UserError(base)
+            #raise UserError(base)
 
 def action_retrieve_dds_numbers(record):
     """Given record.dds_identifier, call Retrieval SOAP and fill eudr_id (and others if present)."""

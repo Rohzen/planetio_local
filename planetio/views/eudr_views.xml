@@ -98,7 +98,7 @@
               <field name="area_ha_display" string="Area Ha" readonly="1"/>
               <field name="area_ha" readonly="1" invisible="1"/>
               <field name="operator_name" invisible="1"/>
-              <field name="producer_name" invisible="0"/>
+              <field name="producer_name" string="Lot info" placeholder="Lot number, producer name, etc..." invisible="0"/>
               <field name="name" string="Internal Ref" invisible="1"/>
             </group>
         </group>
@@ -130,6 +130,7 @@
                 <field name="external_status" invisible="1"/>
                 <field name="external_message_short" string="Message" invisible="1"/>
                 <field name="geometry" invisible="0" optional="hide"/>
+                <field name="external_properties_json" optional="hide"/>
               </tree>
               <form>
                 <header>
@@ -164,7 +165,7 @@
                         <field name="external_http_code"/>
                         <field name="external_uid"/>
                         <field name="external_message" widget="text" string="External Message (full)"/>
-                        <field name="external_properties_json" widget="text"/>
+                        <field name="external_properties_json" widget="text"  invisible="0"/>
                       </group>
                     </group>
                   </page>
