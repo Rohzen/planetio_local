@@ -97,12 +97,12 @@ class EUDRDeclaration(models.Model):
         domain=lambda self: [('res_model', '=', self._name)],
         help="Files linked to this declaration."
     )
-    eudr_company_type = fields.Selection([
-        ('trader', 'Trader'),
-        ('operator', 'Operator'),
-        ('mixed', 'Mixed'),
-        ('third_party_trader', 'Third-party Trader')
-    ], string="Company Type",)
+    # eudr_company_type = fields.Selection([
+    #     ('trader', 'Trader'),
+    #     ('operator', 'Operator'),
+    #     ('mixed', 'Mixed'),
+    #     ('third_party_trader', 'Third-party Trader')
+    # ], string="Company Type",)
     eudr_type_override = fields.Selection([
         ('TRADER', 'Trader'),
         ('OPERATOR', 'Operator')
@@ -135,6 +135,24 @@ class EUDRDeclaration(models.Model):
     producer_name = fields.Char(string="Producer name")
     coffee_species  = fields.Many2one('coffee.species', string="Product")
     area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
+
+    company_id = fields.Many2one('res.company', default=lambda s: s.env.company, required=True)
+
+    # Mirrors from company settings (for XML attrs)
+    eudr_company_type_rel = fields.Selection(related="company_id.eudr_company_type", store=False, readonly=True)
+    eudr_is_sme_rel = fields.Boolean(related="company_id.eudr_is_sme", store=False, readonly=True)
+    eudr_tp_has_mandate_rel = fields.Boolean(related="company_id.eudr_third_party_has_mandate", store=False, readonly=True)
+    eudr_tp_in_eu_rel = fields.Boolean(related="company_id.eudr_third_party_established_in_eu", store=False, readonly=True)
+
+    @api.onchange('eudr_company_type_rel', 'eudr_is_sme_rel', 'eudr_type_override')
+    def _onchange_eudr_context_cleanup(self):
+        for r in self:
+            # l’override ha senso solo per Mixed
+            if r.eudr_company_type_rel != 'mixed':
+                r.eudr_type_override = False
+            # se non third party nascondiamo eventuale client_id
+            if r.eudr_company_type_rel != 'third_party_trader':
+                r.eudr_third_party_client_id = False
 
     @api.depends('area_ha')
     def _compute_area_ha_display(self):

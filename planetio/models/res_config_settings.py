@@ -5,6 +5,10 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     debug_import = fields.Boolean(string="Debug Excel Import", config_parameter='planetio.debug_import')
+    eudr_company_type = fields.Selection(related="company_id.eudr_company_type", readonly=False)
+    eudr_is_sme = fields.Boolean(related="company_id.eudr_is_sme", readonly=False)
+    eudr_third_party_has_mandate = fields.Boolean(related="company_id.eudr_third_party_has_mandate", readonly=False)
+    eudr_third_party_established_in_eu = fields.Boolean(related="company_id.eudr_third_party_established_in_eu", readonly=False)
 
     gfw_email = fields.Char(string="GFW Email", config_parameter='planetio.gfw_email')
     gfw_password = fields.Char(string="GFW Password", config_parameter='planetio.gfw_password')

@@ -1,4 +1,3 @@
-
 <odoo>
   <menuitem id="menu_eudr_ai_root" name="Planetio" groups="base.group_user" web_icon="planetio,static/description/icon.png"/>
 
@@ -14,84 +13,82 @@
     <field name="view_mode">tree,form</field>
   </record>
 
- <menuitem id="menu_eudr_declarations" name="Declarations"
+  <menuitem id="menu_eudr_declarations" name="Declarations"
             parent="menu_eudr_ai_root" action="action_eudr_declaration"/>
 
-    <record id="view_eudr_declaration_tree" model="ir.ui.view">
-      <field name="name">eudr.declaration.tree</field>
-      <field name="model">eudr.declaration</field>
-      <field name="arch" type="xml">
-        <tree>
-          <field name="name"/>
-          <field name="create_date"/>
-          <field name="partner_id"/>
-          <field name="source_attachment_id" invisible="1"/>
-          <field name="area_ha"/>
-          <field name="stage_id"/>
-        </tree>
-      </field>
-    </record>
+  <record id="view_eudr_declaration_tree" model="ir.ui.view">
+    <field name="name">eudr.declaration.tree</field>
+    <field name="model">eudr.declaration</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+        <field name="create_date"/>
+        <field name="partner_id"/>
+        <field name="source_attachment_id" invisible="1"/>
+        <field name="area_ha"/>
+        <field name="stage_id"/>
+      </tree>
+    </field>
+  </record>
 
   <menuitem id="menu_eudr_stage_root" name="Stage" parent="menu_eudr_ai_root" action="action_eudr_stage"/>
 
-<record id="view_eudr_declaration_form" model="ir.ui.view">
-  <field name="name">eudr.declaration.form</field>
-  <field name="model">eudr.declaration</field>
-  <field name="arch" type="xml">
-    <form string="EUDR Declaration">
-      <header>
-          <button name="action_open_import_wizard" type="object"
-                  string="Import" class="btn-secondary" icon="fa-upload"/>
-          <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success"
-                  string="Deforestation analysis" icon="fa-tree"/>
-          <button name="action_create_deforestation_geojson" type="object" class="btn-secondary"
-                  string="Deforestation GeoJSON" icon="fa-download"/>
-          <button name="action_create_geojson" type="object" class="btn-secondary"
-                  string="Traces GeoJSON" icon="fa-save"/>
-          <button name="action_transmit_dds" type="object" class="oe_highlight"
-                  string="Trasmit DDS" icon="fa-paper-plane"/>
+  <record id="view_eudr_declaration_form" model="ir.ui.view">
+    <field name="name">eudr.declaration.form</field>
+    <field name="model">eudr.declaration</field>
+    <field name="arch" type="xml">
+      <form string="EUDR Declaration">
+        <header>
+          <button name="action_open_import_wizard" type="object" string="Import" class="btn-secondary" icon="fa-upload"/>
+          <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"/>
+          <button name="action_create_deforestation_geojson" type="object" class="btn-secondary" string="Deforestation GeoJSON" icon="fa-download"/>
+          <button name="action_create_geojson" type="object" class="btn-secondary" string="Traces GeoJSON" icon="fa-save"/>
+          <button name="action_transmit_dds" type="object" class="oe_highlight" string="Trasmit DDS" icon="fa-paper-plane"/>
           <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
-      </header>
+        </header>
 
-      <sheet>
-        <div class="oe_button_box"></div>
-        <div class="oe_title">
-          <h1><field name="name" placeholder="Eudr sequence"/></h1>
-        </div>
+        <sheet>
+          <div class="oe_button_box"></div>
+          <div class="oe_title">
+            <h1><field name="name" placeholder="Eudr sequence"/></h1>
+          </div>
 
-        <group>
+          <!-- Hidden technical fields used by attrs -->
+          <group col="4">
+            <field name="eudr_company_type_rel" invisible="1"/>
+            <field name="eudr_is_sme_rel" invisible="1"/>
+            <field name="eudr_tp_has_mandate_rel" invisible="1"/>
+            <field name="eudr_tp_in_eu_rel" invisible="1"/>
+          </group>
+
+          <group>
+            <!-- Colonna sinistra -->
             <group>
               <field name="datestamp" string="Creation date"/>
-              <field name="partner_id"/>
-              <field name="eudr_company_type" readonly="0"/>
+              <field name="partner_id" />
               <field name="eudr_type_override"/>
-              <field name="eudr_third_party_client_id" attrs="{'invisible': [('eudr_company_type','!=','third_party_trader')]}"/>
+              <field name="eudr_third_party_client_id" attrs="{'invisible': [('eudr_company_type_rel','!=','third_party_trader')]}"/>
               <field name="source_attachment_id" readonly="1" invisible="1"/>
               <field name="activity_type" string="Attività"/>
               <field name="eudr_id" string="EUDR Reference" readonly="0" invisible="1"/>
+
               <div class="o_row bg-light p-2 rounded mb-2">
                 <div class="o_td_label">
                   <label for="dds_identifier" class="o_form_label">DDS Identifier</label>
                 </div>
-
                 <div class="o_td_field">
-                  <field name="dds_identifier"
-                         readonly="1"
-                         widget="copy"
-                         nolabel="1"
-                         class="oe_inline"/>
-                  <button name="action_retrieve_dds"
-                          type="object"
-                          string="Retrieve DDS Data"
-                          class="oe_inline btn btn-secondary btn-sm"
-                          style="margin-left:8px;"
+                  <field name="dds_identifier" readonly="1" widget="copy" nolabel="1" class="oe_inline"/>
+                  <button name="action_retrieve_dds" type="object" string="Retrieve DDS Data"
+                          class="oe_inline btn btn-secondary btn-sm" style="margin-left:8px;"
                           attrs="{'invisible': [('dds_identifier','=',False)]}"/>
                 </div>
               </div>
             </group>
+
+            <!-- Colonna destra -->
             <group>
               <field name="hs_code"/>
-              <field name="product_id" string="Template prodotto" invisible="0"/>
+              <field name="product_id" string="Selezione prodotto" invisible="0"/>
               <field name="coffee_species" invisible="0"/>
               <field name="product_description" invisible="1"/>
               <field name="net_mass_kg" invisible="0"/>
@@ -101,166 +98,150 @@
               <field name="producer_name" string="Lot info" placeholder="Lot number, producer name, etc..." invisible="0"/>
               <field name="name" string="Internal Ref" invisible="1"/>
             </group>
-        </group>
+          </group>
 
-        <notebook>
-          <page string="Details">
-            <field name="line_ids">
-              <tree string="Dettagli"
-                    decoration-success="external_ok"
-                    decoration-danger="not external_ok"
-                    editable="top">
-                <field name="external_ok" widget="boolean_toggle" readonly="0" string=""/>
-                <field name="external_message" invisible="1"/>
-                <field name="name" attrs="{'invisible': [('name', '=', False)]}" optional="show"/>
-                <field name="farmer_id_code" attrs="{'invisible': [('farmer_id_code', '=', False)]}"/>
-                <field name="farmer_name" attrs="{'invisible': [('farmer_name', '=', False)]}" optional="hide"/>
-                <field name="farm_name" attrs="{'invisible': [('farm_name', '=', False)]}"/>
-                <field name="country"/>
-                <field name="country_id" invisible="1"/>
-                <field name="country_flag_bin"
-                       widget="image"
-                       readonly="1"
-                       nolabel="1"
-                       options="{'size': [18, 18]}"
-                       attrs="{'invisible': [('country_flag_bin','=',False)]}"/>
-                <field name="region"/>
-                <field name="municipality" attrs="{'invisible': [('municipality', '=', False)]}"/>
-                <field name="area_ha" invisible="0"/>
-                <field name="external_status" invisible="1"/>
-                <field name="external_message_short" string="Message" invisible="1"/>
-                <field name="geometry" invisible="0" optional="hide"/>
-                <field name="external_properties_json" optional="hide"/>
-              </tree>
-              <form>
-                <header>
-                  <button name="action_visualize_point_on_map" type="object" class="oe_highlight"
-                  string="Show point on map" icon="fa-globe"/>
-                  <button name="action_visualize_area_on_map" type="object" class="oe_highlight"
-                  string="Show area on map" icon="fa-globe" help="Se presente un solo punto viene ipotizzata un'area di 50mq intorno allo stesso"/>
-                </header>
-                <notebook>
-                  <page string="Details">
+          <notebook>
+            <page string="Details">
+              <field name="line_ids">
+                <tree string="Dettagli" decoration-success="external_ok" decoration-danger="not external_ok" editable="top">
+                  <field name="external_ok" widget="boolean_toggle" readonly="0" string=""/>
+                  <field name="external_message" invisible="1"/>
+                  <field name="name" attrs="{'invisible': [('name', '=', False)]}" optional="show"/>
+                  <field name="farmer_id_code" attrs="{'invisible': [('farmer_id_code', '=', False)]}"/>
+                  <field name="farmer_name" attrs="{'invisible': [('farmer_name', '=', False)]}" optional="hide"/>
+                  <field name="farm_name" attrs="{'invisible': [('farm_name', '=', False)]}"/>
+                  <field name="country"/>
+                  <field name="country_id" invisible="1"/>
+                  <field name="country_flag_bin" widget="image" readonly="1" nolabel="1" options="{'size': [18, 18]}" attrs="{'invisible': [('country_flag_bin','=',False)]}"/>
+                  <field name="region"/>
+                  <field name="municipality" attrs="{'invisible': [('municipality', '=', False)]}"/>
+                  <field name="area_ha" invisible="0"/>
+                  <field name="external_status" invisible="1"/>
+                  <field name="external_message_short" string="Message" invisible="1"/>
+                  <field name="geometry" invisible="0" optional="hide"/>
+                  <field name="external_properties_json" optional="hide"/>
+                </tree>
+                <form>
+                  <header>
+                    <button name="action_visualize_point_on_map" type="object" class="oe_highlight" string="Show point on map" icon="fa-globe"/>
+                    <button name="action_visualize_area_on_map" type="object" class="oe_highlight" string="Show area on map" icon="fa-globe" help="Se presente un solo punto viene ipotizzata un'area di 50mq intorno allo stesso"/>
+                  </header>
+                  <notebook>
+                    <page string="Details">
+                      <group>
+                        <group string="Farm data">
+                          <field name="name"/>
+                          <field name="farmer_name"/>
+                          <field name="farmer_id_code"/>
+                          <field name="tax_code"/>
+                          <field name="country"/>
+                          <field name="region"/>
+                          <field name="municipality"/>
+                          <field name="farm_name"/>
+                        </group>
+                        <group string="Geo data">
+                          <field name="area_ha"/>
+                          <field name="geo_type"/>
+                          <field name="geo_type_raw"/>
+                          <!-- <field name="defor_detail_json"/> -->
+                          <field name="geometry" widget="text" invisible="0"/>
+                        </group>
+                        <group string="Additional api data">
+                          <field name="external_ok" widget="boolean_toggle" readonly="1"/>
+                          <field name="external_status"/>
+                          <field name="external_http_code"/>
+                          <field name="external_uid"/>
+                          <field name="external_message" widget="text" string="External Message (full)"/>
+                          <field name="external_properties_json" widget="text" invisible="0"/>
+                        </group>
+                      </group>
+                    </page>
+                    <page string="Deforestation Alerts">
+                      <field name="alert_ids" readonly="1">
+                        <tree string="Alerts" create="0" edit="0" delete="0">
+                          <field name="name"/>
+                          <field name="alert_date"/>
+                          <field name="alert_date_raw" optional="hide"/>
+                          <field name="alert_identifier" optional="show"/>
+                          <field name="provider" optional="show"/>
+                          <field name="risk_level" optional="show"/>
+                          <field name="confidence" optional="show"/>
+                          <field name="area_ha" optional="show"/>
+                          <field name="latitude" optional="show"/>
+                          <field name="longitude" optional="show"/>
+                        </tree>
+                        <form string="Alert" create="0" edit="0" delete="0">
+                          <group>
+                            <group>
+                              <field name="name"/>
+                              <field name="alert_identifier"/>
+                              <field name="provider"/>
+                              <field name="alert_date"/>
+                              <field name="alert_date_raw"/>
+                              <field name="risk_level"/>
+                              <field name="confidence"/>
+                              <field name="area_ha"/>
+                            </group>
+                            <group>
+                              <field name="latitude"/>
+                              <field name="longitude"/>
+                            </group>
+                          </group>
+                          <group>
+                            <field name="payload_json" widget="text" readonly="1"/>
+                          </group>
+                        </form>
+                      </field>
+                    </page>
+                  </notebook>
+                </form>
+              </field>
+            </page>
+            <page string="Documents">
+              <field name="attachment_ids"
+                     context="{
+                       'default_res_model': 'eudr.declaration',
+                       'default_res_id': active_id,
+                       'bin_size': False
+                     }"
+                     domain="[('res_model', '=', 'eudr.declaration')]">
+                <tree editable="bottom" string="Attachments">
+                  <button name="action_open_attachment" type="object" string="" icon="fa-external-link" class="btn-link" help="Open this attachment in a new tab"/>
+                  <field name="name" required="1"/>
+                  <field name="type"/>
+                  <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
+                  <field name="create_date" readonly="1"/>
+                </tree>
+                <form string="Attachment">
+                  <sheet>
                     <group>
-                      <group string="Farm data">
-                        <field name="name"/>
-                        <field name="farmer_name"/>
-                        <field name="farmer_id_code"/>
-                        <field name="tax_code"/>
-                        <field name="country"/>
-                        <field name="region"/>
-                        <field name="municipality"/>
-                        <field name="farm_name"/>
-                      </group>
-                      <group string="Geo data">
-                        <field name="area_ha"/>
-                        <field name="geo_type"/>
-                        <field name="geo_type_raw"/>
-<!--                      <field name="defor_detail_json"/>-->
-                        <field name="geometry" widget="text" invisible="0"/>
-                      </group>
-                      <group string="Additional api data">
-                        <field name="external_ok" widget="boolean_toggle" readonly="1"/>
-                        <field name="external_status"/>
-                        <field name="external_http_code"/>
-                        <field name="external_uid"/>
-                        <field name="external_message" widget="text" string="External Message (full)"/>
-                        <field name="external_properties_json" widget="text"  invisible="0"/>
-                      </group>
+                      <field name="name"/>
+                      <field name="type"/>
+                      <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
                     </group>
-                  </page>
-                  <page string="Deforestation Alerts">
-                    <field name="alert_ids" readonly="1">
-                      <tree string="Alerts" create="0" edit="0" delete="0">
-                        <field name="name"/>
-                        <field name="alert_date"/>
-                        <field name="alert_date_raw" optional="hide"/>
-                        <field name="alert_identifier" optional="show"/>
-                        <field name="provider" optional="show"/>
-                        <field name="risk_level" optional="show"/>
-                        <field name="confidence" optional="show"/>
-                        <field name="area_ha" optional="show"/>
-                        <field name="latitude" optional="show"/>
-                        <field name="longitude" optional="show"/>
-                      </tree>
-                      <form string="Alert" create="0" edit="0" delete="0">
-                        <group>
-                          <group>
-                            <field name="name"/>
-                            <field name="alert_identifier"/>
-                            <field name="provider"/>
-                            <field name="alert_date"/>
-                            <field name="alert_date_raw"/>
-                            <field name="risk_level"/>
-                            <field name="confidence"/>
-                            <field name="area_ha"/>
-                          </group>
-                          <group>
-                            <field name="latitude"/>
-                            <field name="longitude"/>
-                          </group>
-                        </group>
-                        <group>
-                          <field name="payload_json" widget="text" readonly="1"/>
-                        </group>
-                      </form>
-                    </field>
-                  </page>
-                </notebook>
-              </form>
-            </field>
-          </page>
-          <page string="Documents">
-            <field name="attachment_ids"
-                   context="{
-                     'default_res_model': 'eudr.declaration',
-                     'default_res_id': active_id,
-                     'bin_size': False
-                   }"
-                   domain="[('res_model', '=', 'eudr.declaration')]">
-              <tree editable="bottom" string="Attachments">
-                <button name="action_open_attachment"
-                        type="object"
-                        string=""
-                        icon="fa-external-link"
-                        class="btn-link"
-                        help="Open this attachment in a new tab"/>
-                <field name="name" required="1"/>
-                <field name="type"/>
-                <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
-                <field name="create_date" readonly="1"/>
-              </tree>
-              <form string="Attachment">
-                <sheet>
-                  <group>
-                    <field name="name"/>
-                    <field name="type"/>
-                    <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
-                  </group>
-                  <group>
-                    <field name="mimetype" readonly="1"/>
-                    <field name="description"/>
-                    <field name="res_model" invisible="1"/>
-                    <field name="res_id" invisible="1"/>
-                  </group>
-                </sheet>
-              </form>
-            </field>
-          </page>
-        </notebook>
+                    <group>
+                      <field name="mimetype" readonly="1"/>
+                      <field name="description"/>
+                      <field name="res_model" invisible="1"/>
+                      <field name="res_id" invisible="1"/>
+                    </group>
+                  </sheet>
+                </form>
+              </field>
+            </page>
+          </notebook>
 
-        <!-- “footer” notes area at bottom of sheet -->
           <group string="Additional info" col="1">
             <field name="extra_info" widget="text"/>
           </group>
-      </sheet>
+        </sheet>
 
-      <div class="oe_chatter">
-        <field name="message_follower_ids" widget="mail_followers"/>
-        <field name="message_ids" widget="mail_thread"/>
-      </div>
-    </form>
-  </field>
-</record>
+        <div class="oe_chatter">
+          <field name="message_follower_ids" widget="mail_followers"/>
+          <field name="message_ids" widget="mail_thread"/>
+        </div>
+      </form>
+    </field>
+  </record>
 
 </odoo>

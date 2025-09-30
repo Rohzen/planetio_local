@@ -1,6 +1,6 @@
 {
     'name': 'Planetio',
-    'version': '14.0.1.0.3',
+    'version': '14.0.1.0.4',
     'author': 'Alessandro Vasi / Roberto Zanardo / Encodata S.r.l.',
     'summary': 'Modulo per la compilazione della due-diligence sulla normativa della deforestazione',
     'depends': ['base', 'mail', 'web', 'coffee_species'],
@@ -15,6 +15,7 @@
         'data/seed_template.xml',
         'data/sequence.xml',
         'report/eudr_declaration_report.xml',
+        "views/res_company_views.xml",
     ],
     'external_dependencies': {
         'python' : ['pandas', 'requests', 'google-generativeai', 'pyproj', 'shapely'],

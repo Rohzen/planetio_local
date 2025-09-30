@@ -266,7 +266,7 @@ def submit_dds_for_batch(record):
         description_of_goods=(
             record.coffee_species.name if record.coffee_species else (record.product_id.display_name or '')),
         net_weight_kg=weight,
-        producer_country=(producer_country or 'BR').upper(),
+        producer_country=(record.partner_id.country_id.code or 'BR').upper(),
         producer_name=record.producer_name or 'Unknown Producer',
         geojson_b64=geojson_b64,
         operator_type=record.eudr_type_override or 'TRADER',
@@ -344,7 +344,7 @@ def submit_dds_for_batch(record):
                 base += _('\n\nWS_REQUEST_ID: %s') % wsid_only
             record.message_post(
                 body=("Fault grezzo (parsing fallito):<br/><pre>%s</pre>" % (text or "")).replace("\n", "<br/>"))
-            #raise UserError(base)
+            # raise UserError(base)
 
 def action_retrieve_dds_numbers(record):
     """Given record.dds_identifier, call Retrieval SOAP and fill eudr_id (and others if present)."""

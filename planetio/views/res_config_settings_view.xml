@@ -17,6 +17,42 @@
               <div class="text-muted"><field name="debug_import"/></div>
             </div>
           </div>
+          <div class="col-12 col-lg-12 o_setting_box">
+            <div class="o_setting_left_pane"/> 
+            <div class="o_setting_right_pane">
+              <span class="o_form_label">
+                Classification used by PLANETIO/TRACES for DDS submission:
+                <ul>
+                  <li>Operator: places products on the EU market for the first time or exports them</li>
+                  <li>Trader: buys/sells products already placed on the EU market (SME / non-SME)</li>
+                  <li>Mixed: may act either as operator or trader depending on the case</li>
+                  <li>Third Party Trader: submits on behalf of another party, with mandate and EU establishment</li>
+                </ul>
+              </span>
+              <div class="text-muted"><field name="eudr_company_type"/></div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-12 o_setting_box" attrs="{'invisible': [('eudr_company_type','not in',('trader','mixed'))]}">
+            <div class="o_setting_left_pane"/> 
+            <div class="o_setting_right_pane">
+              <span class="o_form_label">Relevant only if the company operates as Trader / Mixed (in Trader mode).</span>
+              <div class="text-muted"><field name="eudr_is_sme"/></div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-12 o_setting_box" attrs="{'invisible': [('eudr_company_type','!=','third_party_trader')]}">
+            <div class="o_setting_left_pane"/> 
+            <div class="o_setting_right_pane">
+              <span class="o_form_label">Third Party: Signed mandate</span>
+              <div class="text-muted"><field name="eudr_third_party_has_mandate"/></div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-12 o_setting_box" attrs="{'invisible': [('eudr_company_type','!=','third_party_trader')]}">
+            <div class="o_setting_left_pane"/> 
+            <div class="o_setting_right_pane">
+              <span class="o_form_label">Third Party: Established in the EU</span>
+              <div class="text-muted"><field name="eudr_third_party_established_in_eu"/></div>
+            </div>
+          </div>
         </div>
 
 <!--        <h2>Global Forest Watch API</h2>-->

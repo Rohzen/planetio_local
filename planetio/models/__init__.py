@@ -4,4 +4,5 @@ from . import res_config_settings
 from . import excel_import_template
 from . import excel_import_service
 from . import ir_attachment
+from . import res_company
 
