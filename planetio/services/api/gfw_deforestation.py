@@ -269,8 +269,19 @@ class DeforestationProviderGFW(models.AbstractModel):
                 breakdown_data, breakdown_info = self._execute_sql(headers, geom_req, breakdown_sql, aggregate_info['date_from'], allow_short=False)
             except UserError as exc:
                 message = tools.ustr(exc).lower()
-                layer_tokens = [count_field.lower(), area_field.lower()]
-                if any(f"layer {token}" in message and 'invalid' in message for token in layer_tokens):
+                layer_tokens = {count_field.lower(), area_field.lower()}
+                # GFW sometimes returns the invalid layer using the plural form
+                # (``alerts__count``) even if we queried the singular version
+                # (``alert__count``) and vice versa. Try both variants when
+                # detecting an invalid layer so we can fall back to the next
+                # candidate instead of raising immediately.
+                expanded_tokens = set(layer_tokens)
+                for token in list(layer_tokens):
+                    if 'alerts__' in token:
+                        expanded_tokens.add(token.replace('alerts__', 'alert__'))
+                    if 'alert__' in token:
+                        expanded_tokens.add(token.replace('alert__', 'alerts__'))
+                if any('invalid' in message and f"layer {token}" in message for token in expanded_tokens):
                     last_layer_error = exc
                     continue
                 raise
