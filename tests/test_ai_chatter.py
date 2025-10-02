@@ -21,9 +21,28 @@ mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
 
+class DummyAttachment:
+    def __init__(self, attachment_id, visible):
+        self.id = attachment_id
+        self.eudr_document_visible = visible
+
+
 class DummyAttachments:
-    def __init__(self, ids):
-        self.ids = ids
+    def __init__(self, attachments):
+        self._attachments = list(attachments)
+
+    def __iter__(self):
+        return iter(self._attachments)
+
+    def __bool__(self):
+        return bool(self._attachments)
+
+    @property
+    def ids(self):
+        return [attachment.id for attachment in self._attachments]
+
+    def filtered(self, func):
+        return DummyAttachments(filter(func, self._attachments))
 
 
 class FakeAiRequest:
@@ -74,16 +93,17 @@ class FakeConfigParameter:
 
 
 class FakeDeclaration(mod.PlanetioSummarizeWizard):
-    def __init__(self, request_model=None):
+    def __init__(self, request_model=None, attachments=None):
         attachment_model = FakeAttachmentModel()
         request_model = request_model or FakeAiRequestModel()
+        attachments = attachments or [DummyAttachment(1, True)]
         self.env = FakeEnv({
             'ai.request': request_model,
             'ir.attachment': attachment_model,
             'ir.config_parameter': FakeConfigParameter(),
             'eudr.declaration.line': types.SimpleNamespace(),
         })
-        self.attachment_ids = DummyAttachments([1])
+        self.attachment_ids = DummyAttachments(attachments)
         self._name = 'eudr.declaration'
         self.id = 1
         self.display_name = 'Fake Declaration'
@@ -181,6 +201,24 @@ def test_structured_response_creates_records():
     assert rec.ai_action_ids[0]['line_label'] == 'Field Two'
     assert rec.ai_action_ids[0]['description']
     assert rec.attachment_model.created, 'Expected a summary attachment to be created'
+
+
+def test_only_visible_attachments_are_sent_to_ai():
+    request_model = FakeAiRequestModel()
+    request_model.status = 'done'
+    request_model.error_message = ''
+    request_model.response_text = json.dumps({'alerts': [], 'actions': []})
+
+    attachments = [
+        DummyAttachment(101, True),
+        DummyAttachment(202, False),
+    ]
+
+    rec = FakeDeclaration(request_model=request_model, attachments=attachments)
+    rec.action_ai_analyze()
+
+    attachment_command = rec.request_model.last_create_vals['attachment_ids']
+    assert attachment_command == [(6, 0, [101])]
 
 
 def test_actions_with_recommendation_key_are_preserved():

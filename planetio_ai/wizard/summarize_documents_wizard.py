@@ -1200,7 +1200,8 @@ class PlanetioSummarizeWizard(models.Model):
         payload_parts = [part for part in payload_parts if part]
         payload_text = "\n\n".join(payload_parts)
         for rec in self:
-            if not rec.attachment_ids:
+            attachment_ids = self._get_visible_attachment_ids(rec.attachment_ids)
+            if not attachment_ids:
                 continue
 
             req = AiRequest.create(
@@ -1208,7 +1209,7 @@ class PlanetioSummarizeWizard(models.Model):
                     "name": f"AI Summary for {rec.id}",
                     "provider": default_provider,
                     "task_type": "summarize",
-                    "attachment_ids": [(6, 0, rec.attachment_ids.ids)],
+                    "attachment_ids": [(6, 0, attachment_ids)],
                     "model_ref": f"{rec._name},{rec.id}",
                     "payload": payload_text,
                 }
@@ -1257,3 +1258,30 @@ class PlanetioSummarizeWizard(models.Model):
             )
 
         return True
+
+    @staticmethod
+    def _get_visible_attachment_ids(attachments):
+        """Return IDs of attachments visible to EUDR consumers."""
+
+        if not attachments:
+            return []
+
+        filtered_method = getattr(attachments, "filtered", None)
+        if callable(filtered_method):
+            filtered = filtered_method(
+                lambda attachment: getattr(attachment, "eudr_document_visible", False)
+            )
+            ids = getattr(filtered, "ids", None)
+            if ids is not None:
+                return list(ids)
+            return [
+                getattr(attachment, "id", attachment)
+                for attachment in filtered
+                if getattr(attachment, "id", None) is not None
+            ]
+
+        return [
+            getattr(attachment, "id", attachment)
+            for attachment in attachments
+            if getattr(attachment, "eudr_document_visible", False)
+        ]
