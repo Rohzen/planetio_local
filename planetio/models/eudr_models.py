@@ -67,8 +67,7 @@ class EUDRDeclaration(models.Model):
             self.filtered(lambda rec: rec.stage_id != stage).write({'stage_id': stage.id})
         return stage
 
-    company_id = fields.Many2one(
-        'res.company', string="Company")
+    company_id = fields.Many2one('res.company', default=lambda s: s.env.company, required=True)
     datestamp = fields.Datetime(string="Datestamp", default=lambda self: fields.Datetime.now())
     name = fields.Char(required=False)
     partner_id = fields.Many2one(
@@ -96,10 +95,6 @@ class EUDRDeclaration(models.Model):
     attachment_ids = fields.One2many(
         'ir.attachment', 'res_id',
         string='Attachments',
-        domain=lambda self: [
-            ('res_model', '=', self._name),
-            ('eudr_document_visible', '=', True),
-        ],
         help="Files linked to this declaration that should be shown in the Documents tab."
     )
     # eudr_company_type = fields.Selection([
@@ -108,6 +103,7 @@ class EUDRDeclaration(models.Model):
     #     ('mixed', 'Mixed'),
     #     ('third_party_trader', 'Third-party Trader')
     # ], string="Company Type",)
+
     eudr_type_override = fields.Selection([
         ('TRADER', 'Trader'),
         ('OPERATOR', 'Operator')
@@ -132,9 +128,9 @@ class EUDRDeclaration(models.Model):
             ('090121',  '0901 21 – non-decaffeinated'),
             ('090122',  '0901 22 – decaffeinated'),
             ('090190',  '0901 90 – others'),
-        ], string="HS Code", default="090111")
+        ], string="HS Code", default="090111", required=True)
     product_id  = fields.Many2one('product.product', string="Product template")
-    product_description = fields.Char(string="Description of raw materials or products")
+    product_description = fields.Char(string="Description of raw materials or products", required=True)
     net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3), required=True)
     common_name = fields.Char(string="Common name")
     producer_name = fields.Char(string="Producer name")
@@ -142,8 +138,6 @@ class EUDRDeclaration(models.Model):
     supplier_id = fields.Many2one('res.partner', string="Producer/Supplier")
     coffee_species  = fields.Many2one('coffee.species', string="Product")
     area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
-
-    company_id = fields.Many2one('res.company', default=lambda s: s.env.company, required=True)
 
     # Mirrors from company settings (for XML attrs)
     eudr_company_type_rel = fields.Selection(related="company_id.eudr_company_type", store=False, readonly=True)
@@ -165,6 +159,11 @@ class EUDRDeclaration(models.Model):
     def _compute_area_ha_display(self):
         for rec in self:
             rec.area_ha_display = formatLang(self.env, rec.area_ha or 0.0, digits=4)
+
+    @api.onchange('product_id')
+    def _onchange_product_id_set_description(self):
+        for rec in self:
+            rec.product_description = rec.product_id.name or False
 
     # ---------------------- helpers ----------------------
 
@@ -399,20 +398,34 @@ class EUDRDeclaration(models.Model):
 
     @api.model
     def create(self, vals):
-        # assegna stage di default se non specificato
+        # pick default stage
         default_stage_id = self._default_stage_id()
 
-        # Abilitare per multicompany
-        # if 'company_id' in vals:
-        #     self = self.with_company(vals['company_id'])
+        # ensure company context is correct before drawing the sequence
+        target_company = vals.get('company_id') or self.env.company.id
+        env_in_company = self.with_company(target_company)
+
+        # choose the sequence date (use provided datestamp or now)
+        seq_dt = vals.get('datestamp') or fields.Datetime.now()
+        ctx = dict(env_in_company.env.context, ir_sequence_date=seq_dt)
+
         if not vals.get('name'):
-            seq_date = None
-            vals['name'] = self.env['ir.sequence'].next_by_code('eudr.declaration') or _('New')
+            vals['name'] = env_in_company.with_context(ctx).env['ir.sequence'].next_by_code('eudr.declaration') or _('New')
+
+        if not vals.get('stage_id'):
             vals['stage_id'] = default_stage_id
+        if 'net_mass_kg' not in vals:
             vals['net_mass_kg'] = 0.0
 
-        result = super(EUDRDeclaration, self).create(vals)
-        return result
+        # try once, and if a rare race triggers the unique constraint, regenerate and retry
+        try:
+            return super(EUDRDeclaration, self).create(vals)
+        except Exception as e:
+            # Only retry on unique violation on our constraint
+            if hasattr(e, 'pgerror') and 'name_company_uniq' in getattr(e, 'pgerror', ''):
+                vals['name'] = env_in_company.with_context(ctx).env['ir.sequence'].next_by_code('eudr.declaration') or _('New')
+                return super(EUDRDeclaration, self).create(vals)
+            raise
 
     def action_open_excel_import_wizard(self):
         self.ensure_one()

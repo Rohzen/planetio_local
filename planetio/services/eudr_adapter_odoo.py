@@ -256,7 +256,12 @@ def submit_dds_for_batch(record):
 
     # Take the first line with geometry to determine producer country
     line = next((l for l in record.line_ids if l.geometry), None)
-    producer_country = (line.country[:2] or 'PE').upper()
+    if line and line.country:
+        producer_country = (line.country[:2] or 'PE').upper()
+    elif record.supplier_id.country_id.code:
+        producer_country = (record.supplier_id.country_id.code or 'PE').upper()
+    else:
+        raise UserError(_('Nazione produttore mancante: imposta la nazione sul fornitore o sulle linee.'))
 
     submit_xml = client.build_statement_xml(
         internal_ref=record.name or f'Batch-{record.id}',

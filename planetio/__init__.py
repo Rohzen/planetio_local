@@ -1,1 +1,1 @@
-from . import models, wizards, services
+from . import models, wizards, services, hooks
