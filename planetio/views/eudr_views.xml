@@ -39,7 +39,7 @@
     <field name="arch" type="xml">
       <form string="EUDR Declaration">
         <header>
-          <button name="action_open_import_wizard" type="object" string="Import" class="btn-secondary" icon="fa-upload"/>
+          <button name="action_open_import_wizard" type="object" string="Upload documentation" class="btn-secondary" icon="fa-upload"/>
           <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"/>
           <button name="action_create_deforestation_geojson" type="object" class="btn-secondary" string="Deforestation GeoJSON" icon="fa-download" invisible="1"/>
           <button name="action_create_geojson" type="object" class="btn-secondary" string="Traces GeoJSON" icon="fa-save" invisible="1"/>

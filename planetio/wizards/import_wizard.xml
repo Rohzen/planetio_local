@@ -25,7 +25,7 @@
             <field name="step" invisible="1"/>
             <field name="debug_import" invisible="1"/>
             <group attrs="{'invisible':[('step','!=','upload')]}" >
-              <field name="template_id" required="1"/>
+              <field name="template_id" required="1" invisible="1"/>
               <field name="file_name" readonly="1"/>
               <field name="file_data" filename="file_name"/>
             </group>
@@ -63,7 +63,7 @@
                   attrs="{'invisible':['|',('step','!=','map'),('debug_import','!=',True)]}"/>
 
           <button name="action_confirm"
-                  string="Create Records"
+                  string="Add"
                   type="object"
                   class="btn-primary"
                   />
