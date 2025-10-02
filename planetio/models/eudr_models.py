@@ -67,6 +67,8 @@ class EUDRDeclaration(models.Model):
             self.filtered(lambda rec: rec.stage_id != stage).write({'stage_id': stage.id})
         return stage
 
+    company_id = fields.Many2one(
+        'res.company', string="Company")
     datestamp = fields.Datetime(string="Datestamp", default=lambda self: fields.Datetime.now())
     name = fields.Char(required=False)
     partner_id = fields.Many2one(
@@ -133,6 +135,8 @@ class EUDRDeclaration(models.Model):
     net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3), required=True)
     common_name = fields.Char(string="Common name")
     producer_name = fields.Char(string="Producer name")
+    lot_name = fields.Char(string="Lot info")
+    supplier_id = fields.Many2one('res.partner', string="Producer/Supplier")
     coffee_species  = fields.Many2one('coffee.species', string="Product")
     area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
 

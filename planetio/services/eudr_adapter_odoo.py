@@ -213,7 +213,9 @@ def submit_dds_for_batch(record):
     if not username or not apikey:
         raise UserError(_('Credenziali EUDR mancanti: imposta planetio.eudr_user e planetio.eudr_apikey.'))
 
-    company = record.env.company
+    company = record.company_id or record.env.company
+    if record.eudr_company_type_rel == 'third_party_trader':
+        company = record.partner_id
     addr_parts = [company.street or "", company.zip or "", company.city or "", company.country_id.code or ""]
     company_address = ", ".join([p for p in addr_parts if p]).strip()
     company_country = (company.country_id.code or 'IT').upper()
@@ -257,24 +259,24 @@ def submit_dds_for_batch(record):
 
     submit_xml = client.build_statement_xml(
         internal_ref=record.name or f'Batch-{record.id}',
+        operator_type=record.eudr_type_override or 'TRADER',
         activity_type=record.activity_type.upper(),
-        company_name=record.partner_id.name or 'Company',
-        company_country=record.partner_id.country_id.code or 'IT',
+        company_name=company or 'Company',
         company_address=company_address or 'Unknown Address',
-        eori_value=record.partner_id.vat,
+        company_country=company_country or 'IT',
+        eori_value=company.vat,
         hs_heading=record.hs_code or '090111',
         description_of_goods=(
             record.coffee_species.name if record.coffee_species else (record.product_id.display_name or '')),
-        net_weight_kg=weight,
-        producer_country=(record.partner_id.country_id.code or 'BR').upper(),
-        producer_name=record.producer_name or 'Unknown Producer',
-        geojson_b64=geojson_b64,
-        operator_type=record.eudr_type_override or 'TRADER',
-        country_of_activity=company_country,
-        border_cross_country=company_country,
-        comment=comment_text,
         scientific_name=getattr(record.coffee_species, 'scientific_name', None),
         common_name=getattr(record.coffee_species, 'name', None),
+        net_weight_kg=weight,
+        producer_country=(record.supplier_id.country_id.code or 'BR').upper(),
+        producer_name=record.supplier_id.name or 'Unknown Producer',
+        country_of_activity=company_country,
+        border_cross_country=company_country,
+        geojson_b64=geojson_b64,
+        comment=comment_text
     )
 
     envelope = client.build_envelope(submit_xml)

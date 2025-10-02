@@ -41,36 +41,81 @@
         <header>
           <button name="action_open_import_wizard" type="object" string="Import" class="btn-secondary" icon="fa-upload"/>
           <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"/>
-          <button name="action_create_deforestation_geojson" type="object" class="btn-secondary" string="Deforestation GeoJSON" icon="fa-download"/>
-          <button name="action_create_geojson" type="object" class="btn-secondary" string="Traces GeoJSON" icon="fa-save"/>
+          <button name="action_create_deforestation_geojson" type="object" class="btn-secondary" string="Deforestation GeoJSON" icon="fa-download" invisible="1"/>
+          <button name="action_create_geojson" type="object" class="btn-secondary" string="Traces GeoJSON" icon="fa-save" invisible="1"/>
           <button name="action_transmit_dds" type="object" class="oe_highlight" string="Trasmit DDS" icon="fa-paper-plane"/>
           <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
         </header>
 
-        <sheet>
-          <div class="oe_button_box"></div>
-          <div class="oe_title">
-            <h1><field name="name" placeholder="Eudr sequence"/></h1>
-          </div>
-
-          <!-- Hidden technical fields used by attrs -->
-          <group col="4">
-            <field name="eudr_company_type_rel" invisible="1"/>
-            <field name="eudr_is_sme_rel" invisible="1"/>
-            <field name="eudr_tp_has_mandate_rel" invisible="1"/>
-            <field name="eudr_tp_in_eu_rel" invisible="1"/>
-          </group>
-
+      <sheet>
+        <div class="oe_button_box"></div>
+        <div class="oe_title">
+          <h1><field name="name" placeholder="Eudr sequence"/></h1>
+        </div>
+        <group col="4">
+          <field name="eudr_company_type_rel" invisible="1"/>
+          <field name="eudr_is_sme_rel" invisible="1"/>
+          <field name="eudr_tp_has_mandate_rel" invisible="1"/>
+          <field name="eudr_tp_in_eu_rel" invisible="1"/>
+        </group>
+        <group>
           <group>
-            <!-- Colonna sinistra -->
-            <group>
-              <field name="datestamp" string="Creation date"/>
-              <field name="partner_id" />
-              <field name="eudr_type_override"/>
-              <field name="eudr_third_party_client_id" attrs="{'invisible': [('eudr_company_type_rel','!=','third_party_trader')]}"/>
-              <field name="source_attachment_id" readonly="1" invisible="1"/>
-              <field name="activity_type" string="Attività"/>
-              <field name="eudr_id" string="EUDR Reference" readonly="0" invisible="1"/>
+            <field name="company_id"/>
+            <field name="datestamp" string="Creation date"/>
+<!--            &lt;!&ndash; eudr_type_override solo per Mixed &ndash;&gt;-->
+<!--            <field name="eudr_type_override"-->
+<!--                  attrs="{'invisible': [('eudr_company_type_rel','!=','mixed')]}"/>-->
+<!--            &lt;!&ndash; Cliente (mandante) solo per Third Party &ndash;&gt;-->
+<!--            <field name="eudr_third_party_client_id"-->
+<!--                  attrs="{'invisible': [('eudr_company_type_rel','!=','third_party_trader')]}"/>-->
+<!--            &lt;!&ndash; Operator - Supplier / Exporter &ndash;&gt;-->
+<!--            <field name="partner_id"-->
+<!--                  string="Supplier / Exporter"-->
+<!--                  options="{'no_open': False}"-->
+<!--                  attrs="{'invisible': [('eudr_company_type_rel','!=','operator')]}"/>-->
+<!--            &lt;!&ndash; Trader non-SME - Supplier / Exporter &ndash;&gt;-->
+<!--            <field name="partner_id"-->
+<!--                  string="Supplier / Exporter"-->
+<!--                  options="{'no_open': False}"-->
+<!--                  attrs="{'invisible': ['|',-->
+<!--                            ('eudr_company_type_rel','!=','trader'),-->
+<!--                            ('eudr_is_sme_rel','=', True)-->
+<!--                          ]}"/>-->
+<!--            &lt;!&ndash; Trader SME - Upstream Operator/Trader &ndash;&gt;-->
+<!--            <field name="partner_id"-->
+<!--                  string="Upstream Operator/Trader"-->
+<!--                  options="{'no_open': False}"-->
+<!--                  attrs="{'invisible': ['|',-->
+<!--                            ('eudr_company_type_rel','!=','trader'),-->
+<!--                            ('eudr_is_sme_rel','=', False)-->
+<!--                          ]}"/>-->
+<!--            &lt;!&ndash; Third-party trader - Principal (Mandating Company) &ndash;&gt;-->
+<!--            <field name="partner_id"-->
+<!--                  string="Principal (Mandating Company)"-->
+<!--                  options="{'no_open': False}"-->
+<!--                  attrs="{'invisible': [('eudr_company_type_rel','!=','third_party_trader')],-->
+<!--                          'required':  [('eudr_company_type_rel','=','third_party_trader')]}"/>-->
+<!--            &lt;!&ndash; Mixed + override = OPERATOR - Supplier / Exporter &ndash;&gt;-->
+<!--            <field name="partner_id"-->
+<!--                  string="Supplier / Exporter (acting as Operator)"-->
+<!--                  options="{'no_open': False}"-->
+<!--                  attrs="{'invisible': ['|',-->
+<!--                            ('eudr_company_type_rel','!=','mixed'),-->
+<!--                            ('eudr_type_override','!=','OPERATOR')-->
+<!--                          ]}"/>-->
+<!--            &lt;!&ndash; Mixed + override = TRADER - Upstream Operator/Trader &ndash;&gt;-->
+<!--            <field name="partner_id"-->
+<!--                  string="Upstream Operator/Trader (acting as Trader)"-->
+<!--                  options="{'no_open': False}"-->
+<!--                  attrs="{'invisible': ['|',-->
+<!--                            ('eudr_company_type_rel','!=','mixed'),-->
+<!--                            ('eudr_type_override','!=','TRADER')-->
+<!--                          ]}"/>-->
+            <field name="partner_id" attrs="{'invisible': [('eudr_company_type_rel','!=','third_party_trader')], 'required':  [('eudr_company_type_rel','=','third_party_trader')]}"/>
+            <field name="source_attachment_id" readonly="1" invisible="1"/>
+            <field name="activity_type" string="Attività"/>
+            <field name="hs_code"/>
+            <field name="eudr_id" string="EUDR Reference" readonly="0" invisible="1"/>
 
               <div class="o_row bg-light p-2 rounded mb-2">
                 <div class="o_td_label">
@@ -87,7 +132,6 @@
 
             <!-- Colonna destra -->
             <group>
-              <field name="hs_code"/>
               <field name="product_id" string="Selezione prodotto" invisible="0"/>
               <field name="coffee_species" invisible="0"/>
               <field name="product_description" invisible="1"/>
@@ -95,7 +139,8 @@
               <field name="area_ha_display" string="Area Ha" readonly="1"/>
               <field name="area_ha" readonly="1" invisible="1"/>
               <field name="operator_name" invisible="1"/>
-              <field name="producer_name" string="Lot info" placeholder="Lot number, producer name, etc..." invisible="0"/>
+              <field name="lot_name" placeholder="Lot number, producer name, etc..." invisible="0"/>
+              <field name="supplier_id" invisible="0"/>
               <field name="name" string="Internal Ref" invisible="1"/>
             </group>
           </group>
@@ -243,5 +288,28 @@
       </form>
     </field>
   </record>
+
+  <!-- Deforestation GeoJSON (Action menu) -->
+  <record id="action_create_deforestation_geojson_server" model="ir.actions.server">
+    <field name="name">Deforestation GeoJSON</field>
+    <!-- TODO: replace my_module.model_your_model with your actual model external id -->
+    <field name="model_id" ref="planetio.model_eudr_declaration"/>
+    <field name="binding_model_id" ref="planetio.model_eudr_declaration"/>
+    <field name="binding_view_types">list,form</field>
+    <field name="state">code</field>
+    <!-- Call your python method on the selected records -->
+    <field name="code">action = records.action_create_deforestation_geojson()</field>
+  </record>
+
+  <!-- Traces GeoJSON (Action menu) -->
+  <record id="action_create_traces_geojson_server" model="ir.actions.server">
+    <field name="name">Traces GeoJSON</field>
+    <field name="model_id" ref="planetio.model_eudr_declaration"/>
+    <field name="binding_model_id" ref="planetio.model_eudr_declaration"/>
+    <field name="binding_view_types">list,form</field>
+    <field name="state">code</field>
+    <field name="code">action = records.action_create_geojson()</field>
+  </record>
+
 
 </odoo>
