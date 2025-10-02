@@ -1244,17 +1244,16 @@ class PlanetioSummarizeWizard(models.Model):
             if not combined_text:
                 continue
 
-            # pdf_bytes, mimetype = self._summary_to_pdf(combined_text, rec)
-            #
-            # self.env["ir.attachment"].create(
-            #     {
-            #         "name": "ai_summary.pdf" if mimetype == "application/pdf" else "ai_summary.txt",
-            #         "type": "binary",
-            #         "datas": base64.b64encode(pdf_bytes),
-            #         "mimetype": mimetype,
-            #         "res_model": rec._name,
-            #         "res_id": rec.id,
-            #     }
-            # )
+            self.env["ir.attachment"].create(
+                {
+                    "name": "ai_summary.txt",
+                    "type": "binary",
+                    "datas": base64.b64encode(combined_text.encode("utf-8")),
+                    "mimetype": "text/plain",
+                    "res_model": rec._name,
+                    "res_id": rec.id,
+                    "eudr_document_visible": False,
+                }
+            )
 
         return True

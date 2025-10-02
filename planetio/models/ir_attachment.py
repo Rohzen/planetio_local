@@ -1,8 +1,15 @@
-from odoo import models
+from odoo import models, fields
 
 
 class IrAttachment(models.Model):
     _inherit = "ir.attachment"
+
+    eudr_document_visible = fields.Boolean(
+        string="Visible in EUDR documents",
+        default=True,
+        help="Show the attachment in the EUDR declaration Documents tab and allow "
+             "AI analysis when enabled.",
+    )
 
     def action_open_attachment(self):
         """Open the attachment content or URL in a new browser tab."""

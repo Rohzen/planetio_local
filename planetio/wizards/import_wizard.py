@@ -272,6 +272,7 @@ class ExcelImportWizard(models.TransientModel):
                 "res_id": decl_id,
                 "type": "binary",
                 "mimetype": "application/geo+json",
+                "eudr_document_visible": True,
             })
             try:
                 decl.write({"source_attachment_id": attach.id})

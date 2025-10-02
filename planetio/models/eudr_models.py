@@ -96,8 +96,11 @@ class EUDRDeclaration(models.Model):
     attachment_ids = fields.One2many(
         'ir.attachment', 'res_id',
         string='Attachments',
-        domain=lambda self: [('res_model', '=', self._name)],
-        help="Files linked to this declaration."
+        domain=lambda self: [
+            ('res_model', '=', self._name),
+            ('eudr_document_visible', '=', True),
+        ],
+        help="Files linked to this declaration that should be shown in the Documents tab."
     )
     # eudr_company_type = fields.Selection([
     #     ('trader', 'Trader'),
