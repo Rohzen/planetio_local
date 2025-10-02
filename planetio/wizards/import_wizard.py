@@ -1,6 +1,6 @@
 from odoo import models, fields, _
 from odoo.exceptions import UserError
-import base64, json
+import base64, json, mimetypes
 
 def extract_geojson_features(obj):
     """Return list of (geometry_dict, properties_dict) tuples from a GeoJSON object."""
@@ -78,7 +78,14 @@ class ExcelImportWizard(models.TransientModel):
 
     file_data = fields.Binary(string="File", required=True, attachment=False)
     file_name = fields.Char(string="Filename")
-    template_id = fields.Many2one("excel.import.template", required=True)
+    def _default_template_id(self):
+        template_id = self.env.context.get("default_template_id")
+        if template_id:
+            return template_id
+        template = self.env["excel.import.template"].search([], limit=1)
+        return template.id
+
+    template_id = fields.Many2one("excel.import.template", required=True, default=_default_template_id)
 
     def _default_debug_import(self):
         icp = self.env['ir.config_parameter'].sudo()
@@ -102,6 +109,50 @@ class ExcelImportWizard(models.TransientModel):
     preview_json = fields.Text(readonly=True)
     result_json = fields.Text(readonly=True)
     analysis_json = fields.Text(readonly=True)
+
+    def _get_target_declaration(self):
+        self.ensure_one()
+        Decl = self.env["eudr.declaration"]
+
+        decl = self.declaration_id and self.declaration_id.exists()
+        if decl:
+            return decl
+
+        ctx = self.env.context or {}
+        default_decl_id = ctx.get("default_declaration_id")
+        if default_decl_id:
+            decl = Decl.browse(default_decl_id).exists()
+            if decl:
+                self.declaration_id = decl
+                return decl
+
+        active_model = ctx.get("active_model")
+        active_id = ctx.get("active_id")
+        if active_model == "eudr.declaration" and active_id:
+            decl = Decl.browse(active_id).exists()
+            if decl:
+                self.declaration_id = decl
+                return decl
+
+        params = ctx.get("params") or {}
+        param_model = params.get("model")
+        param_id = params.get("id")
+        if param_model == "eudr.declaration" and param_id:
+            decl = Decl.browse(param_id).exists()
+            if decl:
+                self.declaration_id = decl
+                return decl
+
+        decl = Decl.create({})
+        self.declaration_id = decl
+        return decl
+
+    def _is_excel_file(self):
+        if self.attachment_id or self.sheet_name:
+            return True
+        fname = (self.file_name or "").lower()
+        excel_exts = (".xls", ".xlsx", ".xlsm", ".xlsb", ".ods", ".csv", ".tsv")
+        return fname.endswith(excel_exts)
 
     def _create_attachment(self):
         self.ensure_one()
@@ -209,32 +260,8 @@ class ExcelImportWizard(models.TransientModel):
             except Exception:
                 raise UserError(_("Invalid GeoJSON file"))
 
-            ctx = self.env.context or {}
-            Decl = self.env["eudr.declaration"]
-
-            decl = self.declaration_id
-            if not decl:
-                active_model = ctx.get("active_model")
-                active_id = ctx.get("active_id")
-                if active_model == "eudr.declaration" and active_id:
-                    decl = Decl.browse(active_id)
-
-            if not decl:
-                params = ctx.get("params") or {}
-                param_model = params.get("model")
-                param_id = params.get("id")
-                if param_model == "eudr.declaration" and param_id:
-                    decl = Decl.browse(param_id)
-
-            if decl and not decl.exists():
-                decl = Decl.browse([])
-
-            if not decl:
-                decl = Decl.create({})
-
+            decl = self._get_target_declaration()
             decl_id = decl.id
-            if not self.declaration_id:
-                self.declaration_id = decl
 
             feats = extract_geojson_features(obj)
             Line = self.env["eudr.declaration.line"]
@@ -279,6 +306,31 @@ class ExcelImportWizard(models.TransientModel):
             except Exception:
                 pass
 
+            self.step = "confirm"
+            return {
+                "type": "ir.actions.act_window",
+                "res_model": "eudr.declaration",
+                "view_mode": "form",
+                "res_id": decl_id,
+                "target": "current",
+            }
+
+        if not self._is_excel_file():
+            decl = self._get_target_declaration()
+            decl_id = decl.id
+            guessed_mimetype, _enc = mimetypes.guess_type(self.file_name or "")
+            attachment_vals = {
+                "name": self.file_name or _("Uploaded document"),
+                "datas": self.file_data,
+                "datas_fname": self.file_name or "document",
+                "res_model": "eudr.declaration",
+                "res_id": decl_id,
+                "type": "binary",
+                "mimetype": guessed_mimetype or "application/octet-stream",
+                "eudr_document_visible": True,
+            }
+            self.env["ir.attachment"].create(attachment_vals)
+            self.declaration_id = decl
             self.step = "confirm"
             return {
                 "type": "ir.actions.act_window",

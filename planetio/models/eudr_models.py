@@ -520,6 +520,11 @@ class EUDRDeclaration(models.Model):
 
     def action_open_import_wizard(self):
         self.ensure_one()
+        template = None
+        try:
+            template = self.env.ref('planetio.tmpl_eudr_declaration')
+        except ValueError:
+            template = self.env['excel.import.template'].search([], limit=1)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'excel.import.wizard',
@@ -528,6 +533,8 @@ class EUDRDeclaration(models.Model):
             'context': {
                 'active_model': 'eudr.declaration',
                 'active_id': self.id,
+                'default_declaration_id': self.id,
+                'default_template_id': template.id if template else False,
             }
         }
 
