@@ -250,8 +250,8 @@ def submit_dds_for_batch(record):
     comment_text = ((getattr(record, 'x_eudr_comment', None) or getattr(record, 'note', None) or '').strip())
 
     if not comment_text:
-        comment_text = _('Submission for %s on %s by %s') % (
-        (record.name or f'Batch-{record.id}'), fields.Date.today(),record.env.company.name,
+        comment_text = _('Submission for %s on %s by %s for lot %s') % (
+        (record.name or f'Batch-{record.id}'), fields.Date.today(),company.name,record.lot_name or 'N/A'
         )
 
     # Take the first line with geometry to determine producer country

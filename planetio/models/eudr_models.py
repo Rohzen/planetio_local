@@ -93,16 +93,30 @@ class EUDRDeclaration(models.Model):
     line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
 
     attachment_ids = fields.One2many(
-        'ir.attachment', 'res_id',
-        string='Attachments',
-        help="Files linked to this declaration that should be shown in the Documents tab."
+        'ir.attachment',
+        'res_id',
+        string='Documenti visibili',
+        help="Allegati collegati."
     )
-    # eudr_company_type = fields.Selection([
-    #     ('trader', 'Trader'),
-    #     ('operator', 'Operator'),
-    #     ('mixed', 'Mixed'),
-    #     ('third_party_trader', 'Third-party Trader')
-    # ], string="Company Type",)
+    # Allegati mostrati nella tab Documenti
+    attachment_visible_ids = fields.One2many(
+        'ir.attachment',
+        'res_id',
+        string='Documenti visibili',
+        domain=[('res_model', '=', 'eudr.declaration'),
+                ('eudr_document_visible', '=', True)],
+        help="Allegati collegati e visibili nella sezione Documenti."
+    )
+
+    # Allegati non visibili
+    attachment_hidden_ids = fields.One2many(
+        'ir.attachment',
+        'res_id',
+        string='Documenti nascosti',
+        domain=[('res_model', '=', 'eudr.declaration'),
+                ('eudr_document_visible', '!=', True)],
+        help="Allegati collegati ma non mostrati nella sezione Documenti."
+    )
 
     eudr_type_override = fields.Selection([
         ('TRADER', 'Trader'),

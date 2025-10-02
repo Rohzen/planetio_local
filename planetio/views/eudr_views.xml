@@ -242,38 +242,64 @@
                 </form>
               </field>
             </page>
-            <page string="Documents">
-              <field name="attachment_ids"
-                     context="{
-                       'default_res_model': 'eudr.declaration',
-                       'default_res_id': active_id,
-                       'default_eudr_document_visible': True,
-                       'bin_size': False
-                     }"
-                     domain="[('res_model', '=', 'eudr.declaration'),('eudr_document_visible', '=', True)]">
-                <tree editable="bottom" string="Attachments">
-                  <button name="action_open_attachment" type="object" string="" icon="fa-external-link" class="btn-link" help="Open this attachment in a new tab"/>
-                  <field name="name" required="1"/>
-                  <field name="type"/>
-                  <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
-                  <field name="create_date" readonly="1"/>
-                </tree>
-                <form string="Attachment">
-                  <sheet>
-                    <group>
-                      <field name="name"/>
-                      <field name="type"/>
-                      <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
-                    </group>
-                    <group>
-                      <field name="mimetype" readonly="1"/>
-                      <field name="description"/>
-                      <field name="res_model" invisible="1"/>
-                      <field name="res_id" invisible="1"/>
-                    </group>
-                  </sheet>
-                </form>
-              </field>
+            <page string="Documenti">
+              <field name="attachment_ids" invisible="1"/>
+              <group>
+                <field name="attachment_visible_ids"
+                       context="{
+                         'default_res_model': 'eudr.declaration',
+                         'default_res_id': active_id,
+                         'default_eudr_document_visible': True,
+                         'bin_size': False
+                       }">
+                  <tree editable="bottom" string="Allegati visibili">
+                    <field name="name" required="1"/>
+                    <field name="type"/>
+                    <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
+                    <field name="create_date" readonly="1"/>
+                    <field name="eudr_document_visible" optional="show"/>
+                    <button name="action_open_attachment" type="object" string="" icon="fa-external-link" class="btn-link" help="Apri in nuova scheda"/>
+                  </tree>
+                  <form string="Allegato visibile">
+                    <sheet>
+                      <group>
+                        <field name="name"/>
+                        <field name="type"/>
+                        <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
+                        <field name="eudr_document_visible" optional="show"/>
+                      </group>
+                    </sheet>
+                  </form>
+                </field>
+              </group>
+              <group>
+                <field name="attachment_hidden_ids"
+                       context="{
+                         'default_res_model': 'eudr.declaration',
+                         'default_res_id': active_id,
+                         'default_eudr_document_visible': False,
+                         'bin_size': False
+                       }" invisible="1">
+                  <tree editable="bottom" string="Allegati non visibili">
+                    <button name="action_open_attachment" type="object" string="" icon="fa-external-link" class="btn-link" help="Apri in nuova scheda"/>
+                    <field name="name" required="1"/>
+                    <field name="type"/>
+                    <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
+                    <field name="create_date" readonly="1"/>
+                    <field name="eudr_document_visible"/>
+                  </tree>
+                  <form string="Allegato non visibile">
+                    <sheet>
+                      <group>
+                        <field name="name"/>
+                        <field name="type"/>
+                        <field name="url" attrs="{'invisible': [('type','!=','url')]}"/>
+                        <field name="eudr_document_visible"/>
+                      </group>
+                    </sheet>
+                  </form>
+                </field>
+              </group>
             </page>
           </notebook>
 
