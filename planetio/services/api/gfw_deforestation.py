@@ -223,38 +223,65 @@ class DeforestationProviderGFW(models.AbstractModel):
 
         headers = self._prepare_headers(origin, api_key)
 
-        aggregate_sql = (
-            "SELECT "
-            "SUM(alert__count) AS alert_count, "
-            "SUM(alert__area__ha) AS area_ha_total, "
-            "MIN(gfw_integrated_alerts__date) AS first_alert_date, "
-            "MAX(gfw_integrated_alerts__date) AS last_alert_date "
-            "FROM results WHERE gfw_integrated_alerts__date >= '{date_from}'"
-        )
+        field_variants = [
+            ('alert__count', 'alert__area__ha'),
+            ('alerts__count', 'alerts__area__ha'),
+        ]
 
-        series_sql = (
-            "SELECT gfw_integrated_alerts__date AS alert_date, "
-            "SUM(alert__count) AS alert_count, "
-            "SUM(alert__area__ha) AS area_ha "
-            "FROM results WHERE gfw_integrated_alerts__date >= '{date_from}' "
-            "GROUP BY gfw_integrated_alerts__date "
-            "ORDER BY alert_date DESC LIMIT 365"
-        )
+        aggregate_data = series_data = breakdown_data = None
+        aggregate_info = series_info = breakdown_info = None
+        selected_fields = None
+        last_layer_error = None
 
-        breakdown_sql = (
-            "SELECT gfw_integrated_alerts__date AS alert_date, "
-            "SUM(alert__count) AS alert_count, "
-            "SUM(alert__area__ha) AS area_ha, "
-            "MAX(confidence__rating) AS confidence, "
-            "MAX(alert__id) AS alert_id "
-            "FROM results WHERE gfw_integrated_alerts__date >= '{date_from}' "
-            "GROUP BY gfw_integrated_alerts__date "
-            "ORDER BY alert_date DESC LIMIT 200"
-        )
+        for count_field, area_field in field_variants:
+            aggregate_sql = (
+                "SELECT "
+                f"SUM({count_field}) AS alert_count, "
+                f"SUM({area_field}) AS area_ha_total, "
+                "MIN(gfw_integrated_alerts__date) AS first_alert_date, "
+                "MAX(gfw_integrated_alerts__date) AS last_alert_date "
+                "FROM results WHERE gfw_integrated_alerts__date >= '{date_from}'"
+            )
 
-        aggregate_data, aggregate_info = self._execute_sql(headers, geom_req, aggregate_sql, date_from, allow_short=True)
-        series_data, series_info = self._execute_sql(headers, geom_req, series_sql, aggregate_info['date_from'], allow_short=False)
-        breakdown_data, breakdown_info = self._execute_sql(headers, geom_req, breakdown_sql, aggregate_info['date_from'], allow_short=False)
+            series_sql = (
+                "SELECT gfw_integrated_alerts__date AS alert_date, "
+                f"SUM({count_field}) AS alert_count, "
+                f"SUM({area_field}) AS area_ha "
+                "FROM results WHERE gfw_integrated_alerts__date >= '{date_from}' "
+                "GROUP BY gfw_integrated_alerts__date "
+                "ORDER BY alert_date DESC LIMIT 365"
+            )
+
+            breakdown_sql = (
+                "SELECT gfw_integrated_alerts__date AS alert_date, "
+                f"SUM({count_field}) AS alert_count, "
+                f"SUM({area_field}) AS area_ha, "
+                "MAX(confidence__rating) AS confidence, "
+                "MAX(alert__id) AS alert_id "
+                "FROM results WHERE gfw_integrated_alerts__date >= '{date_from}' "
+                "GROUP BY gfw_integrated_alerts__date "
+                "ORDER BY alert_date DESC LIMIT 200"
+            )
+
+            try:
+                aggregate_data, aggregate_info = self._execute_sql(headers, geom_req, aggregate_sql, date_from, allow_short=True)
+                series_data, series_info = self._execute_sql(headers, geom_req, series_sql, aggregate_info['date_from'], allow_short=False)
+                breakdown_data, breakdown_info = self._execute_sql(headers, geom_req, breakdown_sql, aggregate_info['date_from'], allow_short=False)
+            except UserError as exc:
+                message = tools.ustr(exc).lower()
+                layer_tokens = [count_field.lower(), area_field.lower()]
+                if any(f"layer {token}" in message and 'invalid' in message for token in layer_tokens):
+                    last_layer_error = exc
+                    continue
+                raise
+            else:
+                selected_fields = {'count': count_field, 'area': area_field}
+                break
+
+        if selected_fields is None:
+            if last_layer_error:
+                raise last_layer_error
+            raise UserError(_("Provider gfw: Impossibile interrogare il dataset degli alert."))
 
         aggregate_row = (aggregate_data.get('data') or [{}])[0]
         alert_count = self._extract_number(aggregate_row, ['alert_count', 'cnt', 'count']) or 0.0
@@ -336,6 +363,7 @@ class DeforestationProviderGFW(models.AbstractModel):
             'date_from': aggregate_info['date_from'],
             'dataset_endpoint': aggregate_info.get('endpoint'),
             'geometry_mode': 'bbox' if bbox else 'original',
+            'field_variant': selected_fields,
             'queries': {
                 'aggregate': aggregate_info,
                 'time_series': series_info,
