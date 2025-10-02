@@ -169,6 +169,7 @@ def _attach_geojson(record, geojson_dict, filename):
         "res_id": record.id,
         "mimetype": "application/geo+json",
         "type": "binary",
+        "eudr_document_visible": False,
         "datas": base64.b64encode(
             json.dumps(geojson_dict, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         ),
@@ -288,6 +289,7 @@ def submit_dds_for_batch(record):
         'res_id': record.id,
         'mimetype': 'text/xml',
         'type': 'binary',
+        'eudr_document_visible': False,
         'datas': base64.b64encode(envelope.encode('utf-8')),
     })
 
@@ -300,6 +302,7 @@ def submit_dds_for_batch(record):
         'res_id': record.id,
         'mimetype': 'text/xml',
         'type': 'binary',
+        'eudr_document_visible': False,
         'datas': base64.b64encode((text or '').encode('utf-8')),
     })
 
@@ -378,6 +381,7 @@ def action_retrieve_dds_numbers(record):
         'res_id': record.id,
         'mimetype': 'text/xml',
         'type': 'binary',
+        'eudr_document_visible': False,
         'datas': base64.b64encode(envelope.encode('utf-8')),
     })
 
@@ -390,6 +394,7 @@ def action_retrieve_dds_numbers(record):
         'res_id': record.id,
         'mimetype': 'text/xml',
         'type': 'binary',
+        'eudr_document_visible': False,
         'datas': base64.b64encode((text or '').encode('utf-8')),
     })
 
