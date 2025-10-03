@@ -579,6 +579,7 @@ class DeforestationProviderGFW(models.AbstractModel):
             variants.extend([
                 ('alert__count', 'area__ha'),
                 ('alerts__count', 'area__ha'),
+                (None, 'area__ha'),
             ])
             ordered = []
             seen = set()
@@ -604,7 +605,14 @@ class DeforestationProviderGFW(models.AbstractModel):
                 except UserError as ex:
                     last_error = ex
                     msg_lower = tools.ustr(ex).lower()
-                    needs_fallback = any(token in msg_lower for token in ('alert__count', 'alerts__count'))
+                    needs_fallback = any(
+                        token in msg_lower
+                        for token in (
+                            'alert__count',
+                            'alerts__count',
+                            'layer',
+                        )
+                    )
                     if needs_fallback and idx + 1 < len(ordered):
                         next_variant = ordered[idx + 1]
                         debug_errors.append(

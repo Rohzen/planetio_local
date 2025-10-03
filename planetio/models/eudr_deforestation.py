@@ -308,6 +308,7 @@ class EUDRDeclarationLineAlert(models.Model):
     area_ha = fields.Float(string="Area (ha)")
     latitude = fields.Float(string="Latitude")
     longitude = fields.Float(string="Longitude")
+    problem_description = fields.Text(string="Problem Description")
     payload_json = fields.Text(string="Raw Payload", readonly=True)
 
 
@@ -929,6 +930,50 @@ class EUDRDeclarationLineDeforestation(models.Model):
         except Exception:
             payload_json = tools.ustr(alert)
 
+        def _extract_description_candidates(container):
+            if not isinstance(container, dict):
+                return None
+            keys = (
+                'problem_description',
+                'problemDescription',
+                'description',
+                'issue',
+                'issue_description',
+                'alert_description',
+                'deforestation_problem',
+                'deforestation_issue',
+                'notes',
+                'summary',
+                'details',
+                'message',
+                'comment',
+            )
+            for key in keys:
+                if key not in container:
+                    continue
+                value = container.get(key)
+                if value in (None, ''):
+                    continue
+                if isinstance(value, (list, tuple)):
+                    text = ', '.join(
+                        tools.ustr(item).strip()
+                        for item in value
+                        if item not in (None, '')
+                    ).strip(', ')
+                else:
+                    text = tools.ustr(value).strip()
+                if text:
+                    return text
+            return None
+
+        description = _extract_description_candidates(alert)
+        if not description and isinstance(alert.get('details'), dict):
+            description = _extract_description_candidates(alert['details'])
+        if not description and isinstance(alert.get('properties'), dict):
+            description = _extract_description_candidates(alert['properties'])
+        if not description and isinstance(alert.get('meta'), dict):
+            description = _extract_description_candidates(alert['meta'])
+
         vals = {
             'line_id': self.id,
             'provider': provider_name,
@@ -943,6 +988,9 @@ class EUDRDeclarationLineDeforestation(models.Model):
             'longitude': lon,
             'payload_json': payload_json,
         }
+
+        if description:
+            vals['problem_description'] = description
 
         # Remove keys with None to keep the record clean, but keep False/0
         vals = {key: value for key, value in vals.items() if value not in (None, '')}
