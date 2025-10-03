@@ -426,6 +426,65 @@ class DeforestationProviderGFW(models.AbstractModel):
             debug_errors.append(f"breakdown_best_effort_error[{dataset_id}]: {tools.ustr(ex)}")
         return ser, ser_info, brk, brk_info
 
+    def _detail_select_variants(self, dataset_id, date_field):
+        base_coords = [
+            "ST_Y(ST_Centroid(the_geom)) AS latitude",
+            "ST_X(ST_Centroid(the_geom)) AS longitude",
+        ]
+
+        dataset_conf = {
+            'gfw_integrated_alerts': ['gfw_integrated_alerts__confidence'],
+            'umd_glad_sentinel2_alerts': ['umd_glad_sentinel2_alerts__confidence'],
+            'umd_glad_landsat_alerts': ['umd_glad_landsat_alerts__confidence'],
+            'wur_radd_alerts': ['wur_radd_alerts__confidence'],
+        }.get(dataset_id, [])
+
+        select_variants = []
+
+        detail_fields = [
+            f"{date_field} AS alert_date",
+            "cartodb_id",
+            "alert__id",
+            "alert_id",
+            "glad_id",
+            "gladid",
+            "area__ha",
+        ]
+        detail_fields.extend(dataset_conf)
+        detail_fields.extend(base_coords)
+        select_variants.append(detail_fields)
+
+        minimal_fields = [
+            f"{date_field} AS alert_date",
+            "cartodb_id",
+            "area__ha",
+        ]
+        minimal_fields.extend(dataset_conf)
+        minimal_fields.extend(base_coords)
+        select_variants.append(minimal_fields)
+
+        return select_variants
+
+    def _run_alert_details_best_effort(self, headers, geom_to_use, start_date, dataset_id, debug_errors):
+        df = self._date_field_for_dataset(dataset_id)
+        variants = self._detail_select_variants(dataset_id, df)
+        last_exc = None
+        for fields in variants:
+            select_clause = ", ".join(fields)
+            sql = (
+                f"SELECT {select_clause} "
+                f"FROM results WHERE {df} >= '{{date_from}}' "
+                f"ORDER BY {df} DESC LIMIT 200"
+            )
+            try:
+                return self._gfw_execute_sql_on_dataset(headers, geom_to_use, dataset_id, sql, start_date)
+            except Exception as ex:
+                last_exc = ex
+                debug_errors.append(f"details_best_effort_error[{dataset_id}]: {tools.ustr(ex)}")
+        if last_exc:
+            raise last_exc
+        return {'data': []}, {'endpoint': None, 'date_from': start_date, 'dataset': dataset_id}
+
     def _run_integrated_all_best_effort(self, headers, geom_to_use, start_date, debug_errors,
                                         allow_short_for_agg=True, count_field=None, area_field='area__ha'):
         df = 'gfw_integrated_alerts__date'
@@ -734,10 +793,16 @@ class DeforestationProviderGFW(models.AbstractModel):
                 continue
             breakdown_entries.append({
                 'date': date_token,
-                'alert_id': self._extract_text(rowB, ['alert_id']),
+                'alert_id': self._extract_text(rowB, ['alert_id', 'alert__id', 'cartodb_id', 'id']),
                 'alert_count': self._extract_number(rowB, ['alert_count', 'count', 'cnt']) or 0.0,
                 'area_ha': self._extract_number(rowB, ['area_ha', 'area', 'area_ha_total']) or 0.0,
-                'confidence': self._extract_text(rowB, ['confidence', 'gfw_integrated_alerts__confidence']),
+                'confidence': self._extract_text(rowB, [
+                    'confidence',
+                    'gfw_integrated_alerts__confidence',
+                    'umd_glad_sentinel2_alerts__confidence',
+                    'umd_glad_landsat_alerts__confidence',
+                    'wur_radd_alerts__confidence',
+                ]),
             })
 
         # ---- Diagnostica + PROMOTION (se ancora zero) — aggregate hard, serie/brk best-effort
@@ -802,7 +867,7 @@ class DeforestationProviderGFW(models.AbstractModel):
                                 if dt:
                                     breakdown_entries.append({
                                         'date': dt,
-                                        'alert_id': self._extract_text(rr, ['alert_id']),
+                                        'alert_id': self._extract_text(rr, ['alert_id', 'alert__id', 'cartodb_id', 'id']),
                                         'alert_count': self._extract_number(rr, ['alert_count','count','cnt']) or 0.0,
                                         'area_ha': self._extract_number(rr, ['area_ha','area','area_ha_total']) or 0.0,
                                         'confidence': None,
@@ -837,7 +902,7 @@ class DeforestationProviderGFW(models.AbstractModel):
                                             if dt:
                                                 breakdown_entries.append({
                                                     'date': dt,
-                                                    'alert_id': self._extract_text(rr, ['alert_id']),
+                                                    'alert_id': self._extract_text(rr, ['alert_id', 'alert__id', 'cartodb_id', 'id']),
                                                     'alert_count': self._extract_number(rr, ['alert_count','count','cnt']) or 0.0,
                                                     'area_ha': self._extract_number(rr, ['area_ha','area','area_ha_total']) or 0.0,
                                                     'confidence': self._extract_text(rr, ['confidence','gfw_integrated_alerts__confidence']),
@@ -849,6 +914,50 @@ class DeforestationProviderGFW(models.AbstractModel):
                             break
             except Exception as ex:
                 debug_errors.append(f"promotion_block_error: {tools.ustr(ex)}")
+
+        details_data = {'data': []}
+        details_info = {'endpoint': None, 'date_from': agg_info.get('date_from') or date_from, 'dataset': used_dataset}
+        try:
+            details_data, details_info = self._run_alert_details_best_effort(
+                headers,
+                final_geom_used or geom_req,
+                agg_info.get('date_from') or date_from,
+                used_dataset,
+                debug_errors,
+            )
+        except Exception as ex:
+            debug_errors.append(f"details_error[{used_dataset}]: {tools.ustr(ex)}")
+            details_data = {'data': []}
+            details_info = {'endpoint': None, 'date_from': agg_info.get('date_from') or date_from, 'dataset': used_dataset}
+
+        detail_entries = []
+        detail_date_field = self._date_field_for_dataset(used_dataset)
+        for rowD in (details_data.get('data') or []):
+            date_token = None
+            if isinstance(rowD, dict):
+                date_token = self._extract_text(rowD, ['alert_date', detail_date_field, 'date'])
+            if not date_token:
+                date_token = self._extract_text(rowD, ['gfw_integrated_alerts__date'])
+            if not date_token:
+                continue
+            detail_entries.append({
+                'date': date_token,
+                'alert_id': self._extract_text(rowD, ['alert_id', 'alert__id', 'cartodb_id', 'id']),
+                'alert_count': self._extract_number(rowD, ['alert_count', 'count', 'cnt']) or 1.0,
+                'area_ha': self._extract_number(rowD, ['area_ha', 'area', 'area__ha', 'area_ha_total']) or 0.0,
+                'confidence': self._extract_text(rowD, [
+                    'confidence',
+                    'gfw_integrated_alerts__confidence',
+                    'umd_glad_sentinel2_alerts__confidence',
+                    'umd_glad_landsat_alerts__confidence',
+                    'wur_radd_alerts__confidence',
+                ]),
+                'latitude': self._extract_number(rowD, ['latitude', 'lat', 'alert_lat', 'alert__lat', 'y']),
+                'longitude': self._extract_number(rowD, ['longitude', 'lon', 'lng', 'alert_lon', 'alert__lon', 'x']),
+            })
+
+        if detail_entries:
+            breakdown_entries = detail_entries
 
         # ---- Rolling 30/90 giorni
         def _parse_date_safe(token):
@@ -929,7 +1038,12 @@ class DeforestationProviderGFW(models.AbstractModel):
             'snap': {'used': False, 'source': None, 'bbox_m': None, 'geom': None},
             'used_dataset': used_dataset,
             'field_variant': field_variant_meta,
-            'queries': {'aggregate': agg_info, 'time_series': ser_info, 'breakdown': brk_info},
+            'queries': {
+                'aggregate': agg_info,
+                'time_series': ser_info,
+                'breakdown': brk_info,
+                'details': details_info,
+            },
             'original_geom': original_geom,
             'final_geom_used': final_geom_used,
             'debug': {
@@ -943,7 +1057,12 @@ class DeforestationProviderGFW(models.AbstractModel):
             'metrics': metrics,
             'alerts': breakdown_entries,
             'time_series': series_entries,
-            'responses': {'aggregate': agg_data, 'time_series': ser_data, 'breakdown': brk_data},
+            'responses': {
+                'aggregate': agg_data,
+                'time_series': ser_data,
+                'breakdown': brk_data,
+                'details': details_data,
+            },
         }
 
         return {
