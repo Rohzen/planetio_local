@@ -209,6 +209,7 @@
                           <field name="alert_date_raw" optional="hide"/>
                           <field name="alert_identifier" optional="show"/>
                           <field name="provider" optional="show"/>
+                          <field name="problem_description" optional="show"/>
                           <field name="risk_level" optional="show"/>
                           <field name="confidence" optional="show"/>
                           <field name="area_ha" optional="show"/>
@@ -221,6 +222,7 @@
                               <field name="name"/>
                               <field name="alert_identifier"/>
                               <field name="provider"/>
+                              <field name="problem_description" widget="text"/>
                               <field name="alert_date"/>
                               <field name="alert_date_raw"/>
                               <field name="risk_level"/>
