@@ -192,12 +192,12 @@
                           <field name="geometry" widget="text" invisible="0"/>
                         </group>
                         <group string="Additional api data">
-                          <field name="external_ok" widget="boolean_toggle" readonly="1"/>
-                          <field name="external_status" invisible="1"/>
-                          <field name="external_http_code" invisible="1"/>
-                          <field name="external_uid" invisible="1"/>
-                          <field name="external_message" widget="text" string="External Message (full)" invisible="1"/>
-                          <field name="external_properties_json" widget="text" invisible="1"/>
+                          <field name="external_ok" widget="boolean_toggle" groups="base.group_no_one"/>
+                          <field name="external_status" groups="base.group_no_one"/>
+                          <field name="external_http_code" groups="base.group_no_one"/>
+                          <field name="external_uid" groups="base.group_no_one"/>
+                          <field name="external_message" widget="text" string="External Message (full)" groups="base.group_no_one"/>
+                          <field name="external_properties_json" widget="text" groups="base.group_no_one"/>
                         </group>
                       </group>
                     </page>
