@@ -193,11 +193,11 @@
                         </group>
                         <group string="Additional api data">
                           <field name="external_ok" widget="boolean_toggle" readonly="1"/>
-                          <field name="external_status"/>
-                          <field name="external_http_code"/>
-                          <field name="external_uid"/>
-                          <field name="external_message" widget="text" string="External Message (full)"/>
-                          <field name="external_properties_json" widget="text" invisible="0"/>
+                          <field name="external_status" invisible="1"/>
+                          <field name="external_http_code" invisible="1"/>
+                          <field name="external_uid" invisible="1"/>
+                          <field name="external_message" widget="text" string="External Message (full)" invisible="1"/>
+                          <field name="external_properties_json" widget="text" invisible="1"/>
                         </group>
                       </group>
                     </page>
