@@ -90,3 +90,85 @@ msgstr "SSL"
 #: model_terms:ir.ui.view,arch_db:planetio_osapiens.view_purchase_order_form_osapiens
 msgid "oSapiens"
 msgstr "oSapiens"
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/eudr_declaration.py:31
+#, python-format
+msgid "Attachment %s is not a binary file."
+msgstr "L'allegato %s non è un file binario."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/eudr_declaration.py:37
+#, python-format
+msgid "Attachment %s does not contain any data."
+msgstr "L'allegato %s non contiene dati."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/eudr_declaration.py:44
+#, python-format
+msgid "Cannot decode attachment %s (%s)."
+msgstr "Impossibile decodificare l'allegato %s (%s)."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/eudr_declaration.py:51
+#, python-format
+msgid "Attachment %s does not contain valid JSON (%s)."
+msgstr "L'allegato %s non contiene JSON valido (%s)."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/eudr_declaration.py:56
+#, python-format
+msgid "Attachment %s does not contain a GeoJSON object."
+msgstr "L'allegato %s non contiene un oggetto GeoJSON."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/eudr_declaration.py:88
+#, python-format
+msgid "No GeoJSON attachment found on %s."
+msgstr "Nessun allegato GeoJSON trovato su %s."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/eudr_declaration.py:106
+#, python-format
+msgid "Attachment %s does not contain any GeoJSON feature."
+msgstr "L'allegato %s non contiene alcuna feature GeoJSON."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/eudr_declaration.py:114
+#, python-format
+msgid "Feature %s in attachment %s has no valid geometry."
+msgstr "La feature %s nell'allegato %s non ha una geometria valida."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/eudr_declaration.py:142
+#, python-format
+msgid "Failed to send GeoJSON for plot %(plot)s: %(error)s"
+msgstr "Invio del GeoJSON per il plot %(plot)s non riuscito: %(error)s"
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/purchase_order.py:26
+msgid "Nessuna riga ordine."
+msgstr "Nessuna riga ordine."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/purchase_order.py:30
+#, python-format
+msgid "Manca il product SKU (default_code) su %s"
+msgstr "Manca il product SKU (default_code) su %s"
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/purchase_order.py:41
+#, python-format
+msgid "Creazione lot fallita su oSapiens: %s"
+msgstr "Creazione lot fallita su oSapiens: %s"
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/purchase_order.py:56
+msgid "Lot oSapiens non presente sull'ordine."
+msgstr "Lot oSapiens non presente sull'ordine."
+
+#. module: planetio_osapiens
+#: code:addons/planetio_osapiens/models/purchase_order.py:59
+msgid "Inserisci un DDS Reference."
+msgstr "Inserisci un DDS Reference."
+
