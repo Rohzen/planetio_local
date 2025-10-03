@@ -1,4 +1,4 @@
-from odoo import fields, models, _
+from odoo import fields, models, api, _
 from odoo.exceptions import UserError
 
 class ResConfigSettings(models.TransientModel):
@@ -21,6 +21,19 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='planetio.gfw_alert_years',
         default='1',
         help="Number of years back to include when fetching alerts from GFW (1-5 years).",
+    )
+    gfw_min_area_ha = fields.Float(
+        string="GFW - Area minima (ha)",
+        default=4.0,
+        help="Area minima da rispettare per la normativa. Default 4 ha."
+    )
+    gfw_area_policy = fields.Selection(
+        selection=[('buffer', 'Buffer automatico (< soglia → espandi)'),
+                   ('strict', 'Strict (< soglia → rifiuta)')],
+        string="GFW - Politica area minima",
+        default='buffer',
+        help="Se 'buffer': le geometrie sotto soglia vengono espanse.\n"
+             "Se 'strict': le geometrie sotto soglia vengono rifiutate."
     )
 
     deforestation_provider = fields.Selection(
@@ -80,3 +93,39 @@ class ResConfigSettings(models.TransientModel):
         )
         icp.set_param('planetio.gfw_api_key', api_key)
         self.gfw_api_key = api_key
+
+    @api.model
+    def get_values(self):
+        res = super().get_values()
+        icp = self.env['ir.config_parameter'].sudo()
+
+        min_area_ha = icp.get_param('planetio.gfw_min_area_ha', default='4.0')
+        policy = icp.get_param('planetio.gfw_area_policy', default='buffer')
+
+        try:
+            min_area_ha_val = float(min_area_ha)
+        except Exception:
+            min_area_ha_val = 4.0
+
+        if policy not in ('buffer', 'strict'):
+            policy = 'buffer'
+
+        res.update(
+            gfw_min_area_ha=min_area_ha_val,
+            gfw_area_policy=policy,
+        )
+        return res
+
+    def set_values(self):
+        super().set_values()
+        icp = self.env['ir.config_parameter'].sudo()
+
+        # salva area minima
+        min_area = self.gfw_min_area_ha if self.gfw_min_area_ha and self.gfw_min_area_ha > 0 else 4.0
+        icp.set_param('planetio.gfw_min_area_ha', str(min_area))
+
+        # salva policy
+        policy = self.gfw_area_policy or 'buffer'
+        if policy not in ('buffer', 'strict'):
+            policy = 'buffer'
+        icp.set_param('planetio.gfw_area_policy', policy)

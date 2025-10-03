@@ -128,6 +128,12 @@
 
               <span class="o_form_label">Alert lookback window</span>
               <div class="text-muted"><field name="gfw_alert_years"/></div>
+
+              <span class="o_form_label">GFW - Politica area minima</span>
+              <div class="text-muted"><field name="gfw_area_policy"/></div>
+
+              <span class="o_form_label">Area minima</span>
+              <div class="text-muted"><field name="gfw_min_area_ha"/></div>
             </div>
 
             <div class="o_setting_right_pane">
