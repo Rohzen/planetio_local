@@ -881,7 +881,15 @@ class EUDRDeclarationLineDeforestation(models.Model):
         alert_date, alert_date_raw = self._normalize_alert_date(alert)
 
         area_val = None
-        for key in ('area_ha', 'areaHa', 'alert_area_ha', 'areaHaTotal'):
+        for key in (
+            'area_ha',
+            'areaHa',
+            'alert_area_ha',
+            'areaHaTotal',
+            'area_ha_total',
+            'area__ha',
+            'area',
+        ):
             if key in alert:
                 area_val = _coerce_float(alert.get(key))
                 if area_val is not None:

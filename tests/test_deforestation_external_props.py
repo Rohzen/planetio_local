@@ -4,6 +4,8 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
+
 
 repo_root = Path(__file__).resolve().parents[1]
 
@@ -156,3 +158,20 @@ def test_extract_alerts_from_summary_payload():
     assert vals["risk_level"] == "elevated"
     assert vals["alert_date_raw"] == "2025-09-15"
     assert vals["area_ha"] == 0.0
+
+
+def test_prepare_alert_vals_area_from_total_key():
+    line = mod.EUDRDeclarationLineDeforestation()
+    line.id = 456
+
+    alert = {
+        "id": "alert-123",
+        "area_ha_total": "1.75",
+        "alert_date": "2025-02-10",
+    }
+
+    vals = line._prepare_alert_vals(alert, provider="gfw")
+
+    assert vals["line_id"] == 456
+    assert vals["provider"] == "gfw"
+    assert vals["area_ha"] == pytest.approx(1.75)
