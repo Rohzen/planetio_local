@@ -124,7 +124,7 @@ class DummyProvider(DeforestationProviderGFW):
     def _prepare_headers(self, origin, api_key):
         return {}
 
-    def _execute_sql(self, headers, geometry, sql_template, date_from, allow_short=True):
+    def _gfw_execute_sql(self, headers, geometry, sql_template, date_from, allow_short=True):
         self._sql_calls.append(sql_template)
         if 'SUM(alert__count)' in sql_template:
             raise UserError('Provider gfw: Richiesta rifiutata da GFW: {"status":"failed","message":"Layer alerts__count is invalid"}')

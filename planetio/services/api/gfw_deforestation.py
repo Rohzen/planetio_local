@@ -218,7 +218,7 @@ class DeforestationProviderGFW(models.AbstractModel):
     def _prepare_dataset_base(self, dataset_id):
         return f'https://data-api.globalforestwatch.org/dataset/{dataset_id}'
 
-    def _execute_sql(self, headers, geometry, sql_template, date_from, allow_short=True):
+    def _gfw_execute_sql(self, headers, geometry, sql_template, date_from, allow_short=True):
         base_url = self._prepare_dataset_base('gfw_integrated_alerts')
         sql_long = sql_template.replace('{date_from}', date_from)
         latest_url = f'{base_url}/latest/query/json'
@@ -284,7 +284,7 @@ class DeforestationProviderGFW(models.AbstractModel):
             'fallback': 'version',
         }
 
-    def _execute_sql_on_dataset(self, headers, geometry, dataset_id, sql_template, date_from):
+    def _gfw_execute_sql_on_dataset(self, headers, geometry, dataset_id, sql_template, date_from):
         base_url = self._prepare_dataset_base(dataset_id)
         latest_url = f'{base_url}/latest/query/json'
         sql = sql_template.replace('{date_from}', date_from)
@@ -336,7 +336,7 @@ class DeforestationProviderGFW(models.AbstractModel):
                 f"MAX({df}) AS last_alert_date "
                 f"FROM results WHERE {df} >= '{{date_from}}'"
             )
-            data, info = self._execute_sql_on_dataset(headers, diag_geom, ds_id, sql, date_from)
+            data, info = self._gfw_execute_sql_on_dataset(headers, diag_geom, ds_id, sql, date_from)
             row = (data.get('data') or [{}])[0]
             results[label] = {
                 'count': int(self._extract_number(row, ['alert_count', 'count', 'cnt']) or 0),
@@ -399,7 +399,7 @@ class DeforestationProviderGFW(models.AbstractModel):
             f"MIN({df}) AS first_alert_date, MAX({df}) AS last_alert_date "
             f"FROM results WHERE {df} >= '{{date_from}}'"
         )
-        agg, agg_info = self._execute_sql_on_dataset(headers, geom_to_use, dataset_id, agg_sql, start_date)
+        agg, agg_info = self._gfw_execute_sql_on_dataset(headers, geom_to_use, dataset_id, agg_sql, start_date)
         return agg, agg_info
 
     def _run_series_breakdown_best_effort(self, headers, geom_to_use, start_date, dataset_id, debug_errors):
@@ -417,42 +417,45 @@ class DeforestationProviderGFW(models.AbstractModel):
         ser = {'data': []}; ser_info = {'endpoint': None, 'date_from': start_date, 'dataset': dataset_id}
         brk = {'data': []}; brk_info = {'endpoint': None, 'date_from': start_date, 'dataset': dataset_id}
         try:
-            ser, ser_info = self._execute_sql_on_dataset(headers, geom_to_use, dataset_id, ser_sql, start_date)
+            ser, ser_info = self._gfw_execute_sql_on_dataset(headers, geom_to_use, dataset_id, ser_sql, start_date)
         except Exception as ex:
             debug_errors.append(f"series_best_effort_error[{dataset_id}]: {tools.ustr(ex)}")
         try:
-            brk, brk_info = self._execute_sql_on_dataset(headers, geom_to_use, dataset_id, brk_sql, start_date)
+            brk, brk_info = self._gfw_execute_sql_on_dataset(headers, geom_to_use, dataset_id, brk_sql, start_date)
         except Exception as ex:
             debug_errors.append(f"breakdown_best_effort_error[{dataset_id}]: {tools.ustr(ex)}")
         return ser, ser_info, brk, brk_info
 
-    def _run_integrated_all_best_effort(self, headers, geom_to_use, start_date, debug_errors, allow_short_for_agg=True):
+    def _run_integrated_all_best_effort(self, headers, geom_to_use, start_date, debug_errors,
+                                        allow_short_for_agg=True, count_field=None, area_field='area__ha'):
         df = 'gfw_integrated_alerts__date'
+        count_expr = f"SUM({count_field})" if count_field else "COUNT(*)"
+        area_expr = f"SUM({area_field})" if area_field else "SUM(area__ha)"
         agg_sql = (
-            f"SELECT COUNT(*) AS alert_count, SUM(area__ha) AS area_ha_total, "
+            f"SELECT {count_expr} AS alert_count, {area_expr} AS area_ha_total, "
             f"MIN({df}) AS first_alert_date, MAX({df}) AS last_alert_date "
             f"FROM results WHERE {df} >= '{{date_from}}'"
         )
         ser_sql = (
-            f"SELECT {df} AS alert_date, COUNT(*) AS alert_count, SUM(area__ha) AS area_ha "
+            f"SELECT {df} AS alert_date, {count_expr} AS alert_count, {area_expr} AS area_ha "
             f"FROM results WHERE {df} >= '{{date_from}}' "
             f"GROUP BY {df} ORDER BY alert_date DESC LIMIT 365"
         )
         brk_sql = (
-            f"SELECT {df} AS alert_date, COUNT(*) AS alert_count, SUM(area__ha) AS area_ha, "
+            f"SELECT {df} AS alert_date, {count_expr} AS alert_count, {area_expr} AS area_ha, "
             f"MAX(gfw_integrated_alerts__confidence) AS confidence "
             f"FROM results WHERE {df} >= '{{date_from}}' "
             f"GROUP BY {df} ORDER BY alert_date DESC LIMIT 200"
         )
-        agg_data, agg_info = self._execute_sql(headers, geom_to_use, agg_sql, start_date, allow_short=allow_short_for_agg)
+        agg_data, agg_info = self._gfw_execute_sql(headers, geom_to_use, agg_sql, start_date, allow_short=allow_short_for_agg)
         ser_data = {'data': []}; ser_info = {'endpoint': None, 'date_from': start_date}
         brk_data = {'data': []}; brk_info = {'endpoint': None, 'date_from': start_date}
         try:
-            ser_data, ser_info = self._execute_sql(headers, geom_to_use, ser_sql, agg_info['date_from'], allow_short=False)
+            ser_data, ser_info = self._gfw_execute_sql(headers, geom_to_use, ser_sql, agg_info['date_from'], allow_short=False)
         except Exception as ex:
             debug_errors.append(f"series_best_effort_error[integrated]: {tools.ustr(ex)}")
         try:
-            brk_data, brk_info = self._execute_sql(headers, geom_to_use, brk_sql, agg_info['date_from'], allow_short=False)
+            brk_data, brk_info = self._gfw_execute_sql(headers, geom_to_use, brk_sql, agg_info['date_from'], allow_short=False)
         except Exception as ex:
             debug_errors.append(f"breakdown_best_effort_error[integrated]: {tools.ustr(ex)}")
         return agg_data, agg_info, ser_data, ser_info, brk_data, brk_info
@@ -510,6 +513,51 @@ class DeforestationProviderGFW(models.AbstractModel):
         debug_steps = []
         debug_errors = []
 
+        def _integrated_with_variants(geom_to_use, start_date, allow_short_for_agg, variant_hint=None):
+            variants = []
+            if variant_hint:
+                variants.append(variant_hint)
+            variants.extend([
+                ('alert__count', 'area__ha'),
+                ('alerts__count', 'area__ha'),
+            ])
+            ordered = []
+            seen = set()
+            for item in variants:
+                if not item or item in seen:
+                    continue
+                ordered.append(item)
+                seen.add(item)
+
+            last_error = None
+            for idx, (count_field, area_field) in enumerate(ordered):
+                try:
+                    data = self._run_integrated_all_best_effort(
+                        headers,
+                        geom_to_use,
+                        start_date,
+                        debug_errors,
+                        allow_short_for_agg=allow_short_for_agg,
+                        count_field=count_field,
+                        area_field=area_field,
+                    )
+                    return (count_field, area_field), data
+                except UserError as ex:
+                    last_error = ex
+                    msg_lower = tools.ustr(ex).lower()
+                    needs_fallback = any(token in msg_lower for token in ('alert__count', 'alerts__count'))
+                    if needs_fallback and idx + 1 < len(ordered):
+                        next_variant = ordered[idx + 1]
+                        debug_errors.append(
+                            f"count_field_fallback:{count_field}->{next_variant[0]}"
+                        )
+                        continue
+                    raise
+
+            if last_error:
+                raise last_error
+            raise UserError(_("Provider gfw: nessuna variante campo disponibile"))
+
         # geometria di input
         geom = self._extract_geometry(line)
         if not geom:
@@ -543,11 +591,14 @@ class DeforestationProviderGFW(models.AbstractModel):
         # finestra temporale
         date_from = self._compute_date_from()
 
+        field_variant_tuple = None
+
         # ---- Primo pass Integrated (aggregate hard, serie/brk best-effort)
         debug_steps.append({'step': 'integrated_initial', 'geom': self._bbox_hint(geom_req)})
-        agg_data, agg_info, ser_data, ser_info, brk_data, brk_info = self._run_integrated_all_best_effort(
-            headers, geom_req, date_from, debug_errors, allow_short_for_agg=True
+        field_variant_tuple, integrated_data = _integrated_with_variants(
+            geom_req, date_from, allow_short_for_agg=True, variant_hint=None
         )
+        agg_data, agg_info, ser_data, ser_info, brk_data, brk_info = integrated_data
         row = (agg_data.get('data') or [{}])[0]
         alert_count = self._extract_number(row, ['alert_count', 'cnt', 'count']) or 0.0
         area_total  = self._extract_number(row, ['area_ha_total', 'area_ha', 'area']) or 0.0
@@ -589,9 +640,10 @@ class DeforestationProviderGFW(models.AbstractModel):
                 if cx is not None:
                     second_pass_geom = self._make_bbox_from_center(cx, cy, second_buffer_m)
                     debug_steps.append({'step': 'integrated_second_pass', 'geom': self._bbox_hint(second_pass_geom)})
-                    agg2, info2, ser2, info_ser2, brk2, info_brk2 = self._run_integrated_all_best_effort(
-                        headers, second_pass_geom, date_from, debug_errors, allow_short_for_agg=True
+                    field_variant_tuple, integrated_second = _integrated_with_variants(
+                        second_pass_geom, date_from, allow_short_for_agg=True, variant_hint=field_variant_tuple
                     )
+                    agg2, info2, ser2, info_ser2, brk2, info_brk2 = integrated_second
                     row2 = (agg2.get('data') or [{}])[0]
                     a2 = self._extract_number(row2, ['alert_count', 'cnt', 'count']) or 0.0
                     area2 = self._extract_number(row2, ['area_ha_total', 'area_ha', 'area']) or 0.0
@@ -845,6 +897,11 @@ class DeforestationProviderGFW(models.AbstractModel):
             msg_parts.append(_("Ultima allerta: %s") % metrics['last_alert_date'])
         message = "; ".join(msg_parts)
 
+        field_variant_meta = {
+            'count': field_variant_tuple[0] if field_variant_tuple else 'COUNT(*)',
+            'area': field_variant_tuple[1] if field_variant_tuple else 'area__ha',
+        }
+
         meta = {
             'provider': 'gfw',
             'date_from': agg_info.get('date_from') or date_from,
@@ -871,7 +928,7 @@ class DeforestationProviderGFW(models.AbstractModel):
             },
             'snap': {'used': False, 'source': None, 'bbox_m': None, 'geom': None},
             'used_dataset': used_dataset,
-            'field_variant': {'count': 'COUNT(*)', 'area': 'area__ha'},
+            'field_variant': field_variant_meta,
             'queries': {'aggregate': agg_info, 'time_series': ser_info, 'breakdown': brk_info},
             'original_geom': original_geom,
             'final_geom_used': final_geom_used,
