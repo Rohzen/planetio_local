@@ -23,27 +23,19 @@ class DeforestationProviderGFW(models.AbstractModel):
             raise UserError(_("GFW API Key mancante. Imposta 'GFW API Key' nelle Impostazioni."))
 
     # --------- Geo helpers ---------
-    def _expand_point_to_bbox(self, geom, min_m=60.0, min_area_ha=None):
-        """Se la geom è un Point, crea un bbox quadrato centrato che rispetta sia
-        il lato minimo (min_m) sia l'area minima (min_area_ha)."""
+    def _expand_point_to_bbox(self, geom):
+        """Se la geom è un Point, espandi a un piccolo bbox (coerente col fallback)."""
         if not isinstance(geom, dict) or geom.get('type') != 'Point':
             return None
         coords = geom.get('coordinates') or []
         if len(coords) < 2:
             return None
         lon, lat = coords[0], coords[1]
-
-        side_from_min_m = float(min_m or 0.0)
-        side_from_area = math.sqrt(float(min_area_ha or 0.0) * 10000.0) if (min_area_ha and float(min_area_ha) > 0) else 0.0
-        final_side_m = max(side_from_min_m, side_from_area, 1.0)  # evita 0
-
-        dlat_per_m = 1.0 / 111000.0
-        dlon_per_m = 1.0 / (111000.0 * max(0.1, abs(math.cos(math.radians(lat)))))
-
-        half_side_m = final_side_m / 2.0
-        dlat = half_side_m * dlat_per_m
-        dlon = half_side_m * dlon_per_m
-
+        try:
+            dlat = 0.2 / 111.0
+            dlon = 0.2 / (111.0 * max(0.1, abs(math.cos(math.radians(lat)))))
+        except Exception:
+            return None
         return {
             'type': 'Polygon',
             'coordinates': [[
@@ -58,10 +50,9 @@ class DeforestationProviderGFW(models.AbstractModel):
     def _maybe_buffer_tiny_polygon(self, geom, min_m=60.0, min_area_ha=None, area_policy='buffer'):
         """
         Se geom è un Polygon troppo piccolo:
-          - modalità 'buffer'  : espandi a lato >= min_m e/o area >= min_area_ha
-          - modalità 'strict'  : NON espandere; segnala che la geometria è sotto soglia
+          - 'buffer': espandi a lato >= min_m e/o area >= min_area_ha
+          - 'strict': NON espandere; segnala che la geometria è sotto soglia
         Ritorna: (geom_out, changed_bool, info_dict)
-        Se strict & sotto soglia: changed=False e info['too_small_strict']=True
         """
         if not isinstance(geom, dict) or geom.get('type') != 'Polygon':
             return geom, False, None
@@ -77,9 +68,9 @@ class DeforestationProviderGFW(models.AbstractModel):
             dlat_per_m = 1.0 / 111000.0
             dlon_per_m = 1.0 / (111000.0 * max(0.1, abs(math.cos(math.radians(lat_c)))))
 
-            width_m = max(0.0, (lon_max - lon_min) / dlon_per_m)
+            width_m  = max(0.0, (lon_max - lon_min) / dlon_per_m)
             height_m = max(0.0, (lat_max - lat_min) / dlat_per_m)
-            area_m2 = width_m * height_m
+            area_m2  = width_m * height_m
 
             needs_by_side = (width_m < min_m) or (height_m < min_m)
             needs_by_area = False
@@ -102,7 +93,7 @@ class DeforestationProviderGFW(models.AbstractModel):
                     'too_small_strict': True,
                 }
 
-            # BUFFER: se non serve nulla, mantieni
+            # BUFFER: se non serve, mantieni
             if not (needs_by_side or needs_by_area):
                 return geom, False, {
                     'width_m': width_m,
@@ -118,9 +109,9 @@ class DeforestationProviderGFW(models.AbstractModel):
             cy = (lat_min + lat_max) / 2.0
 
             side_from_min_m = max(min_m, width_m, height_m)
-            side_from_area = target_side_m or 0.0
-            final_side_m = max(side_from_min_m, side_from_area)
-            half_side_m = final_side_m / 2.0
+            side_from_area  = target_side_m or 0.0
+            final_side_m    = max(side_from_min_m, side_from_area)
+            half_side_m     = final_side_m / 2.0
 
             dlon = half_side_m * dlon_per_m
             dlat = half_side_m * dlat_per_m
@@ -169,6 +160,48 @@ class DeforestationProviderGFW(models.AbstractModel):
             return None
         except Exception:
             return None
+
+    # --------- Area & centroid helpers (approx) ---------
+    def _geom_center(self, geom):
+        """Centro approssimato (lon, lat) per Polygon/Point."""
+        if not geom or not isinstance(geom, dict):
+            return None, None
+        t = geom.get('type')
+        if t == 'Point':
+            coords = geom.get('coordinates') or []
+            if len(coords) >= 2:
+                return float(coords[0]), float(coords[1])
+            return None, None
+        if t == 'Polygon':
+            ring = (geom.get('coordinates') or [[]])[0] or []
+            if not ring:
+                return None, None
+            lons = [p[0] for p in ring if isinstance(p, (list, tuple)) and len(p) >= 2]
+            lats = [p[1] for p in ring if isinstance(p, (list, tuple)) and len(p) >= 2]
+            if not lons or not lats:
+                return None, None
+            return (min(lons)+max(lons))/2.0, (min(lats)+max(lats))/2.0
+        return None, None
+
+    def _approx_polygon_area_ha(self, geom):
+        """Area approssimata del polygon via bbox in ettari."""
+        if not geom or geom.get('type') != 'Polygon':
+            return 0.0
+        ring = (geom.get('coordinates') or [[]])[0] or []
+        if not ring:
+            return 0.0
+        lons = [p[0] for p in ring if isinstance(p, (list, tuple)) and len(p) >= 2]
+        lats = [p[1] for p in ring if isinstance(p, (list, tuple)) and len(p) >= 2]
+        if not lons or not lats:
+            return 0.0
+        lon_min, lon_max = min(lons), max(lons)
+        lat_min, lat_max = min(lats), max(lats)
+        lat_c = (lat_min + lat_max)/2.0
+        dlat_per_m = 1.0/111000.0
+        dlon_per_m = 1.0/(111000.0*max(0.1, abs(math.cos(math.radians(lat_c)))))
+        width_m  = max(0.0, (lon_max - lon_min)/dlon_per_m)
+        height_m = max(0.0, (lat_max - lat_min)/dlat_per_m)
+        return (width_m*height_m)/10000.0
 
     # --------- Low-level HTTP/Data API helpers ---------
     def _prepare_headers(self, origin, api_key):
@@ -228,7 +261,7 @@ class DeforestationProviderGFW(models.AbstractModel):
 
     def _gfw_execute_sql(self, headers, geometry, sql_template, date_from, allow_short=True):
         base_url = self._prepare_dataset_base('gfw_integrated_alerts')
-        sql_long = sql_template.replace('{date_from}', date_from)
+        sql_long   = sql_template.replace('{date_from}', date_from)
         latest_url = f'{base_url}/latest/query/json'
         version_url = f'{base_url}/v20250909/query/json'
 
@@ -253,7 +286,7 @@ class DeforestationProviderGFW(models.AbstractModel):
 
         if allow_short:
             short_from = (date.today() - timedelta(days=90)).isoformat()
-            sql_short = sql_template.replace('{date_from}', short_from)
+            sql_short  = sql_template.replace('{date_from}', short_from)
             try:
                 short_resp = self._post_query(latest_url, headers, sql_short, geometry)
             except requests.exceptions.RequestException as ex:
@@ -435,7 +468,12 @@ class DeforestationProviderGFW(models.AbstractModel):
         return ser, ser_info, brk, brk_info
 
     def _detail_select_variants(self, dataset_id, date_field):
-        # campi confidenza per dataset
+        base_coords = [
+            # NB: su GFW alcune funzioni PostGIS potrebbero non essere abilitate;
+            # queste colonne sono "best-effort". Se falliscono passiamo alla variante minima.
+            "ST_Y(ST_Centroid(the_geom)) AS latitude",
+            "ST_X(ST_Centroid(the_geom)) AS longitude",
+        ]
         dataset_conf = {
             'gfw_integrated_alerts': ['gfw_integrated_alerts__confidence'],
             'umd_glad_sentinel2_alerts': ['umd_glad_sentinel2_alerts__confidence'],
@@ -443,34 +481,30 @@ class DeforestationProviderGFW(models.AbstractModel):
             'wur_radd_alerts': ['wur_radd_alerts__confidence'],
         }.get(dataset_id, [])
 
-        # candidati per l'ID (non tutti i dataset espongono gli stessi)
-        id_candidates = ["alert__id", "alert_id", "glad_id", "gladid", "cartodb_id", "id"]
+        select_variants = []
 
-        base_coords = [
-            "ST_Y(ST_Centroid(the_geom)) AS latitude",
-            "ST_X(ST_Centroid(the_geom)) AS longitude",
+        detail_fields = [
+            f"{date_field} AS alert_date",
+            "cartodb_id",
+            "alert__id",
+            "alert_id",
+            "glad_id",
+            "gladid",
+            "area__ha",
         ]
+        detail_fields.extend(dataset_conf)
+        detail_fields.extend(base_coords)
+        select_variants.append(detail_fields)
 
-        variants = []
+        minimal_fields = [
+            f"{date_field} AS alert_date",
+            "cartodb_id",
+            "area__ha",
+        ]
+        minimal_fields.extend(dataset_conf)
+        select_variants.append(minimal_fields)
 
-        # V1: COALESCE tra i candidati ID + area__ha
-        coalesce_id = "COALESCE(" + ", ".join([c for c in id_candidates]) + ") AS any_id"
-        fields_v1 = [f"{date_field} AS alert_date", "area__ha", coalesce_id] + dataset_conf + base_coords
-        variants.append(fields_v1)
-
-        # V2: come V1 ma senza area__ha
-        fields_v2 = [f"{date_field} AS alert_date", coalesce_id] + dataset_conf + base_coords
-        variants.append(fields_v2)
-
-        # V3: niente ID, ma area__ha + coords
-        fields_v3 = [f"{date_field} AS alert_date", "area__ha"] + dataset_conf + base_coords
-        variants.append(fields_v3)
-
-        # V4: minimale: solo data + coords
-        fields_v4 = [f"{date_field} AS alert_date"] + dataset_conf + base_coords
-        variants.append(fields_v4)
-
-        return variants
+        return select_variants
 
     def _run_alert_details_best_effort(self, headers, geom_to_use, start_date, dataset_id, debug_errors):
         df = self._date_field_for_dataset(dataset_id)
@@ -496,7 +530,7 @@ class DeforestationProviderGFW(models.AbstractModel):
                                         allow_short_for_agg=True, count_field=None, area_field='area__ha'):
         df = 'gfw_integrated_alerts__date'
         count_expr = f"SUM({count_field})" if count_field else "COUNT(*)"
-        area_expr = f"SUM({area_field})" if area_field else "SUM(area__ha)"
+        area_expr  = f"SUM({area_field})" if area_field else "SUM(area__ha)"
         agg_sql = (
             f"SELECT {count_expr} AS alert_count, {area_expr} AS area_ha_total, "
             f"MIN({df}) AS first_alert_date, MAX({df}) AS last_alert_date "
@@ -566,7 +600,7 @@ class DeforestationProviderGFW(models.AbstractModel):
 
         min_polygon_m   = _get_int('planetio.gfw_min_polygon_m', 60)
         min_area_ha_req = _get_float('planetio.gfw_min_area_ha', 4.0)  # default 4 ha
-        area_policy     = (ICP.get_param('planetio.gfw_area_policy') or 'buffer').strip()  # 'buffer' | 'strict'
+        area_policy     = (ICP.get_param('planetio.gfw_area_policy') or 'buffer').strip()
         if area_policy not in ('buffer', 'strict'):
             area_policy = 'buffer'
 
@@ -574,6 +608,9 @@ class DeforestationProviderGFW(models.AbstractModel):
         diag_buffer_m   = _get_int('planetio.gfw_diag_buffer_m', 2000)
         auto_step_m     = _get_int('planetio.gfw_auto_buffer_step_m', 150)
         auto_max_m      = _get_int('planetio.gfw_auto_buffer_max_m', 2000)
+
+        max_detail_rows = _get_int('planetio.gfw_max_detail_rows', 80)
+        collapse_when_missing_geo = (ICP.get_param('planetio.gfw_collapse_when_missing_geo') or 'True').strip().lower() in ('1','true','y','yes')
 
         headers = self._prepare_headers(origin, api_key)
         debug_steps = []
@@ -588,46 +625,30 @@ class DeforestationProviderGFW(models.AbstractModel):
                 ('alerts__count', 'area__ha'),
                 (None, 'area__ha'),
             ])
-            ordered = []
-            seen = set()
+            ordered, seen = [], set()
             for item in variants:
                 if not item or item in seen:
                     continue
-                ordered.append(item)
-                seen.add(item)
+                ordered.append(item); seen.add(item)
 
             last_error = None
             for idx, (count_field, area_field) in enumerate(ordered):
                 try:
                     data = self._run_integrated_all_best_effort(
-                        headers,
-                        geom_to_use,
-                        start_date,
-                        debug_errors,
+                        headers, geom_to_use, start_date, debug_errors,
                         allow_short_for_agg=allow_short_for_agg,
-                        count_field=count_field,
-                        area_field=area_field,
+                        count_field=count_field, area_field=area_field,
                     )
                     return (count_field, area_field), data
                 except UserError as ex:
                     last_error = ex
                     msg_lower = tools.ustr(ex).lower()
-                    needs_fallback = any(
-                        token in msg_lower
-                        for token in (
-                            'alert__count',
-                            'alerts__count',
-                            'layer',
-                        )
-                    )
+                    needs_fallback = any(t in msg_lower for t in ('alert__count','alerts__count','layer'))
                     if needs_fallback and idx + 1 < len(ordered):
                         next_variant = ordered[idx + 1]
-                        debug_errors.append(
-                            f"count_field_fallback:{count_field}->{next_variant[0]}"
-                        )
+                        debug_errors.append(f"count_field_fallback:{count_field}->{next_variant[0]}")
                         continue
                     raise
-
             if last_error:
                 raise last_error
             raise UserError(_("Provider gfw: nessuna variante campo disponibile"))
@@ -642,7 +663,7 @@ class DeforestationProviderGFW(models.AbstractModel):
 
         # normalizzazione richiesta + enforcement area minima
         if geom.get('type') == 'Point':
-            bbox = self._expand_point_to_bbox(geom, min_m=min_polygon_m, min_area_ha=min_area_ha_req)
+            bbox = self._expand_point_to_bbox(geom)
             geom_req = bbox if bbox else geom
             geometry_mode = 'point_bbox' if bbox else 'point'
         elif geom.get('type') == 'Polygon':
@@ -650,7 +671,6 @@ class DeforestationProviderGFW(models.AbstractModel):
                 geom, min_m=min_polygon_m, min_area_ha=min_area_ha_req, area_policy=area_policy
             )
             buffer_info = info
-            # STRICT: se sotto soglia, fermiamo con messaggio esplicito
             if info and info.get('too_small_strict'):
                 raise UserError(_(
                     "La geometria è inferiore alla soglia minima di %(minha).2f ha (modalità strict). "
@@ -667,7 +687,7 @@ class DeforestationProviderGFW(models.AbstractModel):
 
         field_variant_tuple = None
 
-        # ---- Primo pass Integrated (aggregate hard, serie/brk best-effort)
+        # ---- Primo pass Integrated
         debug_steps.append({'step': 'integrated_initial', 'geom': self._bbox_hint(geom_req)})
         field_variant_tuple, integrated_data = _integrated_with_variants(
             geom_req, date_from, allow_short_for_agg=True, variant_hint=None
@@ -734,7 +754,7 @@ class DeforestationProviderGFW(models.AbstractModel):
             except Exception as ex:
                 debug_errors.append(f"second_pass_error: {tools.ustr(ex)}")
 
-        # ---- Auto buffer a step + tentativo su diag_buffer_m (aggregate hard)
+        # ---- Auto buffer (step + diag)
         auto_buffer_geom = None
         auto_buffer_radius_m = None
         if alert_count == 0 and area_total == 0.0 and auto_max_m > 0 and auto_step_m > 0:
@@ -800,18 +820,15 @@ class DeforestationProviderGFW(models.AbstractModel):
             except Exception as ex:
                 debug_errors.append(f"auto_buffer_error: {tools.ustr(ex)}")
 
-        # ---- Breakdown coerente con i dati correnti (già best-effort)
+        # ---- Breakdown coerente con i dati correnti
         breakdown_entries = []
         for rowB in (brk_data.get('data') or []):
             date_token = self._extract_text(rowB, ['alert_date', 'gfw_integrated_alerts__date', 'date'])
             if not date_token:
                 continue
-            rid = self._extract_text(rowB, ['alert_id', 'alert__id', 'cartodb_id', 'id'])
-            if not rid:
-                rid = f"{used_dataset}:{date_token}"  # fallback id giornaliero
             breakdown_entries.append({
                 'date': date_token,
-                'alert_id': rid,
+                'alert_id': self._extract_text(rowB, ['alert_id', 'alert__id', 'cartodb_id', 'id']),
                 'alert_count': self._extract_number(rowB, ['alert_count', 'count', 'cnt']) or 0.0,
                 'area_ha': self._extract_number(rowB, ['area_ha', 'area', 'area_ha_total']) or 0.0,
                 'confidence': self._extract_text(rowB, [
@@ -883,10 +900,9 @@ class DeforestationProviderGFW(models.AbstractModel):
                             for rr in (brkD.get('data') or []):
                                 dt = self._extract_text(rr, ['alert_date', 'date'])
                                 if dt:
-                                    rid2 = self._extract_text(rr, ['alert_id', 'alert__id', 'cartodb_id', 'id']) or f"{ds_id}:{dt}"
                                     breakdown_entries.append({
                                         'date': dt,
-                                        'alert_id': rid2,
+                                        'alert_id': self._extract_text(rr, ['alert_id', 'alert__id', 'cartodb_id', 'id']),
                                         'alert_count': self._extract_number(rr, ['alert_count','count','cnt']) or 0.0,
                                         'area_ha': self._extract_number(rr, ['area_ha','area','area_ha_total']) or 0.0,
                                         'confidence': None,
@@ -919,10 +935,9 @@ class DeforestationProviderGFW(models.AbstractModel):
                                         for rr in (brkR.get('data') or []):
                                             dt = self._extract_text(rr, ['alert_date', 'date'])
                                             if dt:
-                                                rid3 = self._extract_text(rr, ['alert_id', 'alert__id', 'cartodb_id', 'id']) or f"gfw_integrated_alerts:{dt}"
                                                 breakdown_entries.append({
                                                     'date': dt,
-                                                    'alert_id': rid3,
+                                                    'alert_id': self._extract_text(rr, ['alert_id', 'alert__id', 'cartodb_id', 'id']),
                                                     'alert_count': self._extract_number(rr, ['alert_count','count','cnt']) or 0.0,
                                                     'area_ha': self._extract_number(rr, ['area_ha','area','area_ha_total']) or 0.0,
                                                     'confidence': self._extract_text(rr, ['confidence','gfw_integrated_alerts__confidence']),
@@ -935,22 +950,23 @@ class DeforestationProviderGFW(models.AbstractModel):
             except Exception as ex:
                 debug_errors.append(f"promotion_block_error: {tools.ustr(ex)}")
 
-        # ---- DETTAGLI: query best-effort e costruzione entries con fallback id
+        # ---- DETTAGLI per le singole allerte (best-effort)
         details_data = {'data': []}
         details_info = {'endpoint': None, 'date_from': agg_info.get('date_from') or date_from, 'dataset': used_dataset}
         try:
             details_data, details_info = self._run_alert_details_best_effort(
-                headers,
-                final_geom_used or geom_req,
-                agg_info.get('date_from') or date_from,
-                used_dataset,
-                debug_errors,
+                headers, final_geom_used or geom_req, agg_info.get('date_from') or date_from, used_dataset, debug_errors,
             )
         except Exception as ex:
             debug_errors.append(f"details_error[{used_dataset}]: {tools.ustr(ex)}")
             details_data = {'data': []}
             details_info = {'endpoint': None, 'date_from': agg_info.get('date_from') or date_from, 'dataset': used_dataset}
 
+        # centro e area dell’analisi (sempre valorizzati)
+        center_lon, center_lat = self._geom_center(final_geom_used)
+        analysis_area_ha = self._approx_polygon_area_ha(final_geom_used) if final_geom_used and final_geom_used.get('type') == 'Polygon' else 0.0
+
+        # costruzione entries dettagliate
         detail_entries = []
         detail_date_field = self._date_field_for_dataset(used_dataset)
         for rowD in (details_data.get('data') or []):
@@ -962,20 +978,14 @@ class DeforestationProviderGFW(models.AbstractModel):
             if not date_token:
                 continue
 
-            latv = self._extract_number(rowD, ['latitude', 'lat', 'alert_lat', 'alert__lat', 'y'])
-            lonv = self._extract_number(rowD, ['longitude', 'lon', 'lng', 'alert_lon', 'alert__lon', 'x'])
-            rid = self._extract_text(rowD, ['any_id', 'alert_id', 'alert__id', 'glad_id', 'gladid', 'cartodb_id', 'id'])
+            lat = self._extract_number(rowD, ['latitude', 'lat', 'alert_lat', 'alert__lat', 'y'])
+            lon = self._extract_number(rowD, ['longitude', 'lon', 'lng', 'alert_lon', 'alert__lon', 'x'])
+            if lat is None or lon is None:
+                lat, lon = center_lat, center_lon  # fallback centro analisi
 
-            # fallback id robusto: dataset:data:lat,lon (arrotondati)
-            if not rid:
-                if latv is not None and lonv is not None:
-                    rid = f"{used_dataset}:{date_token}:{round(latv, 6)},{round(lonv, 6)}"
-                else:
-                    rid = f"{used_dataset}:{date_token}:unknown"
-
-            detail_entries.append({
+            entry = {
                 'date': date_token,
-                'alert_id': rid,
+                'alert_id': self._extract_text(rowD, ['alert_id', 'alert__id', 'cartodb_id', 'id']),
                 'alert_count': self._extract_number(rowD, ['alert_count', 'count', 'cnt']) or 1.0,
                 'area_ha': self._extract_number(rowD, ['area_ha', 'area', 'area__ha', 'area_ha_total']) or 0.0,
                 'confidence': self._extract_text(rowD, [
@@ -985,11 +995,39 @@ class DeforestationProviderGFW(models.AbstractModel):
                     'umd_glad_landsat_alerts__confidence',
                     'wur_radd_alerts__confidence',
                 ]),
-                'latitude': latv,
-                'longitude': lonv,
-            })
+                'latitude': lat,
+                'longitude': lon,
+                'description': used_dataset,              # descrizione di default
+                'analysis_area_ha': analysis_area_ha,     # area di analisi sempre valorizzata
+                'provider': 'gfw',
+            }
+            detail_entries.append(entry)
 
-        if detail_entries:
+        # Se i dettagli mancano o sono “poco informativi”, collassa in una riga periodo
+        def _all_missing_geo(entries):
+            if not entries:
+                return True
+            for e in entries:
+                if (e.get('latitude') not in (None, 0.0) or e.get('longitude') not in (None, 0.0)) or (e.get('area_ha') and e.get('area_ha') > 0):
+                    return False
+            return True
+
+        if (not detail_entries) or (collapse_when_missing_geo and _all_missing_geo(detail_entries)) or (len(detail_entries) > max_detail_rows):
+            period_id = "period:%s→%s" % ((agg_info.get('date_from') or date_from), (last_alert or date.today().isoformat()))
+            single = {
+                'date': last_alert or (agg_info.get('date_from') or date_from),
+                'alert_id': period_id,
+                'alert_count': int(round(alert_count)) if alert_count else 0,
+                'area_ha': 0.0,  # area del singolo alert non nota
+                'confidence': self._extract_text((brk_data.get('data') or [{}])[0], ['confidence']) or 'n/a',
+                'latitude': center_lat,
+                'longitude': center_lon,
+                'description': used_dataset,
+                'analysis_area_ha': analysis_area_ha,
+                'provider': 'gfw',
+            }
+            breakdown_entries = [single]
+        elif detail_entries:
             breakdown_entries = detail_entries
 
         # ---- Rolling 30/90 giorni
@@ -1079,6 +1117,8 @@ class DeforestationProviderGFW(models.AbstractModel):
             },
             'original_geom': original_geom,
             'final_geom_used': final_geom_used,
+            'analysis_area_ha': analysis_area_ha,   # << aggiunto
+            'analysis_center': {'lon': center_lon, 'lat': center_lat},
             'debug': {
                 'steps': debug_steps,
                 'errors': debug_errors,
