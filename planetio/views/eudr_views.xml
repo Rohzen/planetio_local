@@ -332,12 +332,10 @@
   <!-- Deforestation GeoJSON (Action menu) -->
   <record id="action_create_deforestation_geojson_server" model="ir.actions.server">
     <field name="name">Deforestation GeoJSON</field>
-    <!-- TODO: replace my_module.model_your_model with your actual model external id -->
     <field name="model_id" ref="planetio.model_eudr_declaration"/>
     <field name="binding_model_id" ref="planetio.model_eudr_declaration"/>
     <field name="binding_view_types">list,form</field>
     <field name="state">code</field>
-    <!-- Call your python method on the selected records -->
     <field name="code">action = records.action_create_deforestation_geojson()</field>
   </record>
 
