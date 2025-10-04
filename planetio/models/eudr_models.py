@@ -98,17 +98,6 @@ class EUDRDeclaration(models.Model):
         readonly=True,
     )
 
-    deforestation_analysis_progress = fields.Float(
-        string="Deforestation analysis",
-        compute="_compute_deforestation_analysis_progress",
-        readonly=True,
-    )
-    deforestation_analysis_summary = fields.Char(
-        string="Deforestation analysis summary",
-        compute="_compute_deforestation_analysis_progress",
-        readonly=True,
-    )
-
     attachment_ids = fields.One2many(
         'ir.attachment',
         'res_id',
@@ -185,30 +174,6 @@ class EUDRDeclaration(models.Model):
             # se non third party nascondiamo eventuale client_id
             if r.eudr_company_type_rel != 'third_party_trader':
                 r.eudr_third_party_client_id = False
-
-    @api.depends('line_ids', 'line_ids.defor_details_json', 'line_ids.external_properties_json')
-    def _compute_deforestation_analysis_progress(self):
-        for rec in self:
-            total = len(rec.line_ids)
-            done = 0
-            if total:
-                done = sum(
-                    1
-                    for line in rec.line_ids
-                    if (
-                        line.defor_details_json
-                        or line.external_properties_json
-                        or getattr(line, "external_status", False)
-                    )
-                )
-            rec.deforestation_analysis_progress = (done / total * 100.0) if total else 0.0
-            if total:
-                rec.deforestation_analysis_summary = _("%(done)s/%(total)s lines analyzed") % {
-                    'done': done,
-                    'total': total,
-                }
-            else:
-                rec.deforestation_analysis_summary = _("No lines to analyze")
 
     @api.depends('area_ha')
     def _compute_area_ha_display(self):
