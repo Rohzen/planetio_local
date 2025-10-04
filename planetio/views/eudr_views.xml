@@ -40,8 +40,7 @@
       <form string="EUDR Declaration">
         <header>
           <button name="action_open_import_wizard" type="object" string="Carica documenti" help="Importa Excel o Json con informazioni di geolocalizzazione oppure pdf o doc con informazioni aggiuntive." class="btn-secondary" icon="fa-upload"/>
-          <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"
-                  options="{&quot;progress_window&quot;: {&quot;title&quot;: &quot;Deforestation analysis&quot;, &quot;message&quot;: &quot;The deforestation analysis is running. Please wait…&quot;, &quot;success_message&quot;: &quot;Deforestation analysis completed.&quot;, &quot;failure_message&quot;: &quot;Deforestation analysis failed.&quot;, &quot;close_delay&quot;: 1200, &quot;tick_interval&quot;: 900, &quot;tick_amount&quot;: 6}}"/>
+          <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"/>
           <button name="action_create_deforestation_geojson" type="object" class="btn-secondary" string="Deforestation GeoJSON" icon="fa-download" invisible="1"/>
           <button name="action_create_geojson" type="object" class="btn-secondary" string="Traces GeoJSON" icon="fa-save" invisible="1"/>
           <button name="action_transmit_dds" type="object" class="oe_highlight" string="Trasmit DDS" icon="fa-paper-plane"/>
@@ -148,15 +147,6 @@
 
           <notebook>
             <page string="Details">
-              <div class="o_row bg-light p-2 rounded mb-2">
-<!--                <div class="o_td_label">-->
-<!--                  <label class="o_form_label">Deforestation analysis</label>-->
-<!--                </div>-->
-                <div class="o_td_field">
-                  <field name="deforestation_analysis_summary" nolabel="1" readonly="1"
-                         class="oe_inline ms-2 text-muted"/>
-                </div>
-              </div>
               <field name="line_ids">
                 <tree string="Dettagli" decoration-success="external_ok" decoration-danger="not external_ok" editable="top">
                   <field name="external_ok" widget="boolean_toggle" readonly="0" string=""/>

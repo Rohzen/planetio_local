@@ -19,8 +19,6 @@
     ],
     'assets': {
         'web.assets_backend': [
-            'planetio/static/src/js/progress_bar_widget.js',
-            'planetio/static/src/xml/progress_bar_templates.xml',
         ],
     },
     'external_dependencies': {
