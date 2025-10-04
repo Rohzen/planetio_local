@@ -95,6 +95,7 @@ class EUDRDeclaration(models.Model):
         "eudr.declaration.line.alert",
         "declaration_id",
         string="Deforestation Alerts",
+        domain=[("line_id.external_ok", "=", False)],
         readonly=True,
     )
 
