@@ -128,17 +128,6 @@
                           attrs="{'invisible': [('dds_identifier','=',False)]}"/>
                 </div>
               </div>
-              <div class="o_row bg-light p-2 rounded mb-2">
-<!--                <div class="o_td_label">-->
-<!--                  <label class="o_form_label">Deforestation analysis</label>-->
-<!--                </div>-->
-                <div class="o_td_field">
-                  <field name="deforestation_analysis_progress" nolabel="1" widget="progressbar"
-                         options="{'max_value': 100}" class="oe_inline"/>
-                  <field name="deforestation_analysis_summary" nolabel="1" readonly="1"
-                         class="oe_inline ms-2 text-muted"/>
-                </div>
-              </div>
             </group>
 
             <!-- Colonna destra -->
@@ -158,6 +147,17 @@
 
           <notebook>
             <page string="Details">
+              <div class="o_row bg-light p-2 rounded mb-2">
+<!--                <div class="o_td_label">-->
+<!--                  <label class="o_form_label">Deforestation analysis</label>-->
+<!--                </div>-->
+                <div class="o_td_field">
+                  <field name="deforestation_analysis_progress" nolabel="1" widget="progressbar"
+                         options="{'max_value': 100}" class="oe_inline"/>
+                  <field name="deforestation_analysis_summary" nolabel="1" readonly="1"
+                         class="oe_inline ms-2 text-muted"/>
+                </div>
+              </div>
               <field name="line_ids">
                 <tree string="Dettagli" decoration-success="external_ok" decoration-danger="not external_ok" editable="top">
                   <field name="external_ok" widget="boolean_toggle" readonly="0" string=""/>
