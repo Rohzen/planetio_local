@@ -24,6 +24,7 @@ var framework_unblockUI = framework.unblockUI;
 var ProgressBar = Widget.extend({
     template: "WebProgressBar",
     progress_timer: false,
+    allowedStyles: ['standard', 'simple'],
     events: {
         "click .progress_style": "setStyleClick",
     },
@@ -36,9 +37,11 @@ var ProgressBar = Widget.extend({
         this.cancel_html = QWeb.render('WebProgressBarCancel', {});
         this.cancel_confirm_html = QWeb.render('WebProgressBarCancelConfirm', {})
         this.style = localStorage.getItem(this.style_localstorage_key);
-        if (!session.is_system || !this.style) {
+        this.style = this._normalizeStyle(this.style);
+        if (!session.is_system) {
             this.style = 'standard';
         }
+        localStorage.setItem(this.style_localstorage_key, this.style);
     },
     start: function() {
         this.$progress_outline = this.$();
@@ -76,6 +79,7 @@ var ProgressBar = Widget.extend({
             // styles changeable only for admins
             return;
         }
+        name = this._normalizeStyle(name);
         if (this.style && this.style !== name) {
             this.removeStyle(this.style);
             if (this.last_progress_list) {
@@ -86,6 +90,12 @@ var ProgressBar = Widget.extend({
         _.invoke(this.all_elements, 'addClass', name);
         this.style = name;
         localStorage.setItem(this.style_localstorage_key, name);
+    },
+    _normalizeStyle: function(name) {
+        if (name && _.contains(this.allowedStyles, name)) {
+            return name;
+        }
+        return 'standard';
     },
     removeStyle: function(name) {
         _.invoke(this.all_elements, 'removeClass', name);

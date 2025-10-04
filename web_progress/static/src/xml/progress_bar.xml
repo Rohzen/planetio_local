@@ -18,7 +18,6 @@
                 <div class="progress_style">
                     <a href="#" id="standard" onclick="return false;">standard</a>
                     <a href="#" id="simple" onclick="return false;">simple</a>
-                    <a href="#" id="nyan" onclick="return false;">nyan cat</a>
                 </div>
             </div>
             <div id="progress_user" class="o_progress_user" style="visibility:hidden"/>
