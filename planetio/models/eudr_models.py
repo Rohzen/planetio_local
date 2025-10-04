@@ -490,6 +490,52 @@ class EUDRDeclaration(models.Model):
             "target": "new",
         }
 
+    def action_download_external_ok_json(self):
+        """Download JSON data for lines flagged as externally validated."""
+
+        self.ensure_one()
+
+        ok_lines = self.line_ids.filtered(lambda line: line.external_ok)
+        if not ok_lines:
+            raise UserError(_("No lines marked as OK are available for download."))
+
+        payload = []
+        for line in ok_lines:
+            line_payload = {
+                "id": line.id,
+                "name": line.name,
+                "farmer_id_code": line.farmer_id_code,
+                "farmer_name": line.farmer_name,
+                "farm_name": line.farm_name,
+                "country": line.country,
+                "region": line.region,
+                "municipality": line.municipality,
+                "area_ha": line.area_ha,
+                "geo_type": line.geo_type,
+            }
+
+            if line.geometry:
+                try:
+                    line_payload["geometry"] = json.loads(line.geometry)
+                except Exception:
+                    line_payload["geometry"] = line.geometry
+
+            if line.external_properties_json:
+                try:
+                    line_payload["external_properties"] = json.loads(line.external_properties_json)
+                except Exception:
+                    line_payload["external_properties_raw"] = line.external_properties_json
+
+            payload.append(line_payload)
+
+        data = json.dumps({"lines": payload}, ensure_ascii=False, indent=2)
+
+        return {
+            "type": "ir.actions.act_url",
+            "url": "data:application/json," + urllib.parse.quote(data),
+            "target": "new",
+        }
+
     def action_create_geojson(self):
         from ..services.eudr_adapter_odoo import attach_dds_geojson, build_dds_geojson
 
