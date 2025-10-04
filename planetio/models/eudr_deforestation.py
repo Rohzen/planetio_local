@@ -654,7 +654,7 @@ class EUDRDeclarationLineDeforestation(models.Model):
         lines = self
         grouped = defaultdict(lambda: {'items': [], 'alerts': 0, 'errors': 0})
 
-        for line in lines:
+        for line in lines.with_progress("Analisi deforestazione..."):
             try:
                 status = line.retrieve_deforestation_status()
                 result = line._apply_deforestation_status(status)
