@@ -533,7 +533,7 @@ class EUDRDeclaration(models.Model):
             record.message_post(
                 body=_("GeoJSON creato e salvato come <b>%s</b>.") % attachment.name
             )
-        return True
+        return {"type": "ir.actions.client", "tag": "reload"}
 
     def open_otp_wizard(self):
         self.ensure_one()
