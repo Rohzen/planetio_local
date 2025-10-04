@@ -43,6 +43,7 @@
           <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"/>
           <button name="action_create_deforestation_geojson" type="object" class="btn-secondary" string="Deforestation GeoJSON" icon="fa-download" invisible="1"/>
           <button name="action_create_geojson" type="object" class="btn-secondary" string="Traces GeoJSON" icon="fa-save" invisible="1"/>
+          <button name="action_download_external_ok_json" type="object" class="btn-secondary" string="Download OK JSON" icon="fa-download"/>
           <button name="action_transmit_dds" type="object" class="oe_highlight" string="Trasmit DDS" icon="fa-paper-plane"/>
           <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
         </header>
