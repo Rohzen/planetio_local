@@ -129,9 +129,9 @@
                 </div>
               </div>
               <div class="o_row bg-light p-2 rounded mb-2">
-                <div class="o_td_label">
-                  <label class="o_form_label">Deforestation analysis</label>
-                </div>
+<!--                <div class="o_td_label">-->
+<!--                  <label class="o_form_label">Deforestation analysis</label>-->
+<!--                </div>-->
                 <div class="o_td_field">
                   <field name="deforestation_analysis_progress" nolabel="1" widget="progressbar"
                          options="{'max_value': 100}" class="oe_inline"/>
