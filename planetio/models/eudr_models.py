@@ -91,6 +91,12 @@ class EUDRDeclaration(models.Model):
     area_ha = fields.Float(compute="_compute_area_ha", store=True, readonly=True)
     source_attachment_id = fields.Many2one("ir.attachment")
     line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
+    alert_ids = fields.One2many(
+        "eudr.declaration.line.alert",
+        "declaration_id",
+        string="Deforestation Alerts",
+        readonly=True,
+    )
 
     deforestation_analysis_progress = fields.Float(
         string="Deforestation analysis",

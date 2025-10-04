@@ -299,6 +299,26 @@ class EUDRDeclarationLineAlert(models.Model):
         ondelete="cascade",
         index=True,
     )
+    declaration_id = fields.Many2one(
+        "eudr.declaration",
+        string="Declaration",
+        related="line_id.declaration_id",
+        store=True,
+        index=True,
+        readonly=True,
+    )
+    line_name = fields.Char(
+        string="Row Name",
+        related="line_id.name",
+        store=True,
+        readonly=True,
+    )
+    line_country = fields.Char(
+        string="Row Country",
+        related="line_id.country",
+        store=True,
+        readonly=True,
+    )
     provider = fields.Char(string="Provider")
     alert_identifier = fields.Char(string="Alert Identifier")
     alert_date = fields.Date(string="Alert Date")
