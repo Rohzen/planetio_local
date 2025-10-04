@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <t t-name="planetio.ProgressBarWidget">
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" t-att-style="'width: %s%%;' % percentage" t-att-aria-valuenow="value" aria-valuemin="0" aria-valuemax="100">
+                <t t-esc="value"/>%
+            </div>
+        </div>
+    </t>
+</odoo>
