@@ -43,7 +43,6 @@
           <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"/>
           <button name="action_create_deforestation_geojson" type="object" class="btn-secondary" string="Deforestation GeoJSON" icon="fa-download" invisible="1"/>
           <button name="action_create_geojson" type="object" class="btn-secondary" string="Traces GeoJSON" icon="fa-save" invisible="1"/>
-          <button name="action_download_external_ok_json" type="object" class="btn-secondary" string="Download OK JSON" icon="fa-download"/>
           <button name="action_transmit_dds" type="object" class="oe_highlight" string="Trasmit DDS" icon="fa-paper-plane"/>
           <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
         </header>
@@ -348,6 +347,16 @@
     <field name="binding_view_types">list,form</field>
     <field name="state">code</field>
     <field name="code">action = records.action_create_geojson()</field>
+  </record>
+
+  <!-- Download external OK JSON (Action menu) -->
+  <record id="action_download_external_ok_json_server" model="ir.actions.server">
+    <field name="name">Download OK JSON</field>
+    <field name="model_id" ref="planetio.model_eudr_declaration"/>
+    <field name="binding_model_id" ref="planetio.model_eudr_declaration"/>
+    <field name="binding_view_types">list,form</field>
+    <field name="state">code</field>
+    <field name="code">action = records.action_download_external_ok_json()</field>
   </record>
 
 
