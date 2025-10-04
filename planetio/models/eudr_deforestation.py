@@ -1255,4 +1255,4 @@ class EUDRDeclarationDeforestation(models.Model):
                 )
                 % attachment.name
             )
-        return True
+        return {"type": "ir.actions.client", "tag": "reload"}
