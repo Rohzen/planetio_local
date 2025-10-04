@@ -254,8 +254,19 @@
                   </notebook>
                 </form>
               </field>
-            </page>
-            <page string="Documenti">
+          </page>
+          <page string="Alerts">
+            <field name="alert_ids" readonly="1">
+              <tree string="Deforestation Alerts" create="0" edit="0" delete="0">
+                <field name="line_name" string="Row"/>
+                <field name="line_country" string="Country"/>
+                <field name="alert_date"/>
+                <field name="problem_description" optional="show"/>
+                <field name="risk_level"/>
+              </tree>
+            </field>
+          </page>
+          <page string="Documenti">
               <field name="attachment_ids" invisible="1"/>
               <group>
                 <field name="attachment_visible_ids"
