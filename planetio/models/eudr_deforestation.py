@@ -544,15 +544,58 @@ class EUDRDeclarationLineDeforestation(models.Model):
         return self._gfw_analyze_fallback()
 
     def _apply_deforestation_status(self, status):
+        """Apply the response from the external service to the line.
+
+        Returns a dict describing the outcome to simplify message building.
+        """
+
+        def _short_message(text):
+            short = tools.ustr(text or "")
+            return short[:255]
+
+        result = {
+            'status': 'error',
+            'alert_count': 0,
+            'risk_flag': True,
+            'message': tools.ustr(status),
+        }
+
         if not isinstance(status, dict):
-            return
+            vals = {}
+            msg = tools.ustr(status)
+            if 'external_status' in self._fields:
+                vals['external_status'] = 'ok'
+            if 'external_ok' in self._fields:
+                vals['external_ok'] = True
+            if 'external_message' in self._fields:
+                vals['external_message'] = msg
+            if 'external_message_short' in self._fields:
+                vals['external_message_short'] = _short_message(msg)
+            if 'defor_details_json' in self._fields:
+                vals['defor_details_json'] = False
+            if vals:
+                self.write(vals)
+            result.update({
+                'status': 'ok',
+                'risk_flag': False,
+                'message': msg,
+            })
+            return result
 
         metrics = status.get('metrics') or {}
+        meta = status.get('meta') if isinstance(status.get('meta'), dict) else {}
+        alert_count = int(metrics.get('alert_count') or 0)
+        risk_flag = bool(alert_count)
+        if not risk_flag:
+            risk_flag = bool(meta.get('risk_flag'))
+        provider = meta.get('provider', 'gfw')
+        message = status.get('message') or tools.ustr(status)
+
         vals = {}
         if 'defor_provider' in self._fields:
-            vals['defor_provider'] = (status.get('meta') or {}).get('provider', 'gfw')
-        if 'defor_alerts' in self._fields and 'alert_count' in metrics:
-            vals['defor_alerts'] = metrics.get('alert_count') or 0
+            vals['defor_provider'] = provider
+        if 'defor_alerts' in self._fields:
+            vals['defor_alerts'] = alert_count
         if 'defor_area_ha' in self._fields and 'area_ha_total' in metrics:
             vals['defor_area_ha'] = metrics.get('area_ha_total') or 0.0
         if 'defor_details_json' in self._fields:
@@ -561,15 +604,51 @@ class EUDRDeclarationLineDeforestation(models.Model):
             except Exception:
                 vals['defor_details_json'] = tools.ustr(status)
         if 'external_ok' in self._fields:
-            risk_flag = False
-            if metrics.get('alert_count', 0) > 0:
-                risk_flag = True
-            elif isinstance(status.get('meta'), dict):
-                risk_flag = bool(status['meta'].get('risk_flag'))
             vals['external_ok'] = not risk_flag
+        if 'external_status' in self._fields:
+            vals['external_status'] = 'fail' if risk_flag else 'ok'
+        if 'external_message' in self._fields:
+            vals['external_message'] = message
+        if 'external_message_short' in self._fields:
+            vals['external_message_short'] = _short_message(message)
         if vals:
             self.write(vals)
         self._sync_alert_records_from_status(status)
+        result.update({
+            'status': 'fail' if risk_flag else 'ok',
+            'alert_count': alert_count,
+            'risk_flag': risk_flag,
+            'message': message,
+        })
+        return result
+
+    def _mark_deforestation_error(self, message):
+        """Persist an error outcome on the line and return a result payload."""
+
+        msg = tools.ustr(message)
+        vals = {}
+        if 'defor_alerts' in self._fields:
+            vals['defor_alerts'] = 0
+        if 'defor_details_json' in self._fields:
+            vals['defor_details_json'] = False
+        if 'external_status' in self._fields:
+            vals['external_status'] = 'error'
+        if 'external_ok' in self._fields:
+            vals['external_ok'] = False
+        if 'external_message' in self._fields:
+            vals['external_message'] = msg
+        if 'external_message_short' in self._fields:
+            vals['external_message_short'] = msg[:255]
+        if vals:
+            self.write(vals)
+        if hasattr(self, 'alert_ids'):
+            self.alert_ids.unlink()
+        return {
+            'status': 'error',
+            'alert_count': 0,
+            'risk_flag': True,
+            'message': msg,
+        }
 
     def action_analyze_deforestation(self):
         # self can be either lines or declarations; normalize to lines
@@ -578,55 +657,88 @@ class EUDRDeclarationLineDeforestation(models.Model):
             lines = self.mapped('line_ids')
 
         # run analyses and collect results grouped by declaration
-        grouped = defaultdict(list)
+        grouped = defaultdict(lambda: {
+            'items': [],
+            'alerts': 0,
+            'errors': 0,
+        })
 
         for line in lines:
             try:
                 status = line.retrieve_deforestation_status()
 
-                line._apply_deforestation_status(status)
+                result = line._apply_deforestation_status(status)
 
-                # friendly, short per-line snippet for later batching
-                if isinstance(status, dict):
-                    msg = status.get('message') or tools.ustr(status)
-                else:
-                    msg = tools.ustr(status)
+                msg = result.get('message') or tools.ustr(status)
+                status_code = result.get('status') or 'ok'
 
-                grouped[line.declaration_id.id].append({
+                record = grouped[line.declaration_id.id]
+                record['alerts'] += int(result.get('alert_count') or 0)
+                if status_code == 'error':
+                    record['errors'] += 1
+
+                record['items'].append({
                     'line': line,
-                    'ok': True,
+                    'status': status_code,
                     'msg': msg,
                 })
 
             except Exception as e:
                 last = ''.join(traceback.format_exception_only(type(e), e)).strip()
-                grouped[line.declaration_id.id].append({
+                msg = _("Analisi deforestazione fallita sulla riga %(name)s: %(err)s") % {
+                    'name': (getattr(line, 'display_name', None) or line.id),
+                    'err': tools.ustr(last or e),
+                }
+                result = line._mark_deforestation_error(msg)
+                record = grouped[line.declaration_id.id]
+                record['errors'] += 1
+                record['items'].append({
                     'line': line,
-                    'ok': False,
-                    'msg': _("Analisi deforestazione fallita sulla riga %(name)s: %(err)s") % {
-                        'name': (getattr(line, 'display_name', None) or line.id),
-                        'err': tools.ustr(last or e),
-                    }
+                    'status': result.get('status', 'error'),
+                    'msg': msg,
                 })
                 # keep going
 
         # post one message per declaration
         Declaration = lines.env['eudr.declaration']
-        for decl_id, items in grouped.items():
+        for decl_id, data in grouped.items():
             decl = Declaration.browse(decl_id)
             # build an HTML body with line links for easier navigation
             lis = []
-            for it in items:
+            for it in data['items']:
                 line = it['line']
                 anchor = "/web#id=%s&model=%s&view_type=form" % (line.id, line._name)
-                prefix = "OK" if it['ok'] else "ERRORE"
+                status_code = it.get('status') or 'ok'
+                if status_code == 'fail':
+                    prefix = "ALERT"
+                elif status_code == 'error':
+                    prefix = "ERRORE"
+                else:
+                    prefix = "OK"
                 # escape user-facing text
                 line_name = tools.html_escape(getattr(line, 'display_name', str(line.id)))
                 msg_txt = tools.html_escape(it['msg'])
                 lis.append(
                     '<li>[%s] <a href="%s">%s</a>: %s</li>' % (prefix, anchor, line_name, msg_txt)
                 )
-            body = "<p>Risultati analisi deforestazione</p><ul>%s</ul>" % ''.join(lis)
+            total = len(decl.line_ids)
+            done = len(data['items'])
+            summary_parts = [
+                _("%(done)s/%(total)s lines analyzed") % {'done': done, 'total': total},
+            ]
+            if data['alerts']:
+                summary_parts.append(
+                    _("%(count)s alert(s) detected") % {'count': data['alerts']}
+                )
+            if data['errors']:
+                summary_parts.append(
+                    _("%(count)s error(s) detected") % {'count': data['errors']}
+                )
+            summary = ', '.join(summary_parts)
+            body = "<p>%s</p><ul>%s</ul>" % (
+                tools.html_escape(summary),
+                ''.join(lis),
+            )
 
             # one chatter message on the parent
             decl.message_post(

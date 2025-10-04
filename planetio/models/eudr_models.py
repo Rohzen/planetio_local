@@ -195,7 +195,11 @@ class EUDRDeclaration(models.Model):
                 done = sum(
                     1
                     for line in rec.line_ids
-                    if (line.defor_details_json or line.external_properties_json)
+                    if (
+                        line.defor_details_json
+                        or line.external_properties_json
+                        or getattr(line, "external_status", False)
+                    )
                 )
             rec.deforestation_analysis_progress = (done / total * 100.0) if total else 0.0
             if total:
