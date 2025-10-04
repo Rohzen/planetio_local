@@ -651,22 +651,12 @@ class EUDRDeclarationLineDeforestation(models.Model):
         }
 
     def action_analyze_deforestation(self):
-        # self can be either lines or declarations; normalize to lines
         lines = self
-        if self._name == 'eudr.declaration':
-            lines = self.mapped('line_ids')
-
-        # run analyses and collect results grouped by declaration
-        grouped = defaultdict(lambda: {
-            'items': [],
-            'alerts': 0,
-            'errors': 0,
-        })
+        grouped = defaultdict(lambda: {'items': [], 'alerts': 0, 'errors': 0})
 
         for line in lines:
             try:
                 status = line.retrieve_deforestation_status()
-
                 result = line._apply_deforestation_status(status)
 
                 msg = result.get('message') or tools.ustr(status)
@@ -677,11 +667,7 @@ class EUDRDeclarationLineDeforestation(models.Model):
                 if status_code == 'error':
                     record['errors'] += 1
 
-                record['items'].append({
-                    'line': line,
-                    'status': status_code,
-                    'msg': msg,
-                })
+                record['items'].append({'line': line, 'status': status_code, 'msg': msg})
 
             except Exception as e:
                 last = ''.join(traceback.format_exception_only(type(e), e)).strip()
@@ -692,60 +678,31 @@ class EUDRDeclarationLineDeforestation(models.Model):
                 result = line._mark_deforestation_error(msg)
                 record = grouped[line.declaration_id.id]
                 record['errors'] += 1
-                record['items'].append({
-                    'line': line,
-                    'status': result.get('status', 'error'),
-                    'msg': msg,
-                })
-                # keep going
+                record['items'].append({'line': line, 'status': result.get('status', 'error'), 'msg': msg})
 
-        # post one message per declaration
-        Declaration = lines.env['eudr.declaration']
+        Declaration = self.env['eudr.declaration']
         for decl_id, data in grouped.items():
             decl = Declaration.browse(decl_id)
-            # build an HTML body with line links for easier navigation
             lis = []
             for it in data['items']:
                 line = it['line']
                 anchor = "/web#id=%s&model=%s&view_type=form" % (line.id, line._name)
                 status_code = it.get('status') or 'ok'
-                if status_code == 'fail':
-                    prefix = "ALERT"
-                elif status_code == 'error':
-                    prefix = "ERRORE"
-                else:
-                    prefix = "OK"
-                # escape user-facing text
+                prefix = "ALERT" if status_code == 'fail' else ("ERRORE" if status_code == 'error' else "OK")
                 line_name = tools.html_escape(getattr(line, 'display_name', str(line.id)))
                 msg_txt = tools.html_escape(it['msg'])
-                lis.append(
-                    '<li>[%s] <a href="%s">%s</a>: %s</li>' % (prefix, anchor, line_name, msg_txt)
-                )
+                lis.append('<li>[%s] <a href="%s">%s</a>: %s</li>' % (prefix, anchor, line_name, msg_txt))
             total = len(decl.line_ids)
             done = len(data['items'])
-            summary_parts = [
-                _("%(done)s/%(total)s lines analyzed") % {'done': done, 'total': total},
-            ]
+            summary_parts = [_("%(done)s/%(total)s lines analyzed") % {'done': done, 'total': total}]
             if data['alerts']:
-                summary_parts.append(
-                    _("%(count)s alert(s) detected") % {'count': data['alerts']}
-                )
+                summary_parts.append(_("%(count)s alert(s) detected") % {'count': data['alerts']})
             if data['errors']:
-                summary_parts.append(
-                    _("%(count)s error(s) detected") % {'count': data['errors']}
-                )
+                summary_parts.append(_("%(count)s error(s) detected") % {'count': data['errors']})
             summary = ', '.join(summary_parts)
-            body = "<p>%s</p><ul>%s</ul>" % (
-                tools.html_escape(summary),
-                ''.join(lis),
-            )
+            body = "<p>%s</p><ul>%s</ul>" % (tools.html_escape(summary), ''.join(lis))
+            decl.message_post(body=body, message_type='comment', subtype_xmlid='mail.mt_note')
 
-            # one chatter message on the parent
-            decl.message_post(
-                body=body,
-                message_type='comment',
-                subtype_xmlid='mail.mt_note',
-            )
         declarations = lines.mapped('declaration_id')
         if declarations:
             declarations._set_stage_from_xmlid('planetio.eudr_stage_validated')
@@ -1223,21 +1180,10 @@ class EUDRDeclarationDeforestation(models.Model):
     _inherit = "eudr.declaration"
 
     def action_analyze_deforestation(self):
-        for decl in self:
-            lines = decl.mapped('line_ids') if hasattr(decl, 'line_ids') else self.env['eudr.declaration.line'].search([('declaration_id','=',decl.id)])
-            for line in lines:
-                try:
-                    line.action_analyze_deforestation()
-                except Exception as e:
-                    last = ''.join(traceback.format_exception_only(type(e), e)).strip()
-                    try:
-                        decl.message_post(body=_("Analisi deforestazione fallita sulla riga %(name)s: %(err)s") % {
-                            'name': (getattr(line, 'display_name', None) or line.id),
-                            'err': tools.ustr(last or e),
-                        })
-                    except Exception:
-                        pass
-                    continue
+        for decl in self.web_progress_iter(self, msg="Message"):
+            lines = decl.mapped('line_ids')
+            if lines:
+                lines.action_analyze_deforestation()
         return True
 
     def action_create_deforestation_geojson(self):
