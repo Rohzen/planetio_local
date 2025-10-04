@@ -7,6 +7,19 @@ try:
 except Exception:
     pd = None
 
+try:  # pragma: no cover - fallback for standalone test loading
+    from ..utils import estimate_geojson_area_ha
+except ImportError:  # pragma: no cover - loaded outside package context
+    import importlib.util
+    from pathlib import Path
+
+    _geo_path = Path(__file__).resolve().parents[1] / "utils" / "geo.py"
+    _geo_spec = importlib.util.spec_from_file_location("planetio.utils.geo", _geo_path)
+    _geo_mod = importlib.util.module_from_spec(_geo_spec)
+    assert _geo_spec and _geo_spec.loader
+    _geo_spec.loader.exec_module(_geo_mod)
+    estimate_geojson_area_ha = _geo_mod.estimate_geojson_area_ha
+
 
 class ExcelImportService(models.AbstractModel):
     _name = "excel.import.service"
@@ -387,6 +400,11 @@ class ExcelImportService(models.AbstractModel):
 
         vals['geo_type'] = geo_type
         vals['geometry'] = geometry
+
+        if geometry and not vals.get('area_ha'):
+            computed_area = estimate_geojson_area_ha(self.env, geometry)
+            if computed_area:
+                vals['area_ha'] = computed_area
         return vals
 
     def _guess_header(self, headers, candidates):
