@@ -40,7 +40,16 @@
       <form string="EUDR Declaration">
         <header>
           <button name="action_open_import_wizard" type="object" string="Carica documenti" help="Importa Excel o Json con informazioni di geolocalizzazione oppure pdf o doc con informazioni aggiuntive." class="btn-secondary" icon="fa-upload"/>
-          <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"/>
+          <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"
+                  options="{'progress_window': {
+                    'title': 'Deforestation analysis',
+                    'message': 'The deforestation analysis is running. Please wait…',
+                    'success_message': 'Deforestation analysis completed.',
+                    'failure_message': 'Deforestation analysis failed.',
+                    'close_delay': 1200,
+                    'tick_interval': 900,
+                    'tick_amount': 6
+                  }}"/>
           <button name="action_create_deforestation_geojson" type="object" class="btn-secondary" string="Deforestation GeoJSON" icon="fa-download" invisible="1"/>
           <button name="action_create_geojson" type="object" class="btn-secondary" string="Traces GeoJSON" icon="fa-save" invisible="1"/>
           <button name="action_transmit_dds" type="object" class="oe_highlight" string="Trasmit DDS" icon="fa-paper-plane"/>
@@ -152,8 +161,6 @@
 <!--                  <label class="o_form_label">Deforestation analysis</label>-->
 <!--                </div>-->
                 <div class="o_td_field">
-                  <field name="deforestation_analysis_progress" nolabel="1" widget="progressbar"
-                         options="{'max_value': 100}" class="oe_inline"/>
                   <field name="deforestation_analysis_summary" nolabel="1" readonly="1"
                          class="oe_inline ms-2 text-muted"/>
                 </div>
