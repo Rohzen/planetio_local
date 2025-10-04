@@ -254,7 +254,7 @@
                 </form>
               </field>
           </page>
-          <page string="Deferestation Alerts">
+          <page string="Deforestation Alerts">
             <field name="alert_ids" readonly="1">
               <tree string="Deforestation Alerts" create="0" edit="0" delete="0">
                 <field name="line_name" string="Row"/>
