@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import base64, json
+import xml.etree.ElementTree as ET
 import requests
 from requests.auth import HTTPBasicAuth
 from odoo import _, fields
@@ -450,6 +451,33 @@ def submit_dds_for_batch(record):
                 body=("Fault grezzo (parsing fallito):<br/><pre>%s</pre>" % (text or "")).replace("\n", "<br/>"))
             # raise UserError(base)
 
+def _extract_fault_messages(payload: str):
+    """Return a list of human readable fault messages extracted from a SOAP payload."""
+    if not payload:
+        return []
+
+    messages = []
+    try:
+        root = ET.fromstring(payload)
+    except Exception:
+        text = (payload or "").strip()
+        return [text[:400]] if text else []
+
+    def lname(tag: str) -> str:
+        return tag.split('}', 1)[-1] if isinstance(tag, str) else tag
+
+    interesting = {"faultstring", "Text", "message", "reason", "description", "detail", "Value"}
+
+    for node in root.iter():
+        name = lname(node.tag)
+        if name in interesting and node.text:
+            text = node.text.strip()
+            if text and text not in messages:
+                messages.append(text)
+
+    return messages
+
+
 def action_retrieve_dds_numbers(record):
     """Given record.dds_identifier, call Retrieval SOAP and fill eudr_id (and others if present)."""
     ICP = record.env['ir.config_parameter'].sudo()
@@ -498,16 +526,43 @@ def action_retrieve_dds_numbers(record):
     })
 
     if status != 200:
-        wsid = client.parse_ws_request_id(text)
-        msg = _('Errore Retrieval EUDR (%s)') % status
+        wsid, errs = client.parse_business_errors(text)
+        parts = [_('Errore Retrieval EUDR (%s)') % status]
         if wsid:
-            msg += _('\n\nWS_REQUEST_ID: %s') % wsid
-        raise UserError(msg)
+            parts.append(_('WS_REQUEST_ID: %s') % wsid)
+
+        if errs:
+            bullets = []
+            for err in errs:
+                code = err.get('code') or 'N/A'
+                message = err.get('message') or '-'
+                path = err.get('path') or '-'
+                bullets.append(f"- [{code}] {message} (path: {path})")
+            parts.append(_('Dettagli:') + '\n' + '\n'.join(bullets))
+        else:
+            faults = _extract_fault_messages(text)
+            if faults:
+                parts.append(_('Dettagli:') + '\n' + '\n'.join(f'- {msg}' for msg in faults))
+            elif text:
+                snippet = text.strip().splitlines()
+                preview = '\n'.join(snippet[:5])[:400]
+                if preview:
+                    parts.append(_('Risposta:') + f"\n{preview}")
+
+        raise UserError('\n\n'.join(parts))
 
     entries = client.parse_retrieval_result(text) or []
-    hit = next((e for e in entries if e.get('uuid') == dds_uuid), None) or (entries[0] if entries else None)
+    hit = next((e for e in entries if (e.get('uuid') or '').strip() == dds_uuid), None)
     if not hit:
-        record.message_post(body=_('Retrieve OK ma nessuna voce restituita per il UUID.'))
+        available = ', '.join(
+            e.get('uuid').strip()
+            for e in entries
+            if isinstance(e.get('uuid'), str) and e.get('uuid').strip()
+        )
+        msg = _('Retrieve OK ma nessuna voce restituita per il UUID.')
+        if available:
+            msg += _(' UUID disponibili: %s') % available
+        record.message_post(body=msg)
         return False
 
     refno = hit.get('referenceNumber')
