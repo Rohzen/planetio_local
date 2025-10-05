@@ -497,7 +497,16 @@ def action_retrieve_dds_numbers(record):
     if not dds_uuid:
         raise UserError(_('Nessun DDS Identifier (UUID) presente sul record.'))
 
-    client = EUDRRetrievalClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
+    root_tag = ICP.get_param('planetio.eudr_retrieval_root_tag')
+
+    client = EUDRRetrievalClient(
+        endpoint,
+        username,
+        apikey,
+        wsse_mode,
+        webservice_client_id=wsclient,
+        retrieval_root_tag=root_tag,
+    )
 
     # build + attach request for audit
     retrieval_xml = client.build_retrieval_xml(dds_uuid)

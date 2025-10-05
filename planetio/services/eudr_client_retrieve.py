@@ -20,6 +20,47 @@ class EUDRRetrievalClient(EUDRClient):
     # SOAPAction del metodo retrieveDdsNumber
     RETR_SOAP_ACTION = "http://ec.europa.eu/tracesnt/certificate/eudr/retrieval/retrieveDdsNumber"
 
+    DEFAULT_ROOT_TAG = "retrieveDdsNumberRequest"
+
+    def __init__(
+        self,
+        endpoint: str,
+        username: str,
+        apikey: str,
+        wsse_mode: str = "digest",
+        webservice_client_id: str = "eudr-test",
+        timeout: int = 60,
+        session=None,
+        retrieval_root_tag: Optional[str] = None,
+    ):
+        super().__init__(
+            endpoint,
+            username,
+            apikey,
+            wsse_mode=wsse_mode,
+            webservice_client_id=webservice_client_id,
+            timeout=timeout,
+            session=session,
+        )
+        self.retrieval_root_tag = self._sanitize_root_tag(retrieval_root_tag)
+
+    @classmethod
+    def _sanitize_root_tag(cls, value: Optional[str]) -> str:
+        tag = (value or "").strip()
+        if not tag:
+            return cls.DEFAULT_ROOT_TAG
+
+        # Rimuove eventuali prefissi namespace come "retr:" oppure colon sparsi.
+        if ":" in tag:
+            tag = tag.split(":", 1)[-1]
+
+        # Mantiene solo caratteri ammessi in un QName semplice (lettere, numeri, underscore)
+        cleaned = "".join(ch for ch in tag if ch.isalnum() or ch == "_")
+        if not cleaned or not cleaned[0].isalpha():
+            return cls.DEFAULT_ROOT_TAG
+
+        return cleaned
+
     def build_retrieval_xml(self, uuids: Union[str, List[str]]) -> str:
         """
         Costruisce il body XML (senza envelope) per RetrieveDdsNumberRequest.
@@ -32,15 +73,11 @@ class EUDRRetrievalClient(EUDRClient):
             raise ValueError("At least one DDS UUID is required")
 
         # Alcuni ambienti (es. Acceptance) validano l'XML rispetto allo schema e
-        # richiedono che l'elemento radice sia "retrieveDdsNumberRequest"
-        # (camelCase). Utilizzare la forma in uppercase causava l'errore::
-        #
-        #     cvc-elt.1.a: Cannot find the declaration of element
-        #     'retr:RetrieveDdsNumberRequest'.
-        #
-        # Per mantenere la compatibilità future-proof costruiamo dinamicamente
-        # il tag, ma al momento usiamo sempre la versione camelCase.
-        root_tag = "retrieveDdsNumberRequest"
+        # richiedono che l'elemento radice sia "retrieveDdsNumberRequest" oppure
+        # "RetrieveDdsNumberRequest" (la validazione cambia tra ambienti). Il
+        # tag può quindi essere configurato via parametro Odoo, mentre questo
+        # client applica un valore di fallback compatibile.
+        root_tag = self.retrieval_root_tag or self.DEFAULT_ROOT_TAG
 
         return (
             f'<retr:{root_tag} '
