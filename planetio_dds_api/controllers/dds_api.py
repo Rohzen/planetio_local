@@ -5,11 +5,18 @@ from odoo import _, http
 from odoo.exceptions import UserError
 from odoo.http import request
 
+from odoo.addons.planetio.services.eudr_client_retrieve import EUDRRetrievalClient
+from odoo.addons.planetio.services.eudr_adapter_odoo import _extract_fault_messages
+
 _logger = logging.getLogger(__name__)
 
 
 class DDSApiController(http.Controller):
     """Expose a small JSON API to create and transmit DDS declarations."""
+
+    # ------------------------------------------------------------------
+    # API endpoints
+    # ------------------------------------------------------------------
 
     @http.route(
         '/api/dds/minimal_submit',
@@ -87,6 +94,92 @@ class DDSApiController(http.Controller):
                 'error_type': 'server_error',
             }
 
+    @http.route(
+        '/api/dds/retrieve_by_identifier',
+        type='json',
+        auth='user',
+        methods=['POST'],
+        csrf=False,
+    )
+    def api_retrieve_by_identifier(self, **payload):
+        """Retrieve DDS information from TRACES using a DDS identifier (UUID).
+
+        Returns a structure like::
+
+            {
+                "status": "success",
+                "httpStatus": 200,
+                "data": [
+                    {
+                        "identifier": "...",
+                        "internalReferenceNumber": "...",
+                        "referenceNumber": "...",
+                        "verificationNumber": "...",
+                        "status": "AVAILABLE",
+                        "date": "2025-09-18T23:05:02.000Z",
+                        "updatedBy": "Operator Name"
+                    }
+                ]
+            }
+        """
+
+        payload = payload or {}
+        identifier = (payload.get('identifier') or payload.get('dds_identifier') or '').strip()
+        if not identifier:
+            return {
+                'status': 'error',
+                'httpStatus': 400,
+                'message': _('The field "identifier" is required.'),
+                'data': [],
+            }
+
+        try:
+            client = self._build_retrieval_client()
+        except UserError as exc:
+            return {
+                'status': 'error',
+                'httpStatus': 500,
+                'message': str(exc),
+                'data': [],
+            }
+
+        try:
+            result = client.get_numbers(identifier)
+        except Exception:  # pragma: no cover - defensive
+            _logger.exception('Unexpected error while retrieving DDS identifier %s', identifier)
+            return {
+                'status': 'error',
+                'httpStatus': 500,
+                'message': _('Unexpected error while retrieving DDS data.'),
+                'data': [],
+            }
+
+        http_status = result.get('httpStatus') or 500
+        if http_status != 200:
+            message = self._format_retrieval_error(client, result)
+            return {
+                'status': 'error',
+                'httpStatus': http_status,
+                'message': message,
+                'data': [],
+            }
+
+        entry = {
+            'identifier': identifier,
+            'internalReferenceNumber': result.get('internalReferenceNumber'),
+            'referenceNumber': result.get('referenceNumber'),
+            'verificationNumber': result.get('verificationNumber'),
+            'status': (result.get('status') or '').upper() if result.get('status') else None,
+            'date': result.get('date'),
+            'updatedBy': result.get('updatedBy'),
+        }
+
+        return {
+            'status': 'success',
+            'httpStatus': http_status,
+            'data': [entry],
+        }
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
@@ -153,6 +246,52 @@ class DDSApiController(http.Controller):
 
         record = Declaration.create(values)
         return record
+
+    def _build_retrieval_client(self):
+        ICP = request.env['ir.config_parameter'].sudo()
+
+        endpoint = (
+            ICP.get_param('planetio.eudr_retrieval_endpoint')
+            or 'https://webgate.acceptance.ec.europa.eu/tracesnt-alpha/ws/EUDRRetrievalServiceV1'
+        )
+        username = ICP.get_param('planetio.eudr_user') or ''
+        apikey = ICP.get_param('planetio.eudr_apikey') or ''
+        wsse_mode = (ICP.get_param('planetio.eudr_wsse_mode') or 'digest').lower()
+        wsclient = ICP.get_param('planetio.eudr_webservice_client_id') or 'eudr-test'
+
+        if not username or not apikey:
+            raise UserError(_('EUDR credentials are missing. Configure planetio.eudr_user and planetio.eudr_apikey.'))
+
+        return EUDRRetrievalClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
+
+    def _format_retrieval_error(self, client, result):
+        http_status = result.get('httpStatus') or 500
+        raw = result.get('raw') or ''
+        wsid, errs = client.parse_business_errors(raw)
+
+        parts = [_('Errore Retrieval EUDR (%s)') % http_status]
+        if wsid:
+            parts.append(_('WS_REQUEST_ID: %s') % wsid)
+
+        if errs:
+            bullets = []
+            for err in errs:
+                code = err.get('code') or 'N/A'
+                message = err.get('message') or '-'
+                path = err.get('path') or '-'
+                bullets.append(f"- [{code}] {message} (path: {path})")
+            parts.append(_('Dettagli:') + '\n' + '\n'.join(bullets))
+        else:
+            faults = _extract_fault_messages(raw)
+            if faults:
+                parts.append(_('Dettagli:') + '\n' + '\n'.join(f'- {msg}' for msg in faults))
+            elif raw:
+                snippet = raw.strip().splitlines()
+                preview = '\n'.join(snippet[:5])[:400]
+                if preview:
+                    parts.append(_('Risposta:') + f"\n{preview}")
+
+        return '\n\n'.join(parts)
 
     def _resolve_partner(self, payload):
         Partner = request.env['res.partner'].sudo()

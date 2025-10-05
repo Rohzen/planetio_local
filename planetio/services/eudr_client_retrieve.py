@@ -31,14 +31,25 @@ class EUDRRetrievalClient(EUDRClient):
         if not uuids:
             raise ValueError("At least one DDS UUID is required")
 
+        # Alcuni ambienti (es. Acceptance) validano l'XML rispetto allo schema e
+        # richiedono che l'elemento radice sia "retrieveDdsNumberRequest"
+        # (camelCase). Utilizzare la forma in uppercase causava l'errore::
+        #
+        #     cvc-elt.1.a: Cannot find the declaration of element
+        #     'retr:RetrieveDdsNumberRequest'.
+        #
+        # Per mantenere la compatibilità future-proof costruiamo dinamicamente
+        # il tag, ma al momento usiamo sempre la versione camelCase.
+        root_tag = "retrieveDdsNumberRequest"
+
         return (
-            '<retr:RetrieveDdsNumberRequest '
+            f'<retr:{root_tag} '
             'xmlns:retr="http://ec.europa.eu/tracesnt/certificate/eudr/retrieval/v1" '
             'xmlns:base="http://ec.europa.eu/sanco/tracesnt/base/v4">'
             '<retr:uuids>'
             + "".join(f"<retr:uuid>{u}</retr:uuid>" for u in uuids) +
-            "</retr:uuids>"
-            "</retr:RetrieveDdsNumberRequest>"
+            '</retr:uuids>'
+            f'</retr:{root_tag}>'
         )
 
     def build_retrieval_envelope(self, retrieval_xml: str) -> str:
@@ -97,8 +108,10 @@ class EUDRRetrievalClient(EUDRClient):
     @staticmethod
     def parse_retrieval_result(response_text: str) -> List[Dict[str, Optional[str]]]:
         """
-        Estrae una lista di record con chiavi: uuid, status, referenceNumber, verificationNumber.
-        È tollerante a leggere local-name diversi (accettance/prod possono variare).
+        Estrae una lista di record con chiavi: uuid, status, referenceNumber,
+        verificationNumber, internalReferenceNumber, date, updatedBy.
+        È tollerante a leggere local-name diversi (acceptance/prod possono
+        variare).
         """
         try:
             root = ET.fromstring(response_text)
@@ -118,7 +131,15 @@ class EUDRRetrievalClient(EUDRClient):
 
         # Se non troviamo blocchi principali, proviamo a costruire dai singoli campi dispersi
         if not candidate_blocks:
-            rec = {"uuid": None, "status": None, "referenceNumber": None, "verificationNumber": None}
+            rec = {
+                "uuid": None,
+                "status": None,
+                "referenceNumber": None,
+                "verificationNumber": None,
+                "internalReferenceNumber": None,
+                "date": None,
+                "updatedBy": None,
+            }
             for el in root.iter():
                 n = L(el.tag)
                 if n in {"uuid", "ddsIdentifier"} and el.text:
@@ -129,10 +150,24 @@ class EUDRRetrievalClient(EUDRClient):
                     rec["referenceNumber"] = el.text.strip()
                 elif n == "verificationNumber" and el.text:
                     rec["verificationNumber"] = el.text.strip()
+                elif n in {"internalReferenceNumber", "internalReference"} and el.text:
+                    rec["internalReferenceNumber"] = el.text.strip()
+                elif n in {"date", "statusDate", "lastUpdateDate", "updatedOn"} and el.text:
+                    rec["date"] = el.text.strip()
+                elif n in {"updatedBy", "lastUpdatedBy"} and el.text:
+                    rec["updatedBy"] = el.text.strip()
             return [rec] if rec.get("uuid") else []
 
         for node in candidate_blocks:
-            rec = {"uuid": None, "status": None, "referenceNumber": None, "verificationNumber": None}
+            rec = {
+                "uuid": None,
+                "status": None,
+                "referenceNumber": None,
+                "verificationNumber": None,
+                "internalReferenceNumber": None,
+                "date": None,
+                "updatedBy": None,
+            }
             # Scansione profonda per local-names comuni
             for ch in node.iter():
                 n = L(ch.tag)
@@ -144,6 +179,12 @@ class EUDRRetrievalClient(EUDRClient):
                     rec["referenceNumber"] = ch.text.strip()
                 elif n == "verificationNumber" and ch.text:
                     rec["verificationNumber"] = ch.text.strip()
+                elif n in {"internalReferenceNumber", "internalReference"} and ch.text:
+                    rec["internalReferenceNumber"] = ch.text.strip()
+                elif n in {"date", "statusDate", "lastUpdateDate", "updatedOn"} and ch.text:
+                    rec["date"] = ch.text.strip()
+                elif n in {"updatedBy", "lastUpdatedBy"} and ch.text:
+                    rec["updatedBy"] = ch.text.strip()
             if rec.get("uuid"):
                 out.append(rec)
 
@@ -167,6 +208,9 @@ class EUDRRetrievalClient(EUDRClient):
             "status": None,
             "referenceNumber": None,
             "verificationNumber": None,
+            "internalReferenceNumber": None,
+            "date": None,
+            "updatedBy": None,
             "httpStatus": status,
             "wsRequestId": self.parse_ws_request_id(text) if text else None,
             "raw": text,
@@ -181,5 +225,8 @@ class EUDRRetrievalClient(EUDRClient):
                 "status": hit.get("status"),
                 "referenceNumber": hit.get("referenceNumber"),
                 "verificationNumber": hit.get("verificationNumber"),
+                "internalReferenceNumber": hit.get("internalReferenceNumber"),
+                "date": hit.get("date"),
+                "updatedBy": hit.get("updatedBy"),
             })
         return result
