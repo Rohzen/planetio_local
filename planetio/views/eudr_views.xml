@@ -115,7 +115,7 @@
             <field name="source_attachment_id" readonly="1" invisible="1"/>
             <field name="activity_type" string="Attività"/>
             <field name="hs_code"/>
-            <field name="eudr_id" string="EUDR Reference" readonly="0" invisible="0"/>
+            <field name="eudr_id" string="EUDR Reference number" readonly="0" invisible="0"/>
 
               <div class="o_row bg-light p-2 rounded mb-2">
                 <div class="o_td_label">
