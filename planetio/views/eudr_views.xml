@@ -244,7 +244,7 @@
                 </form>
               </field>
           </page>
-          <page string="Deforestation Alerts">
+          <page string="Allerte deforestazione">
             <field name="alert_ids" readonly="1">
               <tree string="Deforestation Alerts" create="0" edit="0" delete="0">
                 <field name="line_name" string="Row"/>
@@ -330,18 +330,18 @@
   </record>
 
   <!-- Deforestation GeoJSON (Action menu) -->
-  <record id="action_create_deforestation_geojson_server" model="ir.actions.server">
-    <field name="name">Deforestation GeoJSON</field>
-    <field name="model_id" ref="planetio.model_eudr_declaration"/>
-    <field name="binding_model_id" ref="planetio.model_eudr_declaration"/>
-    <field name="binding_view_types">list,form</field>
-    <field name="state">code</field>
-    <field name="code">action = records.action_create_deforestation_geojson()</field>
-  </record>
+<!--  <record id="action_create_deforestation_geojson_server" model="ir.actions.server">-->
+<!--    <field name="name">Download GeoJSON</field>-->
+<!--    <field name="model_id" ref="planetio.model_eudr_declaration"/>-->
+<!--    <field name="binding_model_id" ref="planetio.model_eudr_declaration"/>-->
+<!--    <field name="binding_view_types">list,form</field>-->
+<!--    <field name="state">code</field>-->
+<!--    <field name="code">action = records.action_create_deforestation_geojson()</field>-->
+<!--  </record>-->
 
   <!-- Traces GeoJSON (Action menu) -->
   <record id="action_create_traces_geojson_server" model="ir.actions.server">
-    <field name="name">Traces GeoJSON</field>
+    <field name="name">Download GeoJSON</field>
     <field name="model_id" ref="planetio.model_eudr_declaration"/>
     <field name="binding_model_id" ref="planetio.model_eudr_declaration"/>
     <field name="binding_view_types">list,form</field>
@@ -351,7 +351,7 @@
 
   <!-- Download external OK JSON (Action menu) -->
   <record id="action_download_external_ok_json_server" model="ir.actions.server">
-    <field name="name">Download OK JSON</field>
+    <field name="name">Download only compliant GeoJSON</field>
     <field name="model_id" ref="planetio.model_eudr_declaration"/>
     <field name="binding_model_id" ref="planetio.model_eudr_declaration"/>
     <field name="binding_view_types">list,form</field>

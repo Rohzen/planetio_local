@@ -157,7 +157,7 @@ class EUDRDeclaration(models.Model):
     producer_name = fields.Char(string="Producer name")
     lot_name = fields.Char(string="Lot info")
     supplier_id = fields.Many2one('res.partner', string="Producer/Supplier")
-    coffee_species  = fields.Many2one('coffee.species', string="Product")
+    coffee_species  = fields.Many2one('coffee.species', string="Product", required=True)
     area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
 
     # Mirrors from company settings (for XML attrs)

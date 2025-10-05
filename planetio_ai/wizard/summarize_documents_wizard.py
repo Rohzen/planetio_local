@@ -1199,7 +1199,7 @@ class PlanetioSummarizeWizard(models.Model):
             payload_parts.append(cleaned_actions)
         payload_parts = [part for part in payload_parts if part]
         payload_text = "\n\n".join(payload_parts)
-        for rec in self:
+        for rec in self.web_progress_iter(self, msg="Message"):
             attachment_ids = self._get_visible_attachment_ids(rec.attachment_ids)
             if not attachment_ids:
                 continue
