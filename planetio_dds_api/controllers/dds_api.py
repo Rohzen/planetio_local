@@ -258,11 +258,19 @@ class DDSApiController(http.Controller):
         apikey = ICP.get_param('planetio.eudr_apikey') or ''
         wsse_mode = (ICP.get_param('planetio.eudr_wsse_mode') or 'digest').lower()
         wsclient = ICP.get_param('planetio.eudr_webservice_client_id') or 'eudr-test'
+        root_tag = ICP.get_param('planetio.eudr_retrieval_root_tag')
 
         if not username or not apikey:
             raise UserError(_('EUDR credentials are missing. Configure planetio.eudr_user and planetio.eudr_apikey.'))
 
-        return EUDRRetrievalClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
+        return EUDRRetrievalClient(
+            endpoint,
+            username,
+            apikey,
+            wsse_mode,
+            webservice_client_id=wsclient,
+            retrieval_root_tag=root_tag,
+        )
 
     def _format_retrieval_error(self, client, result):
         http_status = result.get('httpStatus') or 500
