@@ -1,10 +1,104 @@
 # -*- coding: utf-8 -*-
 import base64, json
+import requests
+from requests.auth import HTTPBasicAuth
 from odoo import _, fields
 from odoo.exceptions import UserError
 from .eudr_client import EUDRClient, build_geojson_b64
 from .eudr_client_retrieve import EUDRRetrievalClient
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+
+
+class _SafeFormatDict(dict):
+    """Helper dict that returns empty string for missing keys when formatting strings."""
+
+    def __missing__(self, key):  # pragma: no cover - trivial fallback
+        return ""
+
+
+def _download_and_attach_dds_pdf(record, reference_number: str, username: str, apikey: str):
+    """Download the DDS PDF via the public EUDR API and attach it to the record.
+
+    The API documentation is available at https://www.eudr-api.eu/docs. The default
+    endpoint expects a GET request returning ``application/pdf``. The request uses
+    HTTP basic authentication with the TRACES username/API key and supports a
+    configurable header for API key based auth.
+    """
+
+    if not reference_number:
+        return
+
+    ICP = record.env['ir.config_parameter'].sudo()
+    template = ICP.get_param('planetio.eudr_pdf_url_template') or \
+        'https://www.eudr-api.eu/api/dds/{reference_number}/pdf'
+    header_name = (ICP.get_param('planetio.eudr_pdf_key_header') or 'X-API-Key').strip()
+
+    context = _SafeFormatDict(
+        reference_number=reference_number,
+        uuid=getattr(record, 'dds_identifier', ''),
+        dds_identifier=getattr(record, 'dds_identifier', ''),
+        eudr_id=getattr(record, 'eudr_id', reference_number),
+        record_id=record.id,
+    )
+    try:
+        pdf_url = template.format_map(context)
+    except Exception as exc:  # pragma: no cover - configuration error
+        raise UserError(_('Impossibile comporre la URL per il PDF DDS: %s') % exc)
+
+    if not pdf_url:
+        raise UserError(_('La configurazione URL per il PDF DDS restituisce un valore vuoto.'))
+
+    headers = {'Accept': 'application/pdf'}
+    if header_name and apikey:
+        headers[header_name] = apikey
+
+    auth = HTTPBasicAuth(username, apikey) if username and apikey else None
+
+    try:
+        response = requests.get(pdf_url, headers=headers, auth=auth, timeout=120)
+    except Exception as exc:  # pragma: no cover - network failure
+        raise UserError(_('Errore durante il download del PDF DDS: %s') % exc)
+
+    if response.status_code != 200 or not response.content:
+        # Try to extract meaningful message from JSON responses
+        detail = ''
+        try:
+            payload = response.json()
+            detail = payload.get('message') or payload.get('detail') or ''
+        except Exception:  # pragma: no cover - optional JSON decoding
+            detail = response.text[:200]
+        raise UserError(_('Download PDF DDS fallito (%s): %s') % (response.status_code, detail or '-'))
+
+    data_b64 = base64.b64encode(response.content)
+    attachment_vals = {
+        'name': f'DDS_{reference_number}.pdf',
+        'datas_fname': f'DDS_{reference_number}.pdf',
+        'res_model': record._name,
+        'res_id': record.id,
+        'type': 'binary',
+        'mimetype': 'application/pdf',
+        'datas': data_b64,
+        'eudr_document_visible': True,
+    }
+
+    Attachment = record.env['ir.attachment'].sudo()
+    existing = Attachment.search([
+        ('res_model', '=', record._name),
+        ('res_id', '=', record.id),
+        ('datas_fname', '=', attachment_vals['datas_fname']),
+    ], limit=1)
+
+    if existing:
+        write_vals = {k: v for k, v in attachment_vals.items() if k not in {'res_model', 'res_id'}}
+        existing.write(write_vals)
+        attachment = existing
+    else:
+        attachment = Attachment.create(attachment_vals)
+
+    record.message_post(
+        body=_('PDF DDS scaricato e allegato come <b>%s</b>.') % attachment.name,
+        attachment_ids=attachment.ids,
+    )
 
 
 def _place_description(line, record, idx):
@@ -438,4 +532,8 @@ def action_retrieve_dds_numbers(record):
             (', Verification=<b>%s</b>' % verno) if verno else '',
         )
     ))
+
+    if refno:
+        _download_and_attach_dds_pdf(record, refno, username, apikey)
+
     return True

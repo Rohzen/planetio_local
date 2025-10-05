@@ -67,6 +67,20 @@ class ResConfigSettings(models.TransientModel):
     eudr_apikey = fields.Char(string="api-key", config_parameter='planetio.eudr_apikey', readonly=False)
     eudr_wsse_mode = fields.Char(string="WSSE mode", config_parameter='planetio.eudr_wsse_mode', readonly=False, default="digest")
     eudr_webservice_client_id = fields.Char(string="Client ID", config_parameter='planetio.eudr_webservice_client_id', readonly=False, default="eudr-test")
+    eudr_pdf_url_template = fields.Char(
+        string="DDS PDF URL Template",
+        config_parameter='planetio.eudr_pdf_url_template',
+        readonly=False,
+        default='https://www.eudr-api.eu/api/dds/{reference_number}/pdf',
+        help="URL template used to download the DDS PDF. Use placeholders such as {reference_number} or {dds_identifier}.",
+    )
+    eudr_pdf_key_header = fields.Char(
+        string="DDS PDF API-Key Header",
+        config_parameter='planetio.eudr_pdf_key_header',
+        readonly=False,
+        default='X-API-Key',
+        help="HTTP header name that carries the API key when downloading the DDS PDF.",
+    )
 
     def action_generate_gfw_api_key(self):
         self.ensure_one()

@@ -215,6 +215,27 @@
               <div class="text-muted"><field name="eudr_wsse_mode"/></div>
             </div>
           </div>
+
+          <div class="col-12 col-lg-12 o_setting_box">
+            <div class="o_setting_left_pane"/>
+            <div class="o_setting_right_pane">
+              <span class="o_form_label">DDS PDF URL Template</span>
+              <div class="text-muted"><field name="eudr_pdf_url_template"/></div>
+              <p class="text-muted">
+                Customize the endpoint used to download the DDS PDF. Use placeholders like
+                <code>{reference_number}</code> or <code>{dds_identifier}</code>.
+              </p>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-12 o_setting_box">
+            <div class="o_setting_left_pane"/>
+            <div class="o_setting_right_pane">
+              <span class="o_form_label">DDS PDF API-Key Header</span>
+              <div class="text-muted"><field name="eudr_pdf_key_header"/></div>
+              <p class="text-muted">Override the HTTP header used to transmit the API key (default: X-API-Key).</p>
+            </div>
+          </div>
         </div>
       </div>
 
