@@ -1,0 +1,19 @@
+<odoo>
+  <record id="view_res_partner_form_survey_button" model="ir.ui.view">
+    <field name="name">res.partner.form.survey.button</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//sheet//div[@class='oe_button_box']" position="inside">
+        <button type="object"
+                class="oe_stat_button"
+                name="action_open_partner_surveys"
+                icon="fa-check-square-o">
+          <div class="o_stat_info">
+            <span class="o_stat_text">Survey</span>
+          </div>
+        </button>
+      </xpath>
+    </field>
+  </record>
+</odoo>

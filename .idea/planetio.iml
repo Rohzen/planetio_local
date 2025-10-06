@@ -5,5 +5,7 @@
     <orderEntry type="jdk" jdkName="Python 3.8" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="planetio_todo" />
+    <orderEntry type="module" module-name="analytic" />
+    <orderEntry type="module" module-name="14" />
   </component>
 </module>

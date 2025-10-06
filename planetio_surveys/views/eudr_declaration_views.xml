@@ -12,19 +12,31 @@
         <field name="inherit_id" ref="planetio.view_eudr_declaration_form"/>
             <field name="arch" type="xml">
                <div class="oe_button_box" position="inside">
-                        <button
-                            class="oe_stat_button"
-                            name="action_view_survey_user_inputs"
-                            type="object"
-                            icon="fa-question-circle"
-                            attrs="{'invisible': [('id', '=', False)]}">
-                            <field
-                                name="survey_user_input_count"
-                                widget="statinfo"
-                                string="Questionnaires"
-                            />
-                        </button>
+                    <button
+                        class="oe_stat_button"
+                        name="action_view_survey_user_inputs"
+                        type="object"
+                        icon="fa-question-circle"
+                        attrs="{'invisible': [('id', '=', False)]}">
+                        <field
+                            name="survey_user_input_count"
+                            widget="statinfo"
+                            string="Questionnaires"
+                        />
+                    </button>
+                </div>
+                <xpath expr="//field[@name='supplier_id']" position="after">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <field name="questionnaire_input_id" invisible="1"/>
+                    <field name="questionnaire_valid" invisible="1"/>
+                    <field name="questionnaire_alert_message" string="Stato questionario" readonly="1" attrs="{'invisible':[('questionnaire_alert_message','=',False)]}"/>
+                    <field name="questionnaire_valid_until" string="Valid until" readonly="1" attrs="{'invisible':[('questionnaire_valid_until','=',False)]}"/>
                     </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <button name="action_open_or_create_questionnaire" type="object" string="Compila questionario" attrs="{'invisible':['|', ('supplier_id','=',False), ('questionnaire_valid','=',True)]}"/>
+                    <button name="action_open_or_create_questionnaire" type="object" string="Apri questionario" attrs="{'invisible':['|', ('supplier_id','=',False), ('questionnaire_valid','=',False)]}"/>
+                    </div>
+                </xpath>
             </field>
     </record>
  </odoo>
