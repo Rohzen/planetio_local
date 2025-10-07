@@ -127,6 +127,18 @@ class ExcelImportWizard(models.TransientModel):
     preview_json = fields.Text(readonly=True)
     result_json = fields.Text(readonly=True)
     analysis_json = fields.Text(readonly=True)
+    import_mode = fields.Selection(
+        [
+            ("new", "Create new commodity"),
+            ("attach", "Attach to existing commodity"),
+        ],
+        default="new",
+    )
+    target_commodity_id = fields.Many2one(
+        "eudr.commodity.line",
+        domain="[('declaration_id','=',declaration_id)]",
+    )
+    single_producer = fields.Boolean(string="Single producer", default=False, help="When enabled, imported plots are grouped under a single producer.")
 
     def _get_target_declaration(self):
         self.ensure_one()
@@ -164,6 +176,116 @@ class ExcelImportWizard(models.TransientModel):
         decl = Decl.create({})
         self.declaration_id = decl
         return decl
+
+    def _ensure_multi_commodity(self, declaration):
+        self.ensure_one()
+        Commodity = self.env["eudr.commodity.line"]
+
+        if self.import_mode == "attach":
+            commodity = self.target_commodity_id
+            if not commodity:
+                raise UserError(_("Select a commodity to attach the imported plots."))
+            if commodity.declaration_id != declaration:
+                raise UserError(_("The selected commodity does not belong to this declaration."))
+            return commodity
+
+        description = declaration.product_description or declaration.product_id.display_name or declaration.name or _("Commodity")
+        commodity_vals = {
+            "declaration_id": declaration.id,
+            "hs_heading": declaration.hs_code,
+            "description_of_goods": description,
+            "net_weight_kg": declaration.net_mass_kg,
+        }
+        commodity = Commodity.create(commodity_vals)
+        try:
+            self.write({
+                "import_mode": "attach",
+                "target_commodity_id": commodity.id,
+            })
+        except Exception:
+            self.import_mode = "attach"
+            self.target_commodity_id = commodity
+        return commodity
+
+    def _create_multi_records_from_rows(self, declaration, rows):
+        self.ensure_one()
+        commodity = self._ensure_multi_commodity(declaration)
+        Producer = self.env["eudr.producer"]
+        Plot = self.env["eudr.plot"]
+
+        producers = {}
+        created_plots = 0
+
+        def _safe_float(value):
+            try:
+                if value in (None, ""):
+                    return None
+                return float(value)
+            except (TypeError, ValueError):
+                return None
+
+        for idx, row in enumerate(rows or [], start=1):
+            geometry = row.get("geometry_dict") or row.get("geometry")
+            if isinstance(geometry, str):
+                try:
+                    geometry = json.loads(geometry)
+                except Exception:
+                    geometry = None
+            if not isinstance(geometry, dict) or not geometry.get("type"):
+                continue
+
+            area_val = _safe_float(row.get("area_ha")) or _safe_float(row.get("area"))
+            country = row.get("country") or row.get("country_of_production") or row.get("producer_country") or ""
+            if isinstance(country, str):
+                country = country.strip().upper()
+            else:
+                country = ""
+
+            plot_id = row.get("plot_id") or row.get("farmer_id_code") or row.get("name") or f"plot-{idx}"
+            producer_name = (
+                row.get("producer_name")
+                or row.get("farmer_name")
+                or row.get("supplier_name")
+                or row.get("farm_name")
+                or plot_id
+                or _("Producer %s") % idx
+            )
+            producer_country = row.get("producer_country") or country or (declaration.country or "")
+            if isinstance(producer_country, str):
+                producer_country = producer_country.strip().upper()
+            else:
+                producer_country = ""
+
+            key = "__single__" if self.single_producer else (producer_name or "").strip().lower() or f"producer-{idx}"
+            producer = producers.get(key)
+            if not producer:
+                producer_vals = {
+                    "commodity_id": commodity.id,
+                    "name": producer_name or (_("Producer %s") % idx),
+                    "country": producer_country or country or (declaration.country or ""),
+                }
+                producer = Producer.create(producer_vals)
+                producers[key] = producer
+
+            plot_vals = {
+                "producer_id": producer.id,
+                "plot_id": plot_id,
+                "country_of_production": country or producer.country,
+                "geometry": json.dumps(geometry, ensure_ascii=False),
+            }
+            if area_val is not None:
+                plot_vals["area_ha"] = area_val
+            Plot.create(plot_vals)
+            created_plots += 1
+
+        if not created_plots:
+            raise UserError(_("No valid geometries were found in the imported data."))
+
+        return {
+            "declaration_id": declaration.id,
+            "created": created_plots,
+            "commodity_id": commodity.id,
+        }
 
     def _is_excel_file(self):
         if self.attachment_id or self.sheet_name:
@@ -280,37 +402,58 @@ class ExcelImportWizard(models.TransientModel):
             decl = self._get_target_declaration()
             decl_id = decl.id
 
-            Line = self.env["eudr.declaration.line"]
-            created = 0
-            for geom, props in iter_geojson_features(obj):
-                if not isinstance(geom, dict) or not geom.get("type"):
-                    continue
-                geom_json = json.dumps(geom, ensure_ascii=False)
-                vals = {
-                    "declaration_id": decl_id,
-                    "geometry": geom_json,
-                }
-                gtype = str(geom.get("type", "")).lower()
-                if gtype in ("point", "polygon", "multipolygon"):
-                    vals["geo_type"] = "point" if gtype == "point" else "polygon"
+            if decl.dds_mode == "single_multi":
+                rows = []
+                for geom, props in iter_geojson_features(obj):
+                    if not isinstance(geom, dict) or not geom.get("type"):
+                        continue
+                    geom_json = json.dumps(geom, ensure_ascii=False)
+                    mapped, extras = map_geojson_properties(props or {})
+                    row = dict(mapped)
+                    row["geometry"] = geom_json
+                    row["geometry_dict"] = geom
+                    if not row.get("area_ha"):
+                        computed_area = estimate_geojson_area_ha(self.env, geom_json)
+                        if computed_area:
+                            row["area_ha"] = computed_area
+                    if extras:
+                        row["external_properties_json"] = extras
+                    rows.append(row)
 
-                mapped, extras = map_geojson_properties(props or {})
-                vals.update(mapped)
-                if geom_json and not vals.get("area_ha"):
-                    computed_area = estimate_geojson_area_ha(self.env, geom_json)
-                    if computed_area:
-                        vals["area_ha"] = computed_area
-                if extras:
-                    try:
-                        vals["external_properties_json"] = json.dumps(extras, ensure_ascii=False)
-                    except Exception:
-                        pass
-                if not vals.get("name"):
-                    fallback = mapped.get("farm_name") or mapped.get("farmer_name") or mapped.get("farmer_id_code")
-                    if fallback:
-                        vals["name"] = fallback
-                Line.create(vals)
-                created += 1
+                result = self._create_multi_records_from_rows(decl, rows)
+                created = result.get("created", 0)
+            else:
+                Line = self.env["eudr.declaration.line"]
+                created = 0
+                for geom, props in iter_geojson_features(obj):
+                    if not isinstance(geom, dict) or not geom.get("type"):
+                        continue
+                    geom_json = json.dumps(geom, ensure_ascii=False)
+                    vals = {
+                        "declaration_id": decl_id,
+                        "geometry": geom_json,
+                    }
+                    gtype = str(geom.get("type", "")).lower()
+                    if gtype in ("point", "polygon", "multipolygon"):
+                        vals["geo_type"] = "point" if gtype == "point" else "polygon"
+
+                    mapped, extras = map_geojson_properties(props or {})
+                    vals.update(mapped)
+                    if geom_json and not vals.get("area_ha"):
+                        computed_area = estimate_geojson_area_ha(self.env, geom_json)
+                        if computed_area:
+                            vals["area_ha"] = computed_area
+                    if extras:
+                        try:
+                            vals["external_properties_json"] = json.dumps(extras, ensure_ascii=False)
+                        except Exception:
+                            pass
+                    if not vals.get("name"):
+                        fallback = mapped.get("farm_name") or mapped.get("farmer_name") or mapped.get("farmer_id_code")
+                        if fallback:
+                            vals["name"] = fallback
+                    Line.create(vals)
+                    created += 1
 
             # store attachment on declaration
             attach = self.env["ir.attachment"].create({
