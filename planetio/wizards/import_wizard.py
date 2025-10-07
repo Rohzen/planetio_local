@@ -197,7 +197,7 @@ class ExcelImportWizard(models.TransientModel):
             try:
                 data = base64.b64decode(self.file_data or b"")
                 obj = json.loads(data.decode("utf-8"))
-                is_geojson = any(True for _ in iter_geojson_features(obj))
+                is_geojson = any(iter_geojson_features(obj))
             except Exception:
                 obj = None
 
