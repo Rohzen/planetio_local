@@ -287,6 +287,26 @@ class ExcelImportWizard(models.TransientModel):
             "commodity_id": commodity.id,
         }
 
+    def _iter_geojson_feature_payloads(self, obj):
+        """Yield prepared data for each GeoJSON feature without buffering all rows."""
+
+        env = self.env
+        for geom, props in iter_geojson_features(obj):
+            if not isinstance(geom, dict) or not geom.get("type"):
+                continue
+
+            mapped, extras = map_geojson_properties(props or {})
+
+            if not mapped.get("area_ha"):
+                try:
+                    computed_area = estimate_geojson_area_ha(env, geom)
+                except Exception:
+                    computed_area = None
+                if computed_area:
+                    mapped["area_ha"] = computed_area
+
+            yield geom, mapped, extras
+
     def _is_excel_file(self):
         if self.attachment_id or self.sheet_name:
             return True
@@ -318,7 +338,7 @@ class ExcelImportWizard(models.TransientModel):
         if not is_geojson:
             try:
                 data = base64.b64decode(self.file_data or b"")
-                obj = json.loads(data.decode("utf-8"))
+                obj = json.loads(data)
                 is_geojson = any(iter_geojson_features(obj))
             except Exception:
                 obj = None
@@ -327,7 +347,7 @@ class ExcelImportWizard(models.TransientModel):
             try:
                 if obj is None:
                     data = base64.b64decode(self.file_data or b"")
-                    obj = json.loads(data.decode("utf-8"))
+                    obj = json.loads(data)
             except Exception as e:
                 raise UserError(_("Invalid GeoJSON file: %s") % e)
             preview = [g for g, _p in itertools.islice(iter_geojson_features(obj), 20)]
@@ -385,7 +405,7 @@ class ExcelImportWizard(models.TransientModel):
         if not is_geojson:
             try:
                 data = base64.b64decode(self.file_data or b"")
-                obj = json.loads(data.decode("utf-8"))
+                obj = json.loads(data)
                 is_geojson = any(True for _ in iter_geojson_features(obj))
             except Exception:
                 obj = None
@@ -395,7 +415,7 @@ class ExcelImportWizard(models.TransientModel):
             try:
                 if obj is None:
                     data = base64.b64decode(self.file_data or b"")
-                    obj = json.loads(data.decode("utf-8"))
+                    obj = json.loads(data)
             except Exception:
                 raise UserError(_("Invalid GeoJSON file"))
 
@@ -403,31 +423,17 @@ class ExcelImportWizard(models.TransientModel):
             decl_id = decl.id
 
             if decl.dds_mode == "single_multi":
-                rows = []
-                for geom, props in iter_geojson_features(obj):
-                    if not isinstance(geom, dict) or not geom.get("type"):
-                        continue
-                    geom_json = json.dumps(geom, ensure_ascii=False)
-                    mapped, extras = map_geojson_properties(props or {})
-                    row = dict(mapped)
-                    row["geometry"] = geom_json
-                    row["geometry_dict"] = geom
-                    if not row.get("area_ha"):
-                        computed_area = estimate_geojson_area_ha(self.env, geom_json)
-                        if computed_area:
-                            row["area_ha"] = computed_area
-                    if extras:
-                        row["external_properties_json"] = extras
-                    rows.append(row)
-
+                rows = (
+                    dict(mapped, geometry_dict=geom)
+                    for geom, mapped, _extras in self._iter_geojson_feature_payloads(obj)
+                )
                 result = self._create_multi_records_from_rows(decl, rows)
                 created = result.get("created", 0)
+                obj = None
             else:
                 Line = self.env["eudr.declaration.line"]
                 created = 0
-                for geom, props in iter_geojson_features(obj):
-                    if not isinstance(geom, dict) or not geom.get("type"):
-                        continue
+                for geom, mapped, extras in self._iter_geojson_feature_payloads(obj):
                     geom_json = json.dumps(geom, ensure_ascii=False)
                     vals = {
                         "declaration_id": decl_id,
@@ -437,23 +443,23 @@ class ExcelImportWizard(models.TransientModel):
                     if gtype in ("point", "polygon", "multipolygon"):
                         vals["geo_type"] = "point" if gtype == "point" else "polygon"
 
-                    mapped, extras = map_geojson_properties(props or {})
                     vals.update(mapped)
-                    if geom_json and not vals.get("area_ha"):
-                        computed_area = estimate_geojson_area_ha(self.env, geom_json)
-                        if computed_area:
-                            vals["area_ha"] = computed_area
                     if extras:
                         try:
                             vals["external_properties_json"] = json.dumps(extras, ensure_ascii=False)
                         except Exception:
                             pass
                     if not vals.get("name"):
-                        fallback = mapped.get("farm_name") or mapped.get("farmer_name") or mapped.get("farmer_id_code")
+                        fallback = (
+                            mapped.get("farm_name")
+                            or mapped.get("farmer_name")
+                            or mapped.get("farmer_id_code")
+                        )
                         if fallback:
                             vals["name"] = fallback
                     Line.create(vals)
                     created += 1
+                obj = None
 
             # store attachment on declaration
             attach = self.env["ir.attachment"].create({
