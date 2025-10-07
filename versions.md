@@ -14,3 +14,7 @@
 [Feature] Pulizia interfaccia per caricamento documenti (ora c'è un singolo pulsante per json, excel, docs e pdf [Feature] con riconoscimento automatico);
 [Feature] Opzione per download json solo senza allerte deforestazione;
 [Feature] Integrazione progressbar widget per attesa analisi deforestazione che può essere molto lunga.
+# 06/10/2025 14.0.1.0.7 Alessandro Vasi
+[Feature] In planetio_surveys è stato legato il questionario al res.partner e creato i controlli sulla dichiarazione EUDR che veirficano a inserimento "Producer/Supplier" che esista un questionario valido e compilato e che quest'ultimo non sia scaduto (questionario più vecchio di un anno).
+# 06/10/2025 14.0.1.0.8 Alessandro Vasi
+[Feature] Eliminato metodo inutilizzato in eudr_declaration.py
