@@ -9,6 +9,16 @@ import math
 import urllib.parse
 from odoo.modules.module import get_module_resource
 
+
+EUDR_HS_SELECTION = [
+    ('0901',    '0901 – Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes containing coffee'),
+    ('090111',  '0901 11 – non-decaffeinated'),
+    ('090112',  '0901 12 – decaffeinated'),
+    ('090121',  '0901 21 – non-decaffeinated'),
+    ('090122',  '0901 22 – decaffeinated'),
+    ('090190',  '0901 90 – others'),
+]
+
 try:
     from shapely.geometry import Point, mapping, shape
     from shapely.ops import transform
@@ -125,6 +135,17 @@ class EUDRDeclaration(models.Model):
         help="Allegati collegati ma non mostrati nella sezione Documenti."
     )
 
+    dds_mode = fields.Selection(
+        [
+            ('single_one', 'Single commodity – current'),
+            ('single_multi', 'Multiple commodities'),
+            ('trader_refs', 'Trader references upstream DDS'),
+        ],
+        string="Submission mode",
+        default='single_one',
+        required=True,
+        help="Choose how this declaration will be submitted to TRACES DDS.",
+    )
     eudr_type_override = fields.Selection([
         ('TRADER', 'Trader'),
         ('OPERATOR', 'Operator')
@@ -141,15 +162,7 @@ class EUDRDeclaration(models.Model):
         ], string="Activity", default='import')
     operator_name = fields.Char(string="Operator")
     extra_info = fields.Text(string="Additional info")
-    hs_code = fields.Selection(
-        [
-            ('0901',    '0901 – Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes containing coffee'),
-            ('090111',  '0901 11 – non-decaffeinated'),
-            ('090112',  '0901 12 – decaffeinated'),
-            ('090121',  '0901 21 – non-decaffeinated'),
-            ('090122',  '0901 22 – decaffeinated'),
-            ('090190',  '0901 90 – others'),
-        ], string="HS Code", default="090111", required=True)
+    hs_code = fields.Selection(EUDR_HS_SELECTION, string="HS Code", default="090111", required=True)
     product_id  = fields.Many2one('product.product', string="Product template")
     product_description = fields.Char(string="Description of raw materials or products", required=True)
     net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3), required=True)
@@ -159,6 +172,8 @@ class EUDRDeclaration(models.Model):
     supplier_id = fields.Many2one('res.partner', string="Producer/Supplier")
     coffee_species  = fields.Many2one('coffee.species', string="Product", required=True)
     area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
+    commodity_ids = fields.One2many("eudr.commodity.line", "declaration_id", string="Commodities")
+    associated_statement_ids = fields.One2many("eudr.associated.statement", "declaration_id", string="Associated statements")
 
     # Mirrors from company settings (for XML attrs)
     eudr_company_type_rel = fields.Selection(related="company_id.eudr_company_type", store=False, readonly=True)
@@ -381,6 +396,8 @@ class EUDRDeclaration(models.Model):
 
     @api.depends(
         "line_ids", "line_ids.geometry", "line_ids.geo_type",
+        "commodity_ids.producer_ids.plot_ids.geometry",
+        "commodity_ids.producer_ids.plot_ids.area_ha",
     )
     def _compute_area_ha(self):
         ICP = self.env['ir.config_parameter'].sudo()
@@ -390,10 +407,18 @@ class EUDRDeclaration(models.Model):
 
         for rec in self:
             total_area_m2 = 0.0
-            for line in rec.line_ids:
-                gobj = self._safe_json_load(getattr(line, "geometry", None))
+            def _float(value):
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    return None
+
+            def _accumulate_from_geojson(raw_geojson, area_hint=None):
+                gobj = self._safe_json_load(raw_geojson)
                 if not gobj:
-                    continue
+                    if area_hint and area_hint > 0:
+                        return area_hint * 10000.0
+                    return 0.0
 
                 polygons, point_count = [], 0
                 for geom in self._iter_geojson_geometries(gobj):
@@ -411,9 +436,24 @@ class EUDRDeclaration(models.Model):
                                 point_count += 1
 
                 if polygons:
-                    total_area_m2 += rec._polygon_area_m2(polygons)
-                elif point_count:
-                    total_area_m2 += point_count * fallback_m2_per_point
+                    return rec._polygon_area_m2(polygons)
+                if point_count:
+                    return point_count * fallback_m2_per_point
+                if area_hint and area_hint > 0:
+                    return area_hint * 10000.0
+                return 0.0
+
+            for line in rec.line_ids:
+                total_area_m2 += _accumulate_from_geojson(
+                    getattr(line, "geometry", None),
+                    _float(getattr(line, "area_ha", None)),
+                )
+
+            for plot in rec.mapped("commodity_ids.producer_ids.plot_ids"):
+                total_area_m2 += _accumulate_from_geojson(
+                    getattr(plot, "geometry", None),
+                    _float(getattr(plot, "area_ha", None)),
+                )
 
             rec.area_ha = (total_area_m2 / 10000.0) if total_area_m2 > 0.0 else 0.0
 
@@ -878,4 +918,63 @@ class EUDRDeclarationLine(models.Model):
             'url': url,
             'target': 'new',
         }
+
+
+class EUDRCommodityLine(models.Model):
+    _name = "eudr.commodity.line"
+    _description = "EUDR Commodity"
+
+    declaration_id = fields.Many2one("eudr.declaration", ondelete="cascade", required=True)
+    hs_heading = fields.Selection(EUDR_HS_SELECTION, string="HS heading", default="090111")
+    description_of_goods = fields.Char(string="Description of goods")
+    net_weight_kg = fields.Float(string="Net weight (kg)", digits=(16, 3))
+    producer_ids = fields.One2many("eudr.producer", "commodity_id", string="Producers")
+
+
+class EUDRProducer(models.Model):
+    _name = "eudr.producer"
+    _description = "EUDR Producer"
+
+    commodity_id = fields.Many2one("eudr.commodity.line", ondelete="cascade", required=True)
+    name = fields.Char(string="Name", required=True)
+    country = fields.Char(string="Country (ISO2)")
+    plot_ids = fields.One2many("eudr.plot", "producer_id", string="Plots")
+
+
+class EUDRPlot(models.Model):
+    _name = "eudr.plot"
+    _description = "EUDR Plot"
+
+    producer_id = fields.Many2one("eudr.producer", ondelete="cascade", required=True)
+    plot_id = fields.Char(string="Plot ID")
+    country_of_production = fields.Char(string="Country of production")
+    geometry = fields.Text(string="Geometry (GeoJSON)")
+    area_ha = fields.Float(string="Area (ha)")
+
+    def action_open_geojson(self):
+        self.ensure_one()
+        if not self.geometry:
+            raise UserError(_('GeoJSON geometry missing on plot.'))
+        try:
+            geo_data = json.loads(self.geometry)
+        except json.JSONDecodeError:
+            raise UserError(_('Invalid GeoJSON payload on plot.'))
+        encoded_geojson = urllib.parse.quote(json.dumps(geo_data))
+        url = f"https://geojson.io/#data=data:application/json,{encoded_geojson}"
+        return {
+            'type': 'ir.actions.act_url',
+            'name': _('Plot geometry'),
+            'target': 'new',
+            'url': url,
+        }
+
+
+class EUDRAssociatedStatement(models.Model):
+    _name = "eudr.associated.statement"
+    _description = "EUDR Associated Statement"
+
+    declaration_id = fields.Many2one("eudr.declaration", ondelete="cascade", required=True)
+    upstream_reference_number = fields.Char(string="Upstream reference number")
+    upstream_dds_identifier = fields.Char(string="Upstream DDS identifier")
+    note = fields.Char(string="Note")
 

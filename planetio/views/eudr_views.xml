@@ -39,7 +39,7 @@
     <field name="arch" type="xml">
       <form string="EUDR Declaration">
         <header>
-          <button name="action_open_import_wizard" type="object" string="Carica documenti" help="Importa Excel o Json con informazioni di geolocalizzazione oppure pdf o doc con informazioni aggiuntive." class="btn-secondary" icon="fa-upload"/>
+          <button name="action_open_import_wizard" type="object" string="Carica documenti" help="Importa Excel o Json con informazioni di geolocalizzazione oppure pdf o doc con informazioni aggiuntive." class="btn-secondary" icon="fa-upload" attrs="{'invisible': [('dds_mode','=','trader_refs')]}"/>
           <button name="action_analyze_deforestation" type="object" class="oe_highlight btn-success" string="Deforestation analysis" icon="fa-tree"/>
           <button name="action_create_deforestation_geojson" type="object" class="btn-secondary" string="Deforestation GeoJSON" icon="fa-download" invisible="1"/>
           <button name="action_create_geojson" type="object" class="btn-secondary" string="Traces GeoJSON" icon="fa-save" invisible="1"/>
@@ -62,6 +62,7 @@
           <group>
             <field name="company_id"/>
             <field name="datestamp" string="Creation date"/>
+            <field name="dds_mode"/>
 <!--            &lt;!&ndash; eudr_type_override solo per Mixed &ndash;&gt;-->
 <!--            <field name="eudr_type_override"-->
 <!--                  attrs="{'invisible': [('eudr_company_type_rel','!=','mixed')]}"/>-->
@@ -146,7 +147,7 @@
           </group>
 
           <notebook>
-            <page string="Details">
+            <page string="Details" attrs="{'invisible': [('dds_mode','!=','single_one')]}">
               <field name="line_ids">
                 <tree string="Dettagli" decoration-success="external_ok" decoration-danger="not external_ok" editable="top">
                   <field name="external_ok" widget="boolean_toggle" readonly="0" string=""/>
@@ -237,10 +238,97 @@
                           <group>
                             <field name="payload_json" widget="text" readonly="1"/>
                           </group>
-                        </form>
-                      </field>
-                    </page>
-                  </notebook>
+                </form>
+              </field>
+            </page>
+            <page string="Commodities" attrs="{'invisible': [('dds_mode','=','trader_refs')]}" name="multi_commodities_page">
+              <group attrs="{'invisible': [('dds_mode','=','single_multi')]}" class="mb-2">
+                <label string="Switch to Multiple commodities to edit this tab."/>
+              </group>
+              <field name="commodity_ids" attrs="{'readonly': [('dds_mode','!=','single_multi')]}">
+                <tree editable="bottom">
+                  <field name="hs_heading"/>
+                  <field name="description_of_goods"/>
+                  <field name="net_weight_kg"/>
+                  <field name="producer_ids" widget="one2many_list" optional="hide"/>
+                </tree>
+                <form string="Commodity">
+                  <sheet>
+                    <group>
+                      <group>
+                        <field name="hs_heading"/>
+                        <field name="description_of_goods"/>
+                      </group>
+                      <group>
+                        <field name="net_weight_kg"/>
+                      </group>
+                    </group>
+                    <notebook>
+                      <page string="Producers">
+                        <field name="producer_ids">
+                          <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="country"/>
+                          </tree>
+                          <form string="Producer">
+                            <sheet>
+                              <group>
+                                <field name="name"/>
+                                <field name="country"/>
+                              </group>
+                              <group string="Plots">
+                                <field name="plot_ids">
+                                  <tree editable="bottom">
+                                    <field name="plot_id"/>
+                                    <field name="country_of_production"/>
+                                    <field name="area_ha"/>
+                                  </tree>
+                                  <form string="Plot">
+                                    <sheet>
+                                      <group>
+                                        <field name="plot_id"/>
+                                        <field name="country_of_production"/>
+                                        <field name="area_ha"/>
+                                      </group>
+                                      <group>
+                                        <field name="geometry" widget="text"/>
+                                      </group>
+                                      <footer>
+                                        <button name="action_open_geojson" type="object" string="Preview on geojson.io" class="btn-secondary"/>
+                                        <button string="Close" class="btn-secondary" special="cancel"/>
+                                      </footer>
+                                    </sheet>
+                                  </form>
+                                </field>
+                              </group>
+                            </sheet>
+                          </form>
+                        </field>
+                      </page>
+                    </notebook>
+                  </sheet>
+                </form>
+              </field>
+            </page>
+            <page string="Associated Statements" attrs="{'invisible': [('dds_mode','!=','trader_refs')]}">
+              <field name="associated_statement_ids">
+                <tree editable="bottom">
+                  <field name="upstream_reference_number"/>
+                  <field name="upstream_dds_identifier"/>
+                  <field name="note"/>
+                </tree>
+                <form string="Associated Statement">
+                  <sheet>
+                    <group>
+                      <field name="upstream_reference_number"/>
+                      <field name="upstream_dds_identifier"/>
+                      <field name="note"/>
+                    </group>
+                  </sheet>
+                </form>
+              </field>
+            </page>
+          </notebook>
                 </form>
               </field>
           </page>

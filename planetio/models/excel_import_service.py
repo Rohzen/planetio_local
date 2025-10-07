@@ -107,6 +107,9 @@ class ExcelImportService(models.AbstractModel):
 
         base_name = (getattr(getattr(job, "attachment_id", None), "name", None) or "EUDR Import").rsplit(".", 1)[0]
 
+        if decl.dds_mode == "single_multi" and hasattr(job, "_create_multi_records_from_rows"):
+            return job._create_multi_records_from_rows(decl, rows)
+
         count = 0
         for idx, r in enumerate(rows, start=1):
             if not any(v for v in r.values() if v not in (None, "", [], {})):
