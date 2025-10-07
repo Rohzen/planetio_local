@@ -1,6 +1,7 @@
 from odoo import models, fields, _
 from odoo.exceptions import UserError
 import base64, json, mimetypes
+import itertools
 
 try:  # pragma: no cover - fallback for standalone test loading
     from ..utils import estimate_geojson_area_ha
@@ -15,22 +16,26 @@ except ImportError:  # pragma: no cover - loaded outside package context
     _geo_spec.loader.exec_module(_geo_mod)
     estimate_geojson_area_ha = _geo_mod.estimate_geojson_area_ha
 
-def extract_geojson_features(obj):
-    """Return list of (geometry_dict, properties_dict) tuples from a GeoJSON object."""
+def iter_geojson_features(obj):
+    """Yield ``(geometry_dict, properties_dict)`` tuples from a GeoJSON object."""
     if not isinstance(obj, dict):
-        return []
+        return
     t = obj.get("type")
     if t == "FeatureCollection":
-        feats = []
         for f in obj.get("features", []) or []:
             if isinstance(f, dict) and isinstance(f.get("geometry"), dict):
-                feats.append((f["geometry"], f.get("properties") or {}))
-        return feats
+                yield f["geometry"], f.get("properties") or {}
+        return
     if t == "Feature" and isinstance(obj.get("geometry"), dict):
-        return [(obj["geometry"], obj.get("properties") or {})]
+        yield obj["geometry"], obj.get("properties") or {}
+        return
     if t in ("Point", "Polygon", "MultiPolygon", "MultiPoint", "LineString", "MultiLineString"):
-        return [(obj, {})]
-    return []
+        yield obj, {}
+
+
+def extract_geojson_features(obj):
+    """Return list of (geometry_dict, properties_dict) tuples from a GeoJSON object."""
+    return list(iter_geojson_features(obj))
 
 
 def map_geojson_properties(props):
@@ -192,7 +197,7 @@ class ExcelImportWizard(models.TransientModel):
             try:
                 data = base64.b64decode(self.file_data or b"")
                 obj = json.loads(data.decode("utf-8"))
-                is_geojson = bool(extract_geojson_features(obj))
+                is_geojson = any(True for _ in iter_geojson_features(obj))
             except Exception:
                 obj = None
 
@@ -203,8 +208,7 @@ class ExcelImportWizard(models.TransientModel):
                     obj = json.loads(data.decode("utf-8"))
             except Exception as e:
                 raise UserError(_("Invalid GeoJSON file: %s") % e)
-            feats = extract_geojson_features(obj)
-            preview = [g for g, _p in feats[:20]]
+            preview = [g for g, _p in itertools.islice(iter_geojson_features(obj), 20)]
             self.preview_json = json.dumps(preview, ensure_ascii=False)
             self.mapping_json = "{}"
             self.step = "validate"
@@ -260,7 +264,7 @@ class ExcelImportWizard(models.TransientModel):
             try:
                 data = base64.b64decode(self.file_data or b"")
                 obj = json.loads(data.decode("utf-8"))
-                is_geojson = bool(extract_geojson_features(obj))
+                is_geojson = any(True for _ in iter_geojson_features(obj))
             except Exception:
                 obj = None
 
@@ -276,10 +280,9 @@ class ExcelImportWizard(models.TransientModel):
             decl = self._get_target_declaration()
             decl_id = decl.id
 
-            feats = extract_geojson_features(obj)
             Line = self.env["eudr.declaration.line"]
             created = 0
-            for geom, props in feats:
+            for geom, props in iter_geojson_features(obj):
                 if not isinstance(geom, dict) or not geom.get("type"):
                     continue
                 geom_json = json.dumps(geom, ensure_ascii=False)
