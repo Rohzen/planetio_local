@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_deforestation_geometry_wizard" model="ir.ui.view">
+        <field name="name">deforestation.geometry.wizard.form</field>
+        <field name="model">deforestation.geometry.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Deforestation Geometry Check">
+                <div style="background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:10px 12px; line-height:1.45; font-size:13px; color:#111827;">
+                  <p style="margin:0 0 4px 0;">Insert a GeoJSON geometry to check for deforestation risk.</p>
+                  <p style="margin:0 0 8px 0; color:#374151;">The analysis will be performed using the selected provider.</p>
+
+                  <pre aria-label="GeoJSON Polygon example"
+                       style="white-space:pre; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow:auto; max-height:220px; margin:0; padding:8px; background:#ffffff; border:1px solid #e5e7eb; border-radius:6px;">
+                {
+                  "type": "Feature",
+                  "properties": {
+                    "name": "Sample Area"
+                  },
+                  "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                      [
+                        [12.4923, 41.8902],
+                        [12.4930, 41.8902],
+                        [12.4930, 41.8908],
+                        [12.4923, 41.8908],
+                        [12.4923, 41.8902]
+                      ]
+                    ]
+                  }
+                }
+                  </pre>
+
+                  <div style="display:flex; align-items:center; gap:8px; margin:8px 0;">
+                    <div style="flex:1; height:1px; background:#e5e7eb;"></div>
+                    <span style="color:#6b7280; font-size:12px; white-space:nowrap;">OR</span>
+                    <div style="flex:1; height:1px; background:#e5e7eb;"></div>
+                  </div>
+
+                  <pre aria-label="GeoJSON Point example"
+                       style="white-space:pre; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow:auto; max-height:140px; margin:0; padding:8px; background:#ffffff; border:1px solid #e5e7eb; border-radius:6px;">
+                {
+                  "type": "Point",
+                  "coordinates": [12.4923, 41.8902]
+                }
+                  </pre>
+                </div>
+                <group>
+                    <field name="provider_code"/>
+                    <field name="geojson_input" widget="text"/>
+                </group>
+                <group string="Risultato">
+                    <field name="result_json" widget="text" readonly="1"/>
+                </group>
+                <footer>
+                    <button name="action_analyze" type="object" string="Analyze" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_deforestation_geometry_wizard" model="ir.actions.act_window">
+        <field name="name">Deforestation Geometry Check</field>
+        <field name="res_model">deforestation.geometry.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_deforestation_geometry_wizard"/>
+        <field name="target">new</field>
+    </record>
+
+<!--    <menuitem id="menu_deforestation_geometry_wizard"-->
+<!--              name="Deforestation Check"-->
+<!--              parent="menu_eudr_ai_root"-->
+<!--              action="action_deforestation_geometry_wizard"-->
+<!--              sequence="50"-->
+<!--              groups="base.group_no_one"-->
+<!--    />-->
+</odoo>

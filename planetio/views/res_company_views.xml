@@ -1,0 +1,21 @@
+<odoo>
+  <record id="view_company_form_inherit_planetio_eudr" model="ir.ui.view">
+    <field name="name">res.company.form.planetio.eudr</field>
+    <field name="model">res.company</field>
+    <field name="inherit_id" ref="base.view_company_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//sheet/notebook" position="inside">
+        <page string="Planetio / EUDR">
+          <group>
+            <field name="eudr_company_type"/>
+          </group>
+          <group string="Options">
+            <field name="eudr_is_sme" attrs="{'invisible': [('eudr_company_type','not in',('trader','mixed'))]}"/>
+            <field name="eudr_third_party_has_mandate" attrs="{'invisible': [('eudr_company_type','!=','third_party_trader')]}"/>
+            <field name="eudr_third_party_established_in_eu" attrs="{'invisible': [('eudr_company_type','!=','third_party_trader')]}"/>
+          </group>
+        </page>
+      </xpath>
+    </field>
+  </record>
+</odoo>

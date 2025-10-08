@@ -1,5 +1,6 @@
 from odoo import models, fields, _
 from odoo.exceptions import UserError
+<<<<<<< HEAD
 import base64, json
 
 def extract_geojson_features(obj):
@@ -18,6 +19,44 @@ def extract_geojson_features(obj):
     if t in ("Point", "Polygon", "MultiPolygon", "MultiPoint", "LineString", "MultiLineString"):
         return [(obj, {})]
     return []
+=======
+import base64, json, mimetypes
+import itertools
+
+try:  # pragma: no cover - fallback for standalone test loading
+    from ..utils import estimate_geojson_area_ha
+except ImportError:  # pragma: no cover - loaded outside package context
+    import importlib.util
+    from pathlib import Path
+
+    _geo_path = Path(__file__).resolve().parents[1] / "utils" / "geo.py"
+    _geo_spec = importlib.util.spec_from_file_location("planetio.utils.geo", _geo_path)
+    _geo_mod = importlib.util.module_from_spec(_geo_spec)
+    assert _geo_spec and _geo_spec.loader
+    _geo_spec.loader.exec_module(_geo_mod)
+    estimate_geojson_area_ha = _geo_mod.estimate_geojson_area_ha
+
+def iter_geojson_features(obj):
+    """Yield ``(geometry_dict, properties_dict)`` tuples from a GeoJSON object."""
+    if not isinstance(obj, dict):
+        return
+    t = obj.get("type")
+    if t == "FeatureCollection":
+        for f in obj.get("features", []) or []:
+            if isinstance(f, dict) and isinstance(f.get("geometry"), dict):
+                yield f["geometry"], f.get("properties") or {}
+        return
+    if t == "Feature" and isinstance(obj.get("geometry"), dict):
+        yield obj["geometry"], obj.get("properties") or {}
+        return
+    if t in ("Point", "Polygon", "MultiPolygon", "MultiPoint", "LineString", "MultiLineString"):
+        yield obj, {}
+
+
+def extract_geojson_features(obj):
+    """Return list of (geometry_dict, properties_dict) tuples from a GeoJSON object."""
+    return list(iter_geojson_features(obj))
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 
 def map_geojson_properties(props):
@@ -78,7 +117,18 @@ class ExcelImportWizard(models.TransientModel):
 
     file_data = fields.Binary(string="File", required=True, attachment=False)
     file_name = fields.Char(string="Filename")
+<<<<<<< HEAD
     template_id = fields.Many2one("excel.import.template", required=True)
+=======
+    def _default_template_id(self):
+        template_id = self.env.context.get("default_template_id")
+        if template_id:
+            return template_id
+        template = self.env["excel.import.template"].search([], limit=1)
+        return template.id
+
+    template_id = fields.Many2one("excel.import.template", required=True, default=_default_template_id)
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     def _default_debug_import(self):
         icp = self.env['ir.config_parameter'].sudo()
@@ -102,6 +152,195 @@ class ExcelImportWizard(models.TransientModel):
     preview_json = fields.Text(readonly=True)
     result_json = fields.Text(readonly=True)
     analysis_json = fields.Text(readonly=True)
+<<<<<<< HEAD
+=======
+    import_mode = fields.Selection(
+        [
+            ("new", "Create new commodity"),
+            ("attach", "Attach to existing commodity"),
+        ],
+        default="new",
+    )
+    target_commodity_id = fields.Many2one(
+        "eudr.commodity.line",
+        domain="[('declaration_id','=',declaration_id)]",
+    )
+    single_producer = fields.Boolean(string="Single producer", default=False, help="When enabled, imported plots are grouped under a single producer.")
+
+    def _get_target_declaration(self):
+        self.ensure_one()
+        Decl = self.env["eudr.declaration"]
+
+        decl = self.declaration_id and self.declaration_id.exists()
+        if decl:
+            return decl
+
+        ctx = self.env.context or {}
+        default_decl_id = ctx.get("default_declaration_id")
+        if default_decl_id:
+            decl = Decl.browse(default_decl_id).exists()
+            if decl:
+                self.declaration_id = decl
+                return decl
+
+        active_model = ctx.get("active_model")
+        active_id = ctx.get("active_id")
+        if active_model == "eudr.declaration" and active_id:
+            decl = Decl.browse(active_id).exists()
+            if decl:
+                self.declaration_id = decl
+                return decl
+
+        params = ctx.get("params") or {}
+        param_model = params.get("model")
+        param_id = params.get("id")
+        if param_model == "eudr.declaration" and param_id:
+            decl = Decl.browse(param_id).exists()
+            if decl:
+                self.declaration_id = decl
+                return decl
+
+        decl = Decl.create({})
+        self.declaration_id = decl
+        return decl
+
+    def _ensure_multi_commodity(self, declaration):
+        self.ensure_one()
+        Commodity = self.env["eudr.commodity.line"]
+
+        if self.import_mode == "attach":
+            commodity = self.target_commodity_id
+            if not commodity:
+                raise UserError(_("Select a commodity to attach the imported plots."))
+            if commodity.declaration_id != declaration:
+                raise UserError(_("The selected commodity does not belong to this declaration."))
+            return commodity
+
+        description = declaration.product_description or declaration.product_id.display_name or declaration.name or _("Commodity")
+        commodity_vals = {
+            "declaration_id": declaration.id,
+            "hs_heading": declaration.hs_code,
+            "description_of_goods": description,
+            "net_weight_kg": declaration.net_mass_kg,
+        }
+        commodity = Commodity.create(commodity_vals)
+        try:
+            self.write({
+                "import_mode": "attach",
+                "target_commodity_id": commodity.id,
+            })
+        except Exception:
+            self.import_mode = "attach"
+            self.target_commodity_id = commodity
+        return commodity
+
+    def _create_multi_records_from_rows(self, declaration, rows):
+        self.ensure_one()
+        commodity = self._ensure_multi_commodity(declaration)
+        Producer = self.env["eudr.producer"]
+        Plot = self.env["eudr.plot"]
+
+        producers = {}
+        created_plots = 0
+
+        def _safe_float(value):
+            try:
+                if value in (None, ""):
+                    return None
+                return float(value)
+            except (TypeError, ValueError):
+                return None
+
+        for idx, row in enumerate(rows or [], start=1):
+            geometry = row.get("geometry_dict") or row.get("geometry")
+            if isinstance(geometry, str):
+                try:
+                    geometry = json.loads(geometry)
+                except Exception:
+                    geometry = None
+            if not isinstance(geometry, dict) or not geometry.get("type"):
+                continue
+
+            area_val = _safe_float(row.get("area_ha")) or _safe_float(row.get("area"))
+            country = row.get("country") or row.get("country_of_production") or row.get("producer_country") or ""
+            if isinstance(country, str):
+                country = country.strip().upper()
+            else:
+                country = ""
+
+            plot_id = row.get("plot_id") or row.get("farmer_id_code") or row.get("name") or f"plot-{idx}"
+            producer_name = (
+                row.get("producer_name")
+                or row.get("farmer_name")
+                or row.get("supplier_name")
+                or row.get("farm_name")
+                or plot_id
+                or _("Producer %s") % idx
+            )
+            producer_country = row.get("producer_country") or country or (declaration.country or "")
+            if isinstance(producer_country, str):
+                producer_country = producer_country.strip().upper()
+            else:
+                producer_country = ""
+
+            key = "__single__" if self.single_producer else (producer_name or "").strip().lower() or f"producer-{idx}"
+            producer = producers.get(key)
+            if not producer:
+                producer_vals = {
+                    "commodity_id": commodity.id,
+                    "name": producer_name or (_("Producer %s") % idx),
+                    "country": producer_country or country or (declaration.country or ""),
+                }
+                producer = Producer.create(producer_vals)
+                producers[key] = producer
+
+            plot_vals = {
+                "producer_id": producer.id,
+                "plot_id": plot_id,
+                "country_of_production": country or producer.country,
+                "geometry": json.dumps(geometry, ensure_ascii=False),
+            }
+            if area_val is not None:
+                plot_vals["area_ha"] = area_val
+            Plot.create(plot_vals)
+            created_plots += 1
+
+        if not created_plots:
+            raise UserError(_("No valid geometries were found in the imported data."))
+
+        return {
+            "declaration_id": declaration.id,
+            "created": created_plots,
+            "commodity_id": commodity.id,
+        }
+
+    def _iter_geojson_feature_payloads(self, obj):
+        """Yield prepared data for each GeoJSON feature without buffering all rows."""
+
+        env = self.env
+        for geom, props in iter_geojson_features(obj):
+            if not isinstance(geom, dict) or not geom.get("type"):
+                continue
+
+            mapped, extras = map_geojson_properties(props or {})
+
+            if not mapped.get("area_ha"):
+                try:
+                    computed_area = estimate_geojson_area_ha(env, geom)
+                except Exception:
+                    computed_area = None
+                if computed_area:
+                    mapped["area_ha"] = computed_area
+
+            yield geom, mapped, extras
+
+    def _is_excel_file(self):
+        if self.attachment_id or self.sheet_name:
+            return True
+        fname = (self.file_name or "").lower()
+        excel_exts = (".xls", ".xlsx", ".xlsm", ".xlsb", ".ods", ".csv", ".tsv")
+        return fname.endswith(excel_exts)
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     def _create_attachment(self):
         self.ensure_one()
@@ -127,8 +366,13 @@ class ExcelImportWizard(models.TransientModel):
         if not is_geojson:
             try:
                 data = base64.b64decode(self.file_data or b"")
+<<<<<<< HEAD
                 obj = json.loads(data.decode("utf-8"))
                 is_geojson = bool(extract_geojson_features(obj))
+=======
+                obj = json.loads(data)
+                is_geojson = any(iter_geojson_features(obj))
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             except Exception:
                 obj = None
 
@@ -136,11 +380,18 @@ class ExcelImportWizard(models.TransientModel):
             try:
                 if obj is None:
                     data = base64.b64decode(self.file_data or b"")
+<<<<<<< HEAD
                     obj = json.loads(data.decode("utf-8"))
             except Exception as e:
                 raise UserError(_("Invalid GeoJSON file: %s") % e)
             feats = extract_geojson_features(obj)
             preview = [g for g, _p in feats[:20]]
+=======
+                    obj = json.loads(data)
+            except Exception as e:
+                raise UserError(_("Invalid GeoJSON file: %s") % e)
+            preview = [g for g, _p in itertools.islice(iter_geojson_features(obj), 20)]
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             self.preview_json = json.dumps(preview, ensure_ascii=False)
             self.mapping_json = "{}"
             self.step = "validate"
@@ -195,8 +446,13 @@ class ExcelImportWizard(models.TransientModel):
         if not is_geojson:
             try:
                 data = base64.b64decode(self.file_data or b"")
+<<<<<<< HEAD
                 obj = json.loads(data.decode("utf-8"))
                 is_geojson = bool(extract_geojson_features(obj))
+=======
+                obj = json.loads(data)
+                is_geojson = any(True for _ in iter_geojson_features(obj))
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             except Exception:
                 obj = None
 
@@ -205,6 +461,7 @@ class ExcelImportWizard(models.TransientModel):
             try:
                 if obj is None:
                     data = base64.b64decode(self.file_data or b"")
+<<<<<<< HEAD
                     obj = json.loads(data.decode("utf-8"))
             except Exception:
                 raise UserError(_("Invalid GeoJSON file"))
@@ -263,6 +520,53 @@ class ExcelImportWizard(models.TransientModel):
                         vals["name"] = fallback
                 Line.create(vals)
                 created += 1
+=======
+                    obj = json.loads(data)
+            except Exception:
+                raise UserError(_("Invalid GeoJSON file"))
+
+            decl = self._get_target_declaration()
+            decl_id = decl.id
+
+            if decl.dds_mode == "single_multi":
+                rows = (
+                    dict(mapped, geometry_dict=geom)
+                    for geom, mapped, _extras in self._iter_geojson_feature_payloads(obj)
+                )
+                result = self._create_multi_records_from_rows(decl, rows)
+                created = result.get("created", 0)
+                obj = None
+            else:
+                Line = self.env["eudr.declaration.line"]
+                created = 0
+                for geom, mapped, extras in self._iter_geojson_feature_payloads(obj):
+                    geom_json = json.dumps(geom, ensure_ascii=False)
+                    vals = {
+                        "declaration_id": decl_id,
+                        "geometry": geom_json,
+                    }
+                    gtype = str(geom.get("type", "")).lower()
+                    if gtype in ("point", "polygon", "multipolygon"):
+                        vals["geo_type"] = "point" if gtype == "point" else "polygon"
+
+                    vals.update(mapped)
+                    if extras:
+                        try:
+                            vals["external_properties_json"] = json.dumps(extras, ensure_ascii=False)
+                        except Exception:
+                            pass
+                    if not vals.get("name"):
+                        fallback = (
+                            mapped.get("farm_name")
+                            or mapped.get("farmer_name")
+                            or mapped.get("farmer_id_code")
+                        )
+                        if fallback:
+                            vals["name"] = fallback
+                    Line.create(vals)
+                    created += 1
+                obj = None
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
             # store attachment on declaration
             attach = self.env["ir.attachment"].create({
@@ -272,6 +576,10 @@ class ExcelImportWizard(models.TransientModel):
                 "res_id": decl_id,
                 "type": "binary",
                 "mimetype": "application/geo+json",
+<<<<<<< HEAD
+=======
+                "eudr_document_visible": True,
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             })
             try:
                 decl.write({"source_attachment_id": attach.id})
@@ -287,6 +595,34 @@ class ExcelImportWizard(models.TransientModel):
                 "target": "current",
             }
 
+<<<<<<< HEAD
+=======
+        if not self._is_excel_file():
+            decl = self._get_target_declaration()
+            decl_id = decl.id
+            guessed_mimetype, _enc = mimetypes.guess_type(self.file_name or "")
+            attachment_vals = {
+                "name": self.file_name or _("Uploaded document"),
+                "datas": self.file_data,
+                "datas_fname": self.file_name or "document",
+                "res_model": "eudr.declaration",
+                "res_id": decl_id,
+                "type": "binary",
+                "mimetype": guessed_mimetype or "application/octet-stream",
+                "eudr_document_visible": True,
+            }
+            self.env["ir.attachment"].create(attachment_vals)
+            self.declaration_id = decl
+            self.step = "confirm"
+            return {
+                "type": "ir.actions.act_window",
+                "res_model": "eudr.declaration",
+                "view_mode": "form",
+                "res_id": decl_id,
+                "target": "current",
+            }
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         mapping_data = None
         if self.mapping_json:
             try:

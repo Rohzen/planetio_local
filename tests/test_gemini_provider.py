@@ -1,4 +1,8 @@
 import importlib.util
+<<<<<<< HEAD
+=======
+import json
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 import sys
 import types
 from pathlib import Path
@@ -109,3 +113,138 @@ def test_tuned_models_prefix_preserved():
         assert captured["model_name"] == "tunedModels/my-model"
     finally:
         _cleanup_google_modules()
+<<<<<<< HEAD
+=======
+
+
+def test_rest_generate_retries_with_versioned_model():
+    attempts = []
+
+    class FakeResponse:
+        def __init__(self, status_code, payload):
+            self.status_code = status_code
+            self._payload = payload
+            self.text = json.dumps(payload)
+
+        def json(self):
+            return self._payload
+
+    responses = [
+        FakeResponse(
+            404,
+            {
+                "error": {
+                    "code": 404,
+                    "message": "Publisher Model `projects/.../models/gemini-1.5-flash-002` was not found.",
+                }
+            },
+        ),
+        FakeResponse(
+            404,
+            {
+                "error": {
+                    "code": 404,
+                    "message": "Publisher Model `projects/.../models/gemini-1.5-flash-002` was not found.",
+                }
+            },
+        ),
+        FakeResponse(
+            200,
+            {
+                "candidates": [
+                    {"content": {"parts": [{"text": "ok"}]}}
+                ]
+            },
+        ),
+    ]
+
+    def fake_post(url, headers=None, data=None, timeout=None):
+        attempts.append(url)
+        return responses.pop(0)
+
+    genai_stub = types.SimpleNamespace(configure=lambda api_key=None: None)
+    module = _load_provider_module(genai_stub)
+    module.requests.post = fake_post
+
+    try:
+        env = {
+            "ir.config_parameter": FakeConfigParameter(
+                {
+                    "ai_gateway.gemini_api_key": "KEY",
+                    "ai_gateway.gemini_model": "gemini-1.5-flash",
+                }
+            )
+        }
+
+        provider = module.GeminiProvider(env)
+        result = provider.generate("prompt")
+
+        assert result["text"] == "ok"
+        assert attempts[0].endswith("/models/gemini-1.5-flash:generateContent?key=KEY")
+        assert attempts[1].endswith("/models/gemini-1.5-flash-latest:generateContent?key=KEY")
+        assert attempts[2].endswith("/models/gemini-1.5-flash-001:generateContent?key=KEY")
+        assert provider.model_name == "gemini-1.5-flash-001"
+    finally:
+        _cleanup_google_modules()
+
+
+def test_rest_generate_falls_back_from_prefixed_model():
+    attempts = []
+
+    class FakeResponse:
+        def __init__(self, status_code, payload):
+            self.status_code = status_code
+            self._payload = payload
+            self.text = json.dumps(payload)
+
+        def json(self):
+            return self._payload
+
+    responses = [
+        FakeResponse(
+            404,
+            {
+                "error": {
+                    "code": 404,
+                    "message": "models/gemini-1.5-flash-001 is not found for API version v1beta",
+                }
+            },
+        ),
+        FakeResponse(
+            200,
+            {
+                "candidates": [
+                    {"content": {"parts": [{"text": "ok"}]}}
+                ]
+            },
+        ),
+    ]
+
+    def fake_post(url, headers=None, data=None, timeout=None):
+        attempts.append(url)
+        return responses.pop(0)
+
+    genai_stub = types.SimpleNamespace(configure=lambda api_key=None: None)
+    module = _load_provider_module(genai_stub)
+    module.requests.post = fake_post
+
+    try:
+        env = {
+            "ir.config_parameter": FakeConfigParameter(
+                {
+                    "ai_gateway.gemini_api_key": "KEY",
+                    "ai_gateway.gemini_model": "models/gemini-1.5-flash-001",
+                }
+            )
+        }
+
+        provider = module.GeminiProvider(env)
+        result = provider.generate("prompt")
+
+        assert result["text"] == "ok"
+        assert attempts[0].endswith("/models/gemini-1.5-flash-001:generateContent?key=KEY")
+        assert attempts[1].endswith("/models/gemini-1.5-flash:generateContent?key=KEY")
+        assert provider.model_name == "gemini-1.5-flash"
+    finally:
+        _cleanup_google_modules()
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

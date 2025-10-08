@@ -1,0 +1,335 @@
+<odoo>
+  <data>
+
+    <!-- TEMPLATE DOCUMENTO -->
+    <template id="report_ai_summary_document">
+      <t t-set="summary_data" t-value="_summary_data or {}"/>
+      <t t-set="summary_blocks" t-value="summary_data.get('blocks', [])"/>
+      <t t-set="doc_name" t-value="(summary_data.get('title') or 'AI Document Summary')"/>
+
+      <!-- Fallback: leggi alert e azioni dal DB se i blocchi non ci sono -->
+      <t t-set="alerts_qs" t-value="doc and doc.env['declaration.alert'].search([('declaration_id','=',doc.id)], order='sequence,id') or doc.env['declaration.alert']"/>
+      <t t-set="actions_qs" t-value="doc and doc.env['declaration.action'].search([('declaration_id','=',doc.id)], order='sequence,id') or doc.env['declaration.action']"/>
+      <t t-set="has_ai_blocks" t-value="bool(summary_blocks)"/>
+      <t t-set="has_db_data" t-value="bool(alerts_qs) or bool(actions_qs)"/>
+
+      <!-- Titoli noti usati sia in AI blocks che nel fallback DB -->
+      <t t-set="_known_titles" t-value="(
+        'executive summary','summary reports','summary report','summary',
+        'sintesi','sintesi dei dati','sintesi della situazione',
+        'rischi/anomalie','aree non deforestate','limiti dei dati'
+      )"/>
+
+      <t t-call="web.external_layout">
+        <div class="page">
+          <div class="o_ai_summary">
+            <style type="text/css">
+              .o_ai_summary__title { color:#2e7d32;margin:0 0 12px 0;font-size:22px; }
+              .o_ai_summary__meta { display:flex;justify-content:space-between;font-size:12px;color:#555;margin-bottom:18px; }
+              .o_ai_summary__meta span { display:inline-block; }
+
+              /* Macro-sezioni principali */
+              .o_ai_summary__section--main {
+                font-size:22px;
+                margin:30px 0 14px 0;
+                padding:10px 14px;
+                background:#e8f5e9;
+                border-left:6px solid #2e7d32;
+                text-transform:uppercase;
+                letter-spacing:.7px;
+                color:#0f4e1f;
+              }
+
+              /* Sottotitoli netti (H4 grande) */
+              .o_ai_summary__h4 {
+                font-size:18px;
+                font-weight:700;
+                margin:20px 0 10px 0;
+                padding:6px 10px;
+                color:#0f4e1f;
+                background:#eef7f0;
+                border-left:5px solid #2e7d32;
+                text-transform:uppercase;
+                letter-spacing:.5px;
+              }
+
+              .o_ai_summary__separator { height:1px;background:#c8e6c9;margin:16px 0; }
+
+              /* Testo più grande e arioso */
+              .o_ai_summary__paragraph {
+                margin:0 0 12px 0;
+                font-size:15px;
+                line-height:1.75;
+                color:#1d1d1d;
+              }
+
+              /* Liste dei blocchi AI */
+              .o_ai_summary__list {
+                margin:0 0 12px 24px;
+                padding:0;
+                font-size:15px;
+                line-height:1.6;
+              }
+              .o_ai_summary__list li { margin-bottom:7px; }
+
+              .o_ai_summary__table { width:100%;border-collapse:collapse;margin:12px 0 16px 0;font-size:13px; }
+              .o_ai_summary__table th { background:#e8f5e9;font-weight:700;text-transform:uppercase; }
+              .o_ai_summary__table th,.o_ai_summary__table td { border:1px solid #c8e6c9;padding:8px 10px;text-align:left; }
+
+              .o_ai_summary__empty { font-size:12px;font-style:italic;color:#888;margin-bottom:16px; }
+              .o_ai_summary__raw pre { background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px;font-size:10px;white-space:pre-wrap;word-break:break-word; }
+              .o_ai_summary__raw h4 { margin:24px 0 8px 0;font-size:14px; }
+
+              .o_ai_summary__break { page-break-before:always; }
+
+              /* Fallback DB: righe “piatte”, senza puntini elenco */
+              .o_ai_summary__items { margin:6px 0 10px 0; }
+              .o_ai_summary__item { font-size:15px;line-height:1.75;color:#1d1d1d;margin:0 0 10px 0; }
+              .o_ai_summary .badge{
+                display: inline-block;
+                font-size: 12px;           /* prima era ~10px */
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: .35px;
+                padding: 3px 8px;          /* prima 2px 6px */
+                border: 1px solid #c8e6c9;
+                border-radius: 12px;       /* leggermente più “pill” */
+                margin-right: 6px;
+                background: #f6fff7;
+                line-height: 1;            /* evita di “sballare” l’altezza riga */
+              }
+            </style>
+
+            <div class="o_ai_summary__header">
+              <h2 class="o_ai_summary__title" t-esc="summary_data.get('title') or 'RIEPILOGO DATI DEFORESTAZIONE PER LE AREE DI PROVENIENZA INDICATE'"/>
+              <div class="o_ai_summary__meta">
+                <span t-if="summary_data.get('record_name')">
+                  <strong t-esc="summary_data.get('record_label') or 'Declaration'"/>:
+                  <span t-esc="summary_data.get('record_name')"/>
+                </span>
+                <span t-if="summary_data.get('generated_on')">
+                  <strong t-esc="summary_data.get('generated_on_label') or 'Generated on'"/>:
+                  <span t-esc="format_datetime(summary_data.get('generated_on'))"/>
+                </span>
+              </div>
+            </div>
+
+            <div class="o_ai_summary__body">
+              <!-- BLOCCO AI -->
+              <t t-if="has_ai_blocks">
+                <t t-set="main_seen" t-value="False"/>
+                <t t-foreach="summary_blocks" t-as="block">
+                  <t t-set="block_text" t-value="(block.get('text') or '').strip()"/>
+
+                  <t t-if="block.get('type') == 'header'">
+                    <!-- Macro-sezioni -->
+                    <t t-if="block_text.lower().startswith('ai alerts')">
+                      <t t-if="main_seen"><div class="o_ai_summary__break"/></t>
+                      <div class="o_ai_summary__separator"/>
+                      <h3 class="o_ai_summary__section--main">ALLERTE DEFORESTAZIONE</h3>
+                      <t t-set="main_seen" t-value="True"/>
+                    </t>
+                    <t t-elif="block_text.lower().startswith('corrective actions')">
+                      <t t-if="main_seen"><div class="o_ai_summary__break"/></t>
+                      <div class="o_ai_summary__separator"/>
+                      <h3 class="o_ai_summary__section--main">AZIONI CORRETTIVE</h3>
+                      <t t-set="main_seen" t-value="True"/>
+                    </t>
+
+                    <!-- Header breve (≤4 parole + :) -> H4 -->
+                    <t t-elif="(block_text.endswith(':')) and (len(block_text.rstrip(':').split()) &lt;= 4)">
+                      <h4 class="o_ai_summary__h4" t-esc="block_text.rstrip(':').upper()"/>
+                    </t>
+
+                    <!-- Titoli noti -> H4 -->
+                    <t t-elif="block_text.lower().rstrip(':') in _known_titles">
+                      <h4 class="o_ai_summary__h4" t-esc="block_text.rstrip(':').upper()"/>
+                    </t>
+
+                    <!-- Header residuali -> H4 -->
+                    <t t-else="">
+                      <h4 class="o_ai_summary__h4" t-esc="block_text.upper()"/>
+                    </t>
+                  </t>
+
+                  <!-- Paragrafi: promozione a H4 se riga breve con ":" -->
+                  <t t-elif="block.get('type') == 'paragraph'">
+                    <t t-set="_p" t-value="(block.get('text') or '').strip()"/>
+                    <t t-set="_core" t-value="_p.rstrip(':')"/>
+                    <t t-set="_w" t-value="_core.split()"/>
+                    <t t-if="_p.endswith(':') and len(_w) &lt;= 4">
+                      <h4 class="o_ai_summary__h4" t-esc="' '.join(_w).upper()"/>
+                    </t>
+                    <t t-else="">
+                      <p class="o_ai_summary__paragraph" t-esc="block.get('text')"/>
+                    </t>
+                  </t>
+
+                  <t t-elif="block.get('type') == 'bullets'">
+                    <ul class="o_ai_summary__list">
+                      <li t-foreach="block.get('items', [])" t-as="item" t-esc="item"/>
+                    </ul>
+                  </t>
+
+                  <t t-elif="block.get('type') == 'table'">
+                    <table class="o_ai_summary__table">
+                      <thead>
+                        <tr>
+                          <th t-foreach="block.get('header', [])" t-as="cell" t-esc="cell"/>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr t-foreach="block.get('rows', [])" t-as="row">
+                          <td t-foreach="row" t-as="cell" t-esc="cell"/>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </t>
+                </t>
+              </t>
+
+              <!-- FALLBACK DB (stessa logica di promozione + mapping titoli noti) -->
+              <t t-if="(not has_ai_blocks) and has_db_data">
+
+                <!-- ALLERTE DEFORESTAZIONE -->
+                <t t-if="alerts_qs">
+                  <div class="o_ai_summary__separator"/>
+                  <h3 class="o_ai_summary__section--main">ALLERTE DEFORESTAZIONE</h3>
+
+                  <!-- Raggruppo per line_label; salto intestazione se è solo “ALERT” -->
+                  <t t-set="grouped" t-value="{}"/>
+                  <t t-foreach="alerts_qs" t-as="al">
+                    <t t-set="k" t-value="al.line_label or 'ALERT'"/>
+                    <t t-set="dummy" t-value="grouped.setdefault(k, [])"/>
+                    <t t-set="dummy2" t-value="grouped[k].append(al)"/>
+                  </t>
+
+                  <t t-foreach="grouped.items()" t-as="pair">
+                    <t t-set="gk" t-value="pair[0]"/>
+                    <t t-set="gvals" t-value="pair[1]"/>
+
+                    <!-- Normalizzazione label gruppo -->
+                    <t t-set="_gk" t-value="(gk or '').strip()"/>
+                    <t t-set="_gk_core" t-value="_gk.rstrip(':')"/>
+                    <t t-set="_gk_norm" t-value="_gk_core.lower()"/>
+                    <t t-set="_gk_words" t-value="_gk_core.split()"/>
+
+                    <!-- Se label di gruppo “vera” e nota o breve+":" -> H4 -->
+                    <t t-if="_gk and _gk != 'ALERT' and ( _gk_norm in _known_titles or (_gk.endswith(':') and len(_gk_words) &lt;= 4) )">
+                      <h4 class="o_ai_summary__h4" t-esc="_gk_core.upper()"/>
+                    </t>
+                    <t t-elif="_gk and _gk != 'ALERT'">
+                      <h4 class="o_ai_summary__h4" t-esc="_gk.upper()"/>
+                    </t>
+
+                    <!-- Righe del gruppo -->
+                    <t t-foreach="gvals" t-as="al2">
+                      <t t-set="_desc" t-value="(al2.description or '').strip()"/>
+                      <t t-set="_core" t-value="_desc.rstrip(':')"/>
+                      <t t-set="_norm" t-value="_core.lower()"/>
+                      <t t-set="_w" t-value="_core.split()"/>
+
+                      <!-- Riga breve + ":" o titolo noto -> H4 -->
+                      <t t-if="_desc.endswith(':') and len(_w) &lt;= 4 or (_norm in _known_titles)">
+                        <h4 class="o_ai_summary__h4" t-esc="' '.join(_w).upper()"/>
+                      </t>
+                      <t t-else="">
+                        <div class="o_ai_summary__item">
+                          <span t-if="al2.field_identifier" class="badge" t-esc="al2.field_identifier"/>
+                          <span t-esc="al2.description"/>
+                        </div>
+                      </t>
+                    </t>
+                  </t>
+                </t>
+
+                <t t-if="alerts_qs and actions_qs"><div class="o_ai_summary__break"/></t>
+
+                <!-- AZIONI CORRETTIVE -->
+                <t t-if="actions_qs">
+                  <div class="o_ai_summary__separator"/>
+                  <h3 class="o_ai_summary__section--main">AZIONI CORRETTIVE</h3>
+
+                  <!-- Raggruppo per line_label; salto intestazione se è solo “AZIONE” -->
+                  <t t-set="grouped2" t-value="{}"/>
+                  <t t-foreach="actions_qs" t-as="ac">
+                    <t t-set="k2" t-value="ac.line_label or 'AZIONE'"/>
+                    <t t-set="dummy3" t-value="grouped2.setdefault(k2, [])"/>
+                    <t t-set="dummy4" t-value="grouped2[k2].append(ac)"/>
+                  </t>
+
+                  <t t-foreach="grouped2.items()" t-as="pair2">
+                    <t t-set="gk2" t-value="pair2[0]"/>
+                    <t t-set="gvals2" t-value="pair2[1]"/>
+
+                    <t t-set="_gk2" t-value="(gk2 or '').strip()"/>
+                    <t t-set="_gk2_core" t-value="_gk2.rstrip(':')"/>
+                    <t t-set="_gk2_norm" t-value="_gk2_core.lower()"/>
+                    <t t-set="_gk2_words" t-value="_gk2_core.split()"/>
+
+                    <t t-if="_gk2 and _gk2 != 'AZIONE' and ( _gk2_norm in _known_titles or (_gk2.endswith(':') and len(_gk2_words) &lt;= 4) )">
+                      <h4 class="o_ai_summary__h4" t-esc="_gk2_core.upper()"/>
+                    </t>
+                    <t t-elif="_gk2 and _gk2 != 'AZIONE'">
+                      <h4 class="o_ai_summary__h4" t-esc="_gk2.upper()"/>
+                    </t>
+
+                    <t t-foreach="gvals2" t-as="ac2">
+                      <t t-set="_desc2" t-value="(ac2.description or '').strip()"/>
+                      <t t-set="_core2" t-value="_desc2.rstrip(':')"/>
+                      <t t-set="_norm2" t-value="_core2.lower()"/>
+                      <t t-set="_w2" t-value="_core2.split()"/>
+
+                      <t t-if="_desc2.endswith(':') and len(_w2) &lt;= 4 or (_norm2 in _known_titles)">
+                        <h4 class="o_ai_summary__h4" t-esc="' '.join(_w2).upper()"/>
+                      </t>
+                      <t t-else="">
+                        <div class="o_ai_summary__item">
+                          <span t-if="ac2.field_identifier" class="badge" t-esc="ac2.field_identifier"/>
+                          <span t-esc="ac2.description"/>
+                        </div>
+                      </t>
+                    </t>
+                  </t>
+                </t>
+              </t>
+
+              <!-- Nessun contenuto -->
+              <div class="o_ai_summary__empty" t-if="(not has_ai_blocks) and (not has_db_data)">
+                <span t-esc="summary_data.get('empty_label') or 'No summary content was returned by the AI service.'"/>
+              </div>
+            </div>
+
+            <div class="o_ai_summary__raw" t-if="summary_data.get('raw_text')">
+              <h4 t-esc="summary_data.get('raw_label') or 'Original AI response'"/>
+              <pre><t t-esc="summary_data.get('raw_text')"/></pre>
+            </div>
+          </div>
+        </div>
+      </t>
+    </template>
+
+    <!-- WRAPPER HTML (genera <main>) -->
+    <template id="report_ai_summary">
+      <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+          <t t-call="planetio_ai.report_ai_summary_document">
+            <t t-set="doc" t-value="doc"/>
+            <t t-set="_summary_data" t-value="(data or {}).get('doc_data', {}).get(doc.id, {})"/>
+          </t>
+        </t>
+      </t>
+    </template>
+
+    <!-- ACTION REPORT -->
+    <report
+      id="action_report_eudr_declaration_ai"
+      model="eudr.declaration"
+      string="EUDR Declaration - AI Feedback"
+      report_type="qweb-pdf"
+      name="planetio_ai.report_ai_summary"
+      file="planetio_ai.report_ai_summary"
+      print_report_name="'EUDR Declaration AI - %s' % (object.name or object.id)"
+    />
+  </data>
+</odoo>

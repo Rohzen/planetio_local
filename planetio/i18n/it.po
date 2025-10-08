@@ -805,3 +805,404 @@ msgstr "File GeoJSON non valido: %s"
 #: code:addons/planetio/wizards/import_wizard.py:0
 msgid "Invalid GeoJSON file"
 msgstr "File GeoJSON non valido"
+<<<<<<< HEAD
+=======
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:244
+#, python-format
+msgid "alerts: %(count)s"
+msgstr "allerta: %(count)s"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:246
+#, python-format
+msgid "risk: %(risk)s"
+msgstr "rischio: %(risk)s"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:248
+#, python-format
+msgid "period: %(period)s"
+msgstr "periodo: %(period)s"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:250
+#, python-format
+msgid "last alert: %(last)s"
+msgstr "ultima allerta: %(last)s"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:253
+#, python-format
+msgid "GeoJSON deforestation data (%(details)s)"
+msgstr "Dati deforestazione GeoJSON (%(details)s)"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:255
+msgid "GeoJSON deforestation data"
+msgstr "Dati deforestazione GeoJSON"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:408
+msgid "Configura planetio.gfw_api_key"
+msgstr "Configura planetio.gfw_api_key"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:428
+#, python-format
+msgid "Manca geometria (GeoJSON o lat/lon) sulla riga %s"
+msgstr "Manca geometria (GeoJSON o lat/lon) sulla riga %s"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:489
+#, python-format
+msgid "GFW Data API: %(n)s allerta/e (da %(d)s)"
+msgstr "GFW Data API: %(n)s allerta/e (da %(d)s)"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_deforestation.py:586
+#, python-format
+msgid "Analisi deforestazione fallita sulla riga %(name)s: %(err)s"
+msgstr "Analisi deforestazione fallita sulla riga %(name)s: %(err)s"
+
+#. module: planetio
+#: code:addons/planetio/models/eudr_models.py:493
+#, python-format
+msgid "GeoJSON creato e salvato come <b>%s</b>."
+msgstr "GeoJSON creato e salvato come <b>%s</b>."
+
+#. module: planetio
+#: code:addons/planetio/models/res_config_settings.py:19
+#, python-format
+msgid "%s year(s)"
+msgstr "%s anno/i"
+
+#. module: planetio
+#: code:addons/planetio/models/res_config_settings.py:80
+msgid "Imposta email e password GFW prima di generare la chiave."
+msgstr "Imposta email e password GFW prima di generare la chiave."
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_deforestation.py:23
+msgid "GFW API Key mancante. Imposta 'GFW API Key' nelle Impostazioni."
+msgstr "GFW API Key mancante. Imposta 'GFW API Key' nelle Impostazioni."
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_deforestation.py:239
+#, python-format
+msgid "Connessione a GFW non riuscita: %s"
+msgstr "Connessione a GFW non riuscita: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_deforestation.py:244
+#, python-format
+msgid "Provider gfw: Richiesta rifiutata da GFW: %s"
+msgstr "Provider gfw: Richiesta rifiutata da GFW: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_deforestation.py:285
+#, python-format
+msgid "Provider gfw: nessuna risposta valida dal Data API (%s)"
+msgstr "Provider gfw: nessuna risposta valida dal Data API (%s)"
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_deforestation.py:633
+msgid "Provider gfw: nessuna variante campo disponibile"
+msgstr "Provider gfw: nessuna variante campo disponibile"
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_deforestation.py:1029
+#, python-format
+msgid "GFW Data API: %(n)s allerta/e rilevate dal %(d)s"
+msgstr "GFW Data API: %(n)s allerta/e rilevate dal %(d)s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_deforestation.py:1033
+#, python-format
+msgid "GFW Data API: nessuna allerta rilevata dal %(d)s"
+msgstr "GFW Data API: nessuna allerta rilevata dal %(d)s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_deforestation.py:1037
+#, python-format
+msgid "Area interessata: %(area).2f ha"
+msgstr "Area interessata: %(area).2f ha"
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_deforestation.py:1039
+#, python-format
+msgid "Ultima allerta: %s"
+msgstr "Ultima allerta: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/gfw_key_provider.py:17
+msgid "Configura email e password GFW nei Parametri di sistema."
+msgstr "Configura email e password GFW nei Parametri di sistema."
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:62
+msgid "API key Plant-for-the-Planet mancante. Impostala nelle configurazioni."
+msgstr "API key Plant-for-the-Planet mancante. Impostala nelle configurazioni."
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:64
+msgid "URL base Plant-for-the-Planet mancante."
+msgstr "URL base Plant-for-the-Planet mancante."
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:71
+#, python-format
+msgid "Geometria mancante sulla riga %s"
+msgstr "Geometria mancante sulla riga %s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:84
+#, python-format
+msgid "Connessione a Plant-for-the-Planet non riuscita: %s"
+msgstr "Connessione a Plant-for-the-Planet non riuscita: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:90
+msgid "API key Plant-for-the-Planet non valida o scaduta."
+msgstr "API key Plant-for-the-Planet non valida o scaduta."
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:92
+#, python-format
+msgid "Endpoint Plant-for-the-Planet non trovato: %s"
+msgstr "Endpoint Plant-for-the-Planet non trovato: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:94
+#, python-format
+msgid "Plant-for-the-Planet ha risposto con errore temporaneo (%s)."
+msgstr "Plant-for-the-Planet ha risposto con errore temporaneo (%s)."
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:101
+msgid "Risposta Plant-for-the-Planet inattesa."
+msgstr "Risposta Plant-for-the-Planet inattesa."
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:114
+#, python-format
+msgid "Plant-for-the-Planet: %(cnt)s allerta/e"
+msgstr "Plant-for-the-Planet: %(cnt)s allerta/e"
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:187
+#, python-format
+msgid "Impossibile recuperare l'analisi Plant-for-the-Planet esistente: %s"
+msgstr "Impossibile recuperare l'analisi Plant-for-the-Planet esistente: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:190
+#, python-format
+msgid "Analisi Plant-for-the-Planet non trovata per UID %s"
+msgstr "Analisi Plant-for-the-Planet non trovata per UID %s"
+
+#. module: planetio
+#: code:addons/planetio/services/api/plant4_deforestation.py:200
+#, python-format
+msgid "Risposta Plant-for-the-Planet non è JSON valido: %s"
+msgstr "Risposta Plant-for-the-Planet non è JSON valido: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:48
+msgid "Nessun provider di deforestazione configurato."
+msgstr "Nessun provider di deforestazione configurato."
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:56
+#, python-format
+msgid "Provider %(p)s: %(m)s"
+msgstr "Provider %(p)s: %(m)s"
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:66
+#, python-format
+msgid "Provider %(p)s errore inatteso: %(m)s"
+msgstr "Provider %(p)s errore inatteso: %(m)s"
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:75
+#, python-format
+msgid "Analisi deforestazione non riuscita: %s"
+msgstr "Analisi deforestazione non riuscita: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:76
+msgid "Analisi deforestazione non riuscita: nessun provider disponibile."
+msgstr "Analisi deforestazione non riuscita: nessun provider disponibile."
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:82
+msgid "Nessuna riga da analizzare."
+msgstr "Nessuna riga da analizzare."
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:116
+msgid "GeoJSON geometry"
+msgstr "Geometria GeoJSON"
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:137
+msgid "La geometria deve essere un oggetto GeoJSON."
+msgstr "La geometria deve essere un oggetto GeoJSON."
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:149
+msgid "GeoJSON non valido: geometria mancante."
+msgstr "GeoJSON non valido: geometria mancante."
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:153
+#, python-format
+msgid "Tipo GeoJSON non supportato: %s"
+msgstr "Tipo GeoJSON non supportato: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/deforestation_service.py:166
+msgid "Nessun provider valido specificato per l'analisi."
+msgstr "Nessun provider valido specificato per l'analisi."
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:84
+msgid "GeoJSON missing or no valid geometries on lines."
+msgstr "GeoJSON mancante o nessuna geometria valida sulle righe."
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:160
+msgid "No valid geometries found to build deforestation GeoJSON."
+msgstr "Nessuna geometria valida trovata per costruire il GeoJSON di deforestazione."
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:215
+msgid "Credenziali EUDR mancanti: imposta planetio.eudr_user e planetio.eudr_apikey."
+msgstr "Credenziali EUDR mancanti: imposta planetio.eudr_user e planetio.eudr_apikey."
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:224
+msgid "Indirizzo azienda mancante: compila via/Cap/Città/Nazione in Impostazioni Azienda."
+msgstr "Indirizzo azienda mancante: compila via/Cap/Città/Nazione in Impostazioni Azienda."
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:228
+msgid "EORI mancante/non valido. Imposta planetio.eudr_eori nelle configurazioni."
+msgstr "EORI mancante/non valido. Imposta planetio.eudr_eori nelle configurazioni."
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:253
+#, python-format
+msgid "Submission for %s on %s by %s for lot %s"
+msgstr "Invio per %s il %s da %s per il lotto %s"
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:264
+msgid "Nazione produttore mancante: imposta la nazione sul fornitore o sulle linee."
+msgstr "Nazione produttore mancante: imposta la nazione sul fornitore o sulle linee."
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:328
+#, python-format
+msgid "DDS trasmessa con successo. ID: <b>%s</b>%s"
+msgstr "DDS trasmessa con successo. ID: <b>%s</b>%s"
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:335
+msgid "DDS inviata ma senza ddsIdentifier. Controlla la risposta XML."
+msgstr "DDS inviata ma senza ddsIdentifier. Controlla la risposta XML."
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:345
+#, python-format
+msgid ""
+"Violazioni regole EUDR rilevate:\n"
+"%s"
+msgstr ""
+"Violazioni regole EUDR rilevate:\n"
+"%s"
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:347
+#, python-format
+msgid ""
+"\n"
+"\n"
+"WS_REQUEST_ID: %s"
+msgstr ""
+"\n"
+"\n"
+"WS_REQUEST_ID: %s"
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:352
+#, python-format
+msgid "Errore EUDR (%s): %s"
+msgstr "Errore EUDR (%s): %s"
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:376
+msgid "Nessun DDS Identifier (UUID) presente sul record."
+msgstr "Nessun DDS Identifier (UUID) presente sul record."
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:408
+#, python-format
+msgid "Errore Retrieval EUDR (%s)"
+msgstr "Errore Retrieval EUDR (%s)"
+
+#. module: planetio
+#: code:addons/planetio/services/eudr_adapter_odoo.py:416
+msgid "Retrieve OK ma nessuna voce restituita per il UUID."
+msgstr "Retrieve OK ma nessuna voce restituita per il UUID."
+
+#. module: planetio
+#: code:addons/planetio/wizards/deforestation_geometry_wizard.py:43
+msgid "Inserisci una geometria GeoJSON."
+msgstr "Inserisci una geometria GeoJSON."
+
+#. module: planetio
+#: code:addons/planetio/wizards/deforestation_geometry_wizard.py:48
+#, python-format
+msgid "GeoJSON non valido: %s"
+msgstr "GeoJSON non valido: %s"
+
+#. module: planetio
+#: code:addons/planetio/wizards/deforestation_geometry_wizard.py:51
+msgid "Il GeoJSON deve essere un oggetto."
+msgstr "Il GeoJSON deve essere un oggetto."
+
+#. module: planetio
+#: code:addons/planetio/wizards/deforestation_geometry_wizard.py:60
+msgid "La FeatureCollection non contiene geometrie."
+msgstr "La FeatureCollection non contiene geometrie."
+
+#. module: planetio
+#: code:addons/planetio/wizards/deforestation_geometry_wizard.py:63
+msgid "La FeatureCollection contiene elementi non validi."
+msgstr "La FeatureCollection contiene elementi non validi."
+
+#. module: planetio
+#: code:addons/planetio/wizards/deforestation_geometry_wizard.py:67
+msgid "La geometria estratta non è un oggetto valido."
+msgstr "La geometria estratta non è un oggetto valido."
+
+#. module: planetio
+#: code:addons/planetio/wizards/deforestation_geometry_wizard.py:71
+#, python-format
+msgid "Tipo di geometria non supportato: %s"
+msgstr "Tipo di geometria non supportato: %s"
+
+#. module: planetio
+#: code:addons/planetio/wizards/deforestation_geometry_wizard.py:81
+msgid "Wizard geometry"
+msgstr "Geometria procedura guidata"
+
+#. module: planetio
+#: code:addons/planetio/wizards/import_wizard.py:323
+msgid "Uploaded document"
+msgstr "Documento caricato"
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

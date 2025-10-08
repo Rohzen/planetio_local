@@ -1,8 +1,16 @@
 from odoo import _, fields, models
+<<<<<<< HEAD
+=======
+import ast
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 import base64
 import io
 import json
 import logging
+<<<<<<< HEAD
+=======
+import re
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 try:  # pragma: no cover - optional dependency
     from reportlab.lib import colors
@@ -27,6 +35,32 @@ except Exception:  # pragma: no cover - handled gracefully at runtime
 _logger = logging.getLogger(__name__)
 
 
+<<<<<<< HEAD
+=======
+DEFAULT_DEFORESTATION_PROMPT = (
+    "Analizza tutti i documenti allegati relativi alla dichiarazione EUDR e "
+    "riassumi le informazioni utili a valutare lo stato della deforestazione. "
+    "La risposta finale deve includere bullet point chiari, lo stato della "
+    "deforestazione, eventuali rischi o anomalie e, se disponibili dati "
+    "numerici, una tabella in formato testo con gli indicatori principali."
+)
+
+DEFAULT_CORRECTIVE_ACTIONS_PROMPT = (
+    "Indica le azioni correttive consigliate per mitigare i rischi individuati, "
+    "specificando priorità, tempistiche e responsabilità quando possibile."
+)
+
+
+STRUCTURED_RESPONSE_INSTRUCTION = (
+    "Restituisci esclusivamente JSON valido con la seguente struttura: "
+    "{\"alerts\": [{\"field_id\": \"...\", \"field_label\": \"...\", \"description\": \"...\"}], "
+    "\"actions\": [{\"field_id\": \"...\", \"field_label\": \"...\", \"description\": \"...\"}]}. "
+    "Utilizza liste (anche vuote) per entrambi i campi, imposta field_id a null "
+    "quando non disponibile e fornisci descrizioni chiare in forma di paragrafo."
+)
+
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 class PlanetioSummarizeWizard(models.Model):
     _inherit = "eudr.declaration"
 
@@ -319,6 +353,42 @@ class PlanetioSummarizeWizard(models.Model):
         return True
 
     @staticmethod
+<<<<<<< HEAD
+=======
+    def _strip_ai_markup(text):
+        """Remove simple Markdown markers used by the AI provider."""
+
+        if text in (None, "", False):
+            return ""
+        if not isinstance(text, str):
+            text = str(text)
+        cleaned = text.replace("**", "").replace("__", "")
+        cleaned = re.sub(r"`([^`]+)`", r"\\1", cleaned)
+        return cleaned
+
+    @classmethod
+    def _clean_entry_text(cls, text):
+        """Normalise raw AI text for display/storage purposes."""
+
+        cleaned = cls._strip_ai_markup(text)
+        if not cleaned:
+            return ""
+        cleaned = re.sub(r"\s+", " ", cleaned)
+        return cleaned.strip()
+
+    @classmethod
+    def _normalize_heading_token(cls, text):
+        """Prepare a heading string for comparisons."""
+
+        cleaned = cls._clean_entry_text(text)
+        if not cleaned:
+            return ""
+        cleaned = cleaned.strip("# ")
+        cleaned = cleaned.strip("-*• ")
+        return cleaned.strip()
+
+    @staticmethod
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     def _is_header_line(line):
         """Return ``True`` when a line should be styled as a header."""
 
@@ -335,6 +405,514 @@ class PlanetioSummarizeWizard(models.Model):
                 return True
         return False
 
+<<<<<<< HEAD
+=======
+    _STRUCTURED_SECTION_KEY_ALIASES = {
+        "alerts": {
+            "alerts",
+            "alert",
+            "criticalalerts",
+            "criticalissues",
+            "criticalrisks",
+            "issues",
+            "risks",
+            "warnings",
+            "anomalies",
+            "findings",
+            "allerte",
+            "allerta",
+        },
+        "actions": {
+            "actions",
+            "action",
+            "actionitems",
+            "actionpoints",
+            "correctiveactions",
+            "correctiveaction",
+            "recommendedactions",
+            "recommendations",
+            "suggestions",
+            "nextsteps",
+            "mitigationactions",
+            "mitigationmeasures",
+            "remediationsteps",
+            "followupactions",
+            "azioni",
+            "azionicorrettive",
+        },
+    }
+
+    def _parse_ai_structured_response(self, text):
+        """Try to extract structured alerts/actions from ``text``."""
+
+        alerts = []
+        actions = []
+        if text in (None, "", False):
+            return {"alerts": alerts, "actions": actions}
+
+        if isinstance(text, (bytes, bytearray)):
+            try:
+                text = text.decode("utf-8")
+            except Exception:
+                text = text.decode("utf-8", errors="ignore")
+        elif not isinstance(text, str):
+            text = str(text)
+
+        parsed = self._loads_json_like(text)
+        if parsed is not None:
+            structured = self._extract_structured_from_container(parsed)
+            if structured["alerts"] or structured["actions"]:
+                return structured
+
+        return self._parse_structured_from_text(text)
+
+    def _loads_json_like(self, text):
+        """Return Python data parsed from ``text`` when it resembles JSON."""
+
+        if not isinstance(text, str):
+            return None
+
+        cleaned = text.strip()
+        if not cleaned:
+            return None
+
+        fence_match = re.match(r"```(?:json)?\s*(.+?)\s*```$", cleaned, re.DOTALL)
+        if fence_match:
+            cleaned = fence_match.group(1).strip()
+
+        try:
+            return json.loads(cleaned)
+        except Exception:
+            pass
+
+        try:
+            return ast.literal_eval(cleaned)
+        except Exception:
+            return None
+
+    def _extract_structured_from_container(self, container):
+        """Search ``container`` for alert/action sections."""
+
+        empty = {"alerts": [], "actions": []}
+
+        if isinstance(container, dict):
+            candidates = [container]
+            for key in ("data", "result", "response", "payload", "summary", "sections"):
+                nested = container.get(key)
+                if isinstance(nested, dict):
+                    candidates.append(nested)
+            for candidate in candidates:
+                alerts = self._normalize_structured_entries(
+                    self._extract_structured_entries(candidate, "alerts")
+                )
+                actions = self._normalize_structured_entries(
+                    self._extract_structured_entries(candidate, "actions")
+                )
+                if alerts or actions:
+                    return {"alerts": alerts, "actions": actions}
+
+            for value in container.values():
+                nested = self._extract_structured_from_container(value)
+                if nested["alerts"] or nested["actions"]:
+                    return nested
+
+            return empty
+
+        if isinstance(container, list):
+            alerts = self._normalize_structured_entries(container)
+            if alerts:
+                return {"alerts": alerts, "actions": []}
+
+            for item in container:
+                nested = self._extract_structured_from_container(item)
+                if nested["alerts"] or nested["actions"]:
+                    return nested
+
+            return empty
+
+        if isinstance(container, str):
+            nested = self._loads_json_like(container)
+            if nested is not None:
+                return self._extract_structured_from_container(nested)
+
+        return empty
+
+    def _extract_structured_entries(self, container, section):
+        """Return the content of ``section`` from ``container`` handling aliases."""
+
+        if not isinstance(container, dict):
+            return []
+
+        aliases = self._STRUCTURED_SECTION_KEY_ALIASES.get(section, {section})
+        fallback = container.get(section)
+
+        for key, value in container.items():
+            if not isinstance(key, str):
+                continue
+            normalised = re.sub(r"[^a-z]", "", key.lower())
+            if normalised not in aliases:
+                continue
+            if value in (None, "", False):
+                continue
+            if isinstance(value, (list, tuple, dict)) and not value:
+                continue
+            return value
+
+        if fallback not in (None, "", False):
+            if not isinstance(fallback, (list, tuple, dict)) or fallback:
+                return fallback
+
+        return []
+
+    def _normalize_structured_entries(self, entries):
+        """Normalise a list of entries into ``field_id``/``description`` dicts."""
+
+        if isinstance(entries, dict):
+            mapped_entries = []
+            for key, value in entries.items():
+                if isinstance(value, dict):
+                    entry = dict(value)
+                    entry.setdefault("field_id", key)
+                elif isinstance(value, (list, tuple)):
+                    entry = [key, *value]
+                else:
+                    entry = {"field_id": key, "description": value}
+                mapped_entries.append(entry)
+            entries = mapped_entries
+        elif isinstance(entries, tuple):
+            entries = list(entries)
+
+        if isinstance(entries, (bytes, bytearray)):
+            try:
+                entries = entries.decode("utf-8")
+            except Exception:
+                entries = entries.decode("utf-8", errors="ignore")
+
+        if isinstance(entries, str):
+            entries = [entries]
+
+        if not isinstance(entries, list):
+            return []
+
+        normalised = []
+        for index, entry in enumerate(entries, start=1):
+            normalised_entry = self._normalize_structured_entry(entry)
+            if not normalised_entry:
+                continue
+            normalised_entry.setdefault("sequence", index * 10)
+            normalised.append(normalised_entry)
+        return normalised
+
+    def _normalize_structured_entry(self, entry):
+        """Turn ``entry`` into a dict with ``description`` and identifiers."""
+
+        if entry in (None, "", [], {}):
+            return {}
+
+        result = {}
+
+        if isinstance(entry, dict):
+            description = (
+                entry.get("description")
+                or entry.get("paragraph")
+                or entry.get("text")
+                or entry.get("value")
+                or entry.get("summary")
+                or entry.get("action")
+                or entry.get("actions")
+                or entry.get("azioni")
+                or entry.get("recommendation")
+                or entry.get("recommendations")
+                or entry.get("suggestion")
+                or entry.get("suggestions")
+                or entry.get("detail")
+                or entry.get("details")
+                or entry.get("note")
+                or entry.get("notes")
+                or entry.get("message")
+                or entry.get("body")
+                or entry.get("content")
+            )
+            description = self._clean_entry_text(description)
+            if description:
+                result["description"] = description
+
+            for key in (
+                "field_id",
+                "field",
+                "id",
+                "line_id",
+                "line",
+                "identifier",
+            ):
+                value = self._clean_entry_text(entry.get(key))
+                if value not in (None, ""):
+                    result["field_id"] = value
+                    break
+
+            for key in (
+                "field_label",
+                "label",
+                "field_name",
+                "name",
+                "line_name",
+                "title",
+            ):
+                value = self._clean_entry_text(entry.get(key))
+                if value not in (None, ""):
+                    result["field_label"] = value
+                    break
+
+            if entry.get("sequence") not in (None, ""):
+                result["sequence"] = entry.get("sequence")
+
+        elif isinstance(entry, (list, tuple)):
+            if not entry:
+                return {}
+            field_id = self._clean_entry_text(entry[0])
+            description_parts = [
+                self._clean_entry_text(part)
+                for part in entry[1:]
+                if part not in (None, "")
+            ]
+            description = " ".join(part for part in description_parts if part).strip()
+            if description:
+                result["description"] = description
+            if field_id not in (None, ""):
+                result["field_id"] = field_id
+
+        else:
+            cleaned = self._clean_entry_text(entry)
+            if not cleaned:
+                return {}
+            cleaned = cleaned.lstrip("-*• ").strip()
+            match = re.match(
+                r"^(?P<label>[^:]+?)\s*[:\-–—]\s*(?P<body>.+)$",
+                cleaned,
+            )
+            if match:
+                label = match.group("label").strip()
+                body = match.group("body").strip()
+                if label:
+                    result["field_id"] = label
+                if body:
+                    result["description"] = body
+            else:
+                result["description"] = cleaned
+
+        if not result.get("description"):
+            return {}
+
+        return result
+
+    def _parse_structured_from_text(self, text):
+        """Fallback parser when the AI did not return JSON."""
+
+        alerts = []
+        actions = []
+        if not text:
+            return {"alerts": alerts, "actions": actions}
+
+        current = None
+        for raw_line in text.replace("\r\n", "\n").split("\n"):
+            line = raw_line.strip()
+            if not line:
+                continue
+
+            plain_line = self._strip_ai_markup(line)
+            heading = self._normalize_heading_token(plain_line.rstrip(":"))
+            heading_upper = heading.upper()
+            heading_words = [
+                word for word in re.split(r"\W+", heading_upper) if word
+            ]
+            heading_word_set = set(heading_words)
+            if heading_upper in {
+                "ALERTS",
+                "DEFORESTATION ALERTS",
+                "ALLERTE",
+                "ALLERTA",
+            } or (
+                "ALERT" in heading_upper and len(heading_upper.split()) <= 5
+            ):
+                current = "alerts"
+                continue
+
+            if heading_upper in {
+                "CORRECTIVE ACTIONS",
+                "ACTIONS",
+                "AZIONI CORRETTIVE",
+            } or (
+                {"CORRECTIVE", "CORRETTIVE"} & heading_word_set
+                or (
+                    {"ACTION", "ACTIONS", "AZIONI", "AZIONE"} & heading_word_set
+                    and len(heading_word_set) <= 5
+                )
+            ):
+                current = "actions"
+                continue
+
+            entry = self._normalize_structured_entry(plain_line)
+            if not entry:
+                continue
+
+            if current == "actions":
+                target = actions
+            else:
+                target = alerts
+            entry.setdefault("sequence", len(target) * 10 + 10)
+            target.append(entry)
+
+        return {"alerts": alerts, "actions": actions}
+
+    def _match_declaration_line(self, record, *identifiers):
+        """Try to find a declaration line that matches the given identifiers."""
+
+        lines = getattr(record, "line_ids", None)
+        if not lines:
+            return self.env["eudr.declaration.line"]
+
+        try:
+            line_list = list(lines)
+        except TypeError:
+            line_list = [lines]
+
+        for identifier in identifiers:
+            line = self._match_line_identifier(line_list, identifier)
+            if line:
+                return line
+
+        return self.env["eudr.declaration.line"]
+
+    @staticmethod
+    def _match_line_identifier(lines, identifier):
+        if identifier in (None, "", False):
+            return None
+
+        if isinstance(identifier, (int, float)):
+            try:
+                numeric_id = int(identifier)
+            except Exception:
+                numeric_id = None
+            else:
+                for line in lines:
+                    if getattr(line, "id", None) == numeric_id:
+                        return line
+
+        identifier_str = str(identifier).strip()
+        if not identifier_str:
+            return None
+
+        try:
+            numeric_id = int(float(identifier_str))
+        except Exception:
+            numeric_id = None
+        else:
+            for line in lines:
+                if getattr(line, "id", None) == numeric_id:
+                    return line
+
+        lowered = identifier_str.lower()
+        for attr in (
+            "external_uid",
+            "farmer_id_code",
+            "name",
+            "display_name",
+            "line_label",
+        ):
+            for line in lines:
+                value = getattr(line, attr, None)
+                if not value:
+                    continue
+                if str(value).strip().lower() == lowered:
+                    return line
+
+        return None
+
+    def _prepare_feedback_records(self, record, entries):
+        prepared = []
+        for index, entry in enumerate(entries, start=1):
+            description = (entry.get("description") or "").strip()
+            if not description:
+                continue
+
+            identifier = entry.get("field_id")
+            label = entry.get("field_label")
+            line = self._match_declaration_line(record, identifier, label)
+
+            values = {
+                "sequence": entry.get("sequence") or index * 10,
+                "description": description,
+            }
+
+            if identifier not in (None, "", False):
+                values["field_identifier"] = str(identifier)
+
+            if label not in (None, "", False):
+                values["line_label"] = str(label)
+
+            if line and getattr(line, "id", None):
+                values["line_id"] = line.id
+                if not values.get("line_label"):
+                    values["line_label"] = getattr(line, "display_name", None) or getattr(
+                        line, "name", None
+                    )
+
+            display_label = values.get("line_label") or values.get("field_identifier") or ""
+            prepared.append({"vals": values, "label": display_label})
+
+        return prepared
+
+    def _store_ai_feedback(self, record, alerts, actions):
+        alert_prepared = self._prepare_feedback_records(record, alerts)
+        action_prepared = self._prepare_feedback_records(record, actions)
+
+        vals = {}
+        record_fields = getattr(record, "_fields", {}) or {}
+        if "ai_alert_ids" in record_fields or hasattr(record, "ai_alert_ids"):
+            commands = [(5, 0, 0)]
+            commands.extend((0, 0, item["vals"]) for item in alert_prepared)
+            vals["ai_alert_ids"] = commands
+
+        if "ai_action_ids" in record_fields or hasattr(record, "ai_action_ids"):
+            commands = [(5, 0, 0)]
+            commands.extend((0, 0, item["vals"]) for item in action_prepared)
+            vals["ai_action_ids"] = commands
+
+        if vals:
+            record.write(vals)
+
+        return alert_prepared, action_prepared
+
+    def _format_structured_summary(self, alerts, actions):
+        sections = []
+
+        if alerts:
+            lines = [_("Detected alerts")]
+            for item in alerts:
+                vals = item.get("vals", {})
+                label = item.get("label") or vals.get("line_label") or vals.get("field_identifier")
+                description = vals.get("description") or ""
+                if label:
+                    lines.append(f"- {label}: {description}")
+                else:
+                    lines.append(f"- {description}")
+            sections.append("\n".join(lines))
+
+        if actions:
+            lines = [_("Suggested corrective actions")]
+            for item in actions:
+                vals = item.get("vals", {})
+                label = item.get("label") or vals.get("line_label") or vals.get("field_identifier")
+                description = vals.get("description") or ""
+                if label:
+                    lines.append(f"- {label}: {description}")
+                else:
+                    lines.append(f"- {description}")
+            sections.append("\n".join(lines))
+
+        return "\n\n".join(section for section in sections if section).strip()
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     def _prepare_deforestation_feedback(self, record):
         """Collect deforestation alerts linked to the declaration ``record``."""
 
@@ -611,6 +1189,7 @@ class PlanetioSummarizeWizard(models.Model):
         """
 
         AiRequest = self.env["ai.request"]
+<<<<<<< HEAD
         default_provider = (
             self.env["ir.config_parameter"].sudo().get_param(
                 "ai_gateway.default_provider", "gemini"
@@ -619,6 +1198,36 @@ class PlanetioSummarizeWizard(models.Model):
         )
         for rec in self:
             if not rec.attachment_ids:
+=======
+        icp = self.env["ir.config_parameter"].sudo()
+        default_provider = (
+            icp.get_param("ai_gateway.default_provider", "gemini") or "gemini"
+        )
+
+        deforestation_prompt = (
+            icp.get_param("planetio_ai.prompt_deforestation_critical_issues")
+            or DEFAULT_DEFORESTATION_PROMPT
+        )
+        corrective_prompt = (
+            icp.get_param("planetio_ai.prompt_corrective_actions")
+            or DEFAULT_CORRECTIVE_ACTIONS_PROMPT
+        )
+
+        payload_parts = [STRUCTURED_RESPONSE_INSTRUCTION]
+        cleaned_deforestation = (deforestation_prompt or "").strip()
+        cleaned_actions = (corrective_prompt or "").strip()
+        if cleaned_deforestation:
+            payload_parts.append("### Deforestation alerts")
+            payload_parts.append(cleaned_deforestation)
+        if cleaned_actions:
+            payload_parts.append("### Corrective actions")
+            payload_parts.append(cleaned_actions)
+        payload_parts = [part for part in payload_parts if part]
+        payload_text = "\n\n".join(payload_parts)
+        for rec in self.web_progress_iter(self, msg="Message"):
+            attachment_ids = self._get_visible_attachment_ids(rec.attachment_ids)
+            if not attachment_ids:
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
                 continue
 
             req = AiRequest.create(
@@ -626,6 +1235,7 @@ class PlanetioSummarizeWizard(models.Model):
                     "name": f"AI Summary for {rec.id}",
                     "provider": default_provider,
                     "task_type": "summarize",
+<<<<<<< HEAD
                     "attachment_ids": [(6, 0, rec.attachment_ids.ids)],
                     "model_ref": f"{rec._name},{rec.id}",
                     "payload": (
@@ -635,6 +1245,11 @@ class PlanetioSummarizeWizard(models.Model):
                         "deforestazione, eventuali rischi o anomalie e, se disponibili dati "
                         "numerici, una tabella in formato testo con gli indicatori principali."
                     ),
+=======
+                    "attachment_ids": [(6, 0, attachment_ids)],
+                    "model_ref": f"{rec._name},{rec.id}",
+                    "payload": payload_text,
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
                 }
             )
 
@@ -644,6 +1259,7 @@ class PlanetioSummarizeWizard(models.Model):
                 continue
 
             summary = req.response_text or ""
+<<<<<<< HEAD
             if not summary:
                 continue
 
@@ -657,7 +1273,72 @@ class PlanetioSummarizeWizard(models.Model):
                     "mimetype": mimetype,
                     "res_model": rec._name,
                     "res_id": rec.id,
+=======
+            structured = self._parse_ai_structured_response(summary)
+            alerts = structured.get("alerts") or []
+            actions = structured.get("actions") or []
+            alert_prepared, action_prepared = self._store_ai_feedback(
+                rec, alerts, actions
+            )
+
+            formatted_text = self._format_structured_summary(
+                alert_prepared, action_prepared
+            )
+            combined_text = summary
+            if formatted_text:
+                formatted_text = formatted_text.strip()
+                if summary and formatted_text and formatted_text != summary.strip():
+                    combined_text = (
+                        f"{formatted_text}\n\n{_('Original AI response')}\n{summary}"
+                    )
+                else:
+                    combined_text = formatted_text or summary
+
+            combined_text = (combined_text or "").strip()
+            if not combined_text:
+                continue
+
+            self.env["ir.attachment"].create(
+                {
+                    "name": "ai_summary.txt",
+                    "type": "binary",
+                    "datas": base64.b64encode(combined_text.encode("utf-8")),
+                    "mimetype": "text/plain",
+                    "res_model": rec._name,
+                    "res_id": rec.id,
+                    "eudr_document_visible": False,
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
                 }
             )
 
         return True
+<<<<<<< HEAD
+=======
+
+    @staticmethod
+    def _get_visible_attachment_ids(attachments):
+        """Return IDs of attachments visible to EUDR consumers."""
+
+        if not attachments:
+            return []
+
+        filtered_method = getattr(attachments, "filtered", None)
+        if callable(filtered_method):
+            filtered = filtered_method(
+                lambda attachment: getattr(attachment, "eudr_document_visible", False)
+            )
+            ids = getattr(filtered, "ids", None)
+            if ids is not None:
+                return list(ids)
+            return [
+                getattr(attachment, "id", attachment)
+                for attachment in filtered
+                if getattr(attachment, "id", None) is not None
+            ]
+
+        return [
+            getattr(attachment, "id", attachment)
+            for attachment in attachments
+            if getattr(attachment, "eudr_document_visible", False)
+        ]
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

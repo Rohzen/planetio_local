@@ -7,6 +7,22 @@ try:
 except Exception:
     pd = None
 
+<<<<<<< HEAD
+=======
+try:  # pragma: no cover - fallback for standalone test loading
+    from ..utils import estimate_geojson_area_ha
+except ImportError:  # pragma: no cover - loaded outside package context
+    import importlib.util
+    from pathlib import Path
+
+    _geo_path = Path(__file__).resolve().parents[1] / "utils" / "geo.py"
+    _geo_spec = importlib.util.spec_from_file_location("planetio.utils.geo", _geo_path)
+    _geo_mod = importlib.util.module_from_spec(_geo_spec)
+    assert _geo_spec and _geo_spec.loader
+    _geo_spec.loader.exec_module(_geo_mod)
+    estimate_geojson_area_ha = _geo_mod.estimate_geojson_area_ha
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 class ExcelImportService(models.AbstractModel):
     _name = "excel.import.service"
@@ -94,6 +110,12 @@ class ExcelImportService(models.AbstractModel):
 
         base_name = (getattr(getattr(job, "attachment_id", None), "name", None) or "EUDR Import").rsplit(".", 1)[0]
 
+<<<<<<< HEAD
+=======
+        if decl.dds_mode == "single_multi" and hasattr(job, "_create_multi_records_from_rows"):
+            return job._create_multi_records_from_rows(decl, rows)
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         count = 0
         for idx, r in enumerate(rows, start=1):
             if not any(v for v in r.values() if v not in (None, "", [], {})):
@@ -157,12 +179,23 @@ class ExcelImportService(models.AbstractModel):
         df, sheet_name = self._load_normalized_dataframe(job.attachment_id, getattr(job, 'sheet_name', None))
         headers = list(df.columns)
         mapping = self._propose_mapping_from_headers(job.template_id, headers)
+<<<<<<< HEAD
         if self._is_mapping_poor(mapping) and self._ai_enabled():
             try:
                 mapping = self._propose_mapping_with_ai(headers, df.head(5).to_dict(orient='records'))
                 mapping['_source'] = 'ai'
             except Exception as e:
                 self._log(job, f'AI mapping failed: {e}')
+=======
+        if self._is_mapping_poor(mapping):
+            ai_mapper = getattr(self, '_propose_mapping_with_ai', None)
+            if callable(ai_mapper):
+                try:
+                    mapping = ai_mapper(headers, df.head(5).to_dict(orient='records'))
+                    mapping['_source'] = 'ai'
+                except Exception as e:
+                    self._log(job, f'AI mapping failed: {e}')
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         preview = df.head(20).to_dict(orient='records')
         return mapping, preview
 
@@ -385,6 +418,14 @@ class ExcelImportService(models.AbstractModel):
 
         vals['geo_type'] = geo_type
         vals['geometry'] = geometry
+<<<<<<< HEAD
+=======
+
+        if geometry and not vals.get('area_ha'):
+            computed_area = estimate_geojson_area_ha(self.env, geometry)
+            if computed_area:
+                vals['area_ha'] = computed_area
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         return vals
 
     def _guess_header(self, headers, candidates):

@@ -6,8 +6,24 @@ import google.generativeai as genai
 
 
 class GeminiProvider(object):
+<<<<<<< HEAD
     PREFERRED_MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]
     REST_BASE = "https://generativelanguage.googleapis.com/v1beta"
+=======
+    # Prefer current, generally-available models
+    PREFERRED_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"]
+    # v1beta → v1
+    REST_BASE = "https://generativelanguage.googleapis.com/v1"
+
+    # map old → new for compatibility
+    _MODEL_COMPAT = {
+        "gemini-1.5-pro": "gemini-2.5-pro",
+        "gemini-1.5-flash": "gemini-2.5-flash",
+        "gemini-1.5-flash-8b": "gemini-2.5-flash-lite",
+        "gemini-1.5-pro-latest": "gemini-2.5-pro",
+        "gemini-pro": "gemini-2.0-flash",  # legacy alias, best-effort
+    }
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     def __init__(self, env):
         self.env = env
@@ -18,6 +34,7 @@ class GeminiProvider(object):
         if not self.api_key:
             raise ValueError("Gemini API key mancante in Impostazioni")
 
+<<<<<<< HEAD
         # prova a configurare il client; se è vecchio useremo il fallback REST
         self._client_ok = False
         try:
@@ -26,10 +43,22 @@ class GeminiProvider(object):
             if hasattr(genai, "GenerativeModel"):
                 # alcune versioni vecchie hanno l'attributo ma poi 404 sui modelli gemini.
                 # useremo comunque un tentativo con REST come fallback in generate().
+=======
+        # normalize and upgrade model id if needed
+        target = self._normalize_to_bare_id(raw_model)
+        self.model_name = self._MODEL_COMPAT.get(target, target)
+
+        self._client_ok = False
+        try:
+            genai.configure(api_key=self.api_key)
+            # If the installed client is modern enough, use it; else fall back to REST
+            if hasattr(genai, "GenerativeModel"):
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
                 self._model = genai.GenerativeModel(self.model_name)
                 self._use_generate_text = False
                 self._client_ok = True
             else:
+<<<<<<< HEAD
                 # client davvero legacy → usa REST
                 self._model = None
                 self._use_generate_text = True  # segnala percorso non-moderno
@@ -38,6 +67,33 @@ class GeminiProvider(object):
             self._model = None
             self._use_generate_text = True
 
+=======
+                self._model = None
+                self._use_generate_text = True
+        except Exception:
+            self._model = None
+            self._use_generate_text = True
+
+    # optional: call during __init__ after computing self.model_name, to auto-heal bad IDs
+    def _maybe_select_available_model(self):
+        try:
+            import requests
+            resp = requests.get(
+                f"{self.REST_BASE}/models",
+                params={"key": self.api_key},
+                timeout=5,
+            )
+            resp.raise_for_status()
+            available = {m["name"].split("/", 1)[-1] for m in resp.json().get("models", [])}
+            if self.model_name not in available:
+                for pref in self.PREFERRED_MODELS:
+                    if pref in available:
+                        self.model_name = pref
+                        return
+        except Exception:
+            pass
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     # ---------------- utils ----------------
 
     def _normalize_to_bare_id(self, model_id: str) -> str:
@@ -67,8 +123,52 @@ class GeminiProvider(object):
 
     # ---------------- REST fallback ----------------
 
+<<<<<<< HEAD
     def _rest_generate(self, parts, **kwargs):
         url = f"{self.REST_BASE}/models/{self.model_name}:generateContent?key={self.api_key}"
+=======
+    def _rest_model_candidates(self):
+        model = self.model_name or self.PREFERRED_MODELS[0]
+        model = model.split("@")[0]
+
+        if "/" in model:
+            return [model]
+
+        candidates = []
+
+        def add(name):
+            if name and name not in candidates:
+                candidates.append(name)
+
+        add(model)
+
+        base = model
+        suffix = None
+        for ending in ("-latest", "-003", "-002", "-001"):
+            if base.endswith(ending):
+                suffix = ending
+                base = base[: -len(ending)]
+                break
+
+        if suffix == "-latest":
+            add(base)
+            add(f"{base}-001")
+        elif suffix in {"-003", "-002", "-001"}:
+            add(base)
+            add(f"{base}-latest")
+            if suffix != "-001":
+                add(f"{base}-001")
+        else:
+            add(f"{base}-latest")
+            add(f"{base}-001")
+
+        for preferred in self.PREFERRED_MODELS:
+            add(preferred)
+
+        return candidates
+
+    def _rest_generate(self, parts, **kwargs):
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         payload = {"contents": [{"parts": [{"text": p} for p in parts]}]}
         # passa configurazioni opzionali se presenti (come da API)
         gen_cfg = kwargs.get("generation_config")
@@ -79,6 +179,7 @@ class GeminiProvider(object):
             payload["safetySettings"] = safety
 
         headers = {"Content-Type": "application/json"}
+<<<<<<< HEAD
         resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=60)
         if resp.status_code == 404:
             raise RuntimeError(
@@ -98,6 +199,41 @@ class GeminiProvider(object):
         except Exception:
             text = ""
         return {"text": text, "meta": data, "tokens_in": 0, "tokens_out": 0, "cost": 0.0}
+=======
+        last_error = None
+
+        for candidate in self._rest_model_candidates():
+            url = f"{self.REST_BASE}/models/{candidate}:generateContent?key={self.api_key}"
+            resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=60)
+            if resp.status_code == 404:
+                last_error = RuntimeError(
+                    f"Model '{candidate}' non trovato (REST 404). "
+                    f"Controlla 'ai_gateway.gemini_model' oppure prova uno tra: "
+                    f"{', '.join(self.PREFERRED_MODELS)}. Body: {resp.text}"
+                )
+                continue
+            if resp.status_code >= 400:
+                raise RuntimeError(f"AI request error (REST {resp.status_code}): {resp.text}")
+
+            data = resp.json()
+            # estrai testo primario
+            text = ""
+            try:
+                cands = data.get("candidates") or []
+                if cands and cands[0].get("content", {}).get("parts"):
+                    text = "".join(part.get("text", "") for part in cands[0]["content"]["parts"])
+            except Exception:
+                text = ""
+
+            if candidate != self.model_name:
+                self.model_name = candidate
+
+            return {"text": text, "meta": data, "tokens_in": 0, "tokens_out": 0, "cost": 0.0}
+
+        if last_error:
+            raise last_error
+        raise RuntimeError("AI request error: nessun modello REST disponibile")
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     # ---------------- public API ----------------
 
@@ -141,8 +277,14 @@ class GeminiProvider(object):
             partial_summaries.append(res["text"].strip())
 
         merged_prompt = (
+<<<<<<< HEAD
             "Unisci i seguenti riassunti parziali in un unico executive summary con bullet point "
             "e una sezione 'Rischi/Anomalie'. Evita ripetizioni e mantieni i dati numerici:\n\n"
+=======
+            "Unisci i seguenti riassunti parziali in un unico executive summary con bullet point, "
+            "aggiungi una sezione 'Rischi/Anomalie' e una sezione 'Azioni correttive' con interventi "
+            "pratici e mirati. Evita ripetizioni e mantieni i dati numerici:\n\n"
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             + "\n\n".join([s for s in partial_summaries if s])
         )
         final = self.generate(merged_prompt, system_instruction=system_instruction, **kwargs)

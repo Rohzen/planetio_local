@@ -1,8 +1,21 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_eudr_declaration,eudr_declaration,model_eudr_declaration,base.group_user,1,1,1,1
 access_eudr_declaration_line,eudr_declaration_line,model_eudr_declaration_line,base.group_user,1,1,1,1
+<<<<<<< HEAD
 access_eudr_stage,access_eudr_stage,model_eudr_stage,base.group_user,1,1,1,1
 access_planetio_excel_import_wizard_user,access_planetio_excel_import_wizard_user,model_excel_import_wizard,,1,1,1,1
 access_excel_import_template_user,access_excel_import_template_user,model_excel_import_template,,1,1,1,1
 access_excel_import_template_field_user,access_excel_import_template_field_user,model_excel_import_template_field,,1,1,1,1
+=======
+access_eudr_declaration_line_alert,eudr_declaration_line_alert,model_eudr_declaration_line_alert,base.group_user,1,0,1,1
+access_eudr_stage,access_eudr_stage,model_eudr_stage,base.group_user,1,1,1,1
+access_planetio_excel_import_wizard_user,access_planetio_excel_import_wizard_user,model_excel_import_wizard,,1,1,1,1
+access_deforestation_geometry_wizard_user,access_deforestation_geometry_wizard_user,model_deforestation_geometry_wizard,,1,1,1,1
+access_excel_import_template_user,access_excel_import_template_user,model_excel_import_template,,1,1,1,1
+access_excel_import_template_field_user,access_excel_import_template_field_user,model_excel_import_template_field,,1,1,1,1
+access_eudr_commodity_line,eudr_commodity_line,model_eudr_commodity_line,base.group_user,1,1,1,1
+access_eudr_producer,eudr_producer,model_eudr_producer,base.group_user,1,1,1,1
+access_eudr_plot,eudr_plot,model_eudr_plot,base.group_user,1,1,1,1
+access_eudr_associated_statement,eudr_associated_statement,model_eudr_associated_statement,base.group_user,1,1,1,1
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 

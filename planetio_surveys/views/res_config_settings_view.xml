@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <!-- Inherited view to append Survey settings after deforestation_provider_settings -->
+  <record id="planetio_res_config_settings_view_survey" model="ir.ui.view">
+    <field name="name">planetio.res.config.settings.view.form.survey</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="planetio.planetio_res_config_settings_view"/>
+    <field name="arch" type="xml">
+      <xpath expr="//div[@name='plant4_settings']" position="after">
+        <h2>Survey</h2>
+        <div class="row mt16 o_settings_container" name="planetio_survey_settings">
+          <div class="col-12 col-lg-12 o_setting_box">
+            <div class="o_setting_left_pane"/>
+            <div class="o_setting_right_pane">
+              <span class="o_form_label">Template Survey</span>
+              <div class="text-muted">
+                <field name="planetio_survey_id" options="{'no_create_edit': False}"/>
+              </div>
+              <p class="text-muted">
+                Template Survey usato come questionario annuale per i fornitori.
+              </p>
+            </div>
+          </div>
+        </div>
+      </xpath>
+    </field>
+  </record>
+</odoo>

@@ -1,4 +1,8 @@
 
+<<<<<<< HEAD
+=======
+import base64
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 from odoo import models, fields, api, _
 from odoo.tools.misc import formatLang
 from odoo.exceptions import UserError
@@ -6,15 +10,39 @@ from ..services.eudr_adapter_odoo import action_retrieve_dds_numbers
 import json
 import math
 import urllib.parse
+<<<<<<< HEAD
 
 try:
     from shapely.geometry import Point, mapping
     from shapely.ops import transform
     from pyproj import CRS, Transformer
+=======
+from odoo.modules.module import get_module_resource
+
+
+EUDR_HS_SELECTION = [
+    ('0901',    '0901 – Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes containing coffee'),
+    ('090111',  '0901 11 – non-decaffeinated'),
+    ('090112',  '0901 12 – decaffeinated'),
+    ('090121',  '0901 21 – non-decaffeinated'),
+    ('090122',  '0901 22 – decaffeinated'),
+    ('090190',  '0901 90 – others'),
+]
+
+try:
+    from shapely.geometry import Point, mapping, shape
+    from shapely.ops import transform
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 except ImportError:
     # Se le librerie non sono installate, la funzionalità non sarà disponibile.
     # In un ambiente di produzione, sarebbe meglio loggare un avviso.
     Point = None
+<<<<<<< HEAD
+=======
+    mapping = None
+    shape = None
+    transform = None
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 
 try:
@@ -63,6 +91,10 @@ class EUDRDeclaration(models.Model):
             self.filtered(lambda rec: rec.stage_id != stage).write({'stage_id': stage.id})
         return stage
 
+<<<<<<< HEAD
+=======
+    company_id = fields.Many2one('res.company', default=lambda s: s.env.company, required=True)
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     datestamp = fields.Datetime(string="Datestamp", default=lambda self: fields.Datetime.now())
     name = fields.Char(required=False)
     partner_id = fields.Many2one(
@@ -86,6 +118,7 @@ class EUDRDeclaration(models.Model):
     area_ha = fields.Float(compute="_compute_area_ha", store=True, readonly=True)
     source_attachment_id = fields.Many2one("ir.attachment")
     line_ids = fields.One2many("eudr.declaration.line", "declaration_id", string="Lines")
+<<<<<<< HEAD
 
     attachment_ids = fields.One2many(
         'ir.attachment', 'res_id',
@@ -99,6 +132,53 @@ class EUDRDeclaration(models.Model):
         ('mixed', 'Mixed'),
         ('third_party_trader', 'Third-party Trader')
     ], string="Company Type",)
+=======
+    alert_ids = fields.One2many(
+        "eudr.declaration.line.alert",
+        "declaration_id",
+        string="Deforestation Alerts",
+        domain=[("line_id.external_ok", "=", False)],
+        readonly=True,
+    )
+
+    attachment_ids = fields.One2many(
+        'ir.attachment',
+        'res_id',
+        string='Documenti visibili',
+        help="Allegati collegati."
+    )
+    # Allegati mostrati nella tab Documenti
+    attachment_visible_ids = fields.One2many(
+        'ir.attachment',
+        'res_id',
+        string='Documenti visibili',
+        domain=[('res_model', '=', 'eudr.declaration'),
+                ('eudr_document_visible', '=', True)],
+        help="Allegati collegati e visibili nella sezione Documenti."
+    )
+
+    # Allegati non visibili
+    attachment_hidden_ids = fields.One2many(
+        'ir.attachment',
+        'res_id',
+        string='Documenti nascosti',
+        domain=[('res_model', '=', 'eudr.declaration'),
+                ('eudr_document_visible', '!=', True)],
+        help="Allegati collegati ma non mostrati nella sezione Documenti."
+    )
+
+    dds_mode = fields.Selection(
+        [
+            ('single_one', 'Single commodity – current'),
+            ('single_multi', 'Multiple commodities'),
+            ('trader_refs', 'Trader references upstream DDS'),
+        ],
+        string="Submission mode",
+        default='single_one',
+        required=True,
+        help="Choose how this declaration will be submitted to TRACES DDS.",
+    )
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     eudr_type_override = fields.Selection([
         ('TRADER', 'Trader'),
         ('OPERATOR', 'Operator')
@@ -115,6 +195,7 @@ class EUDRDeclaration(models.Model):
         ], string="Activity", default='import')
     operator_name = fields.Char(string="Operator")
     extra_info = fields.Text(string="Additional info")
+<<<<<<< HEAD
     hs_code = fields.Selection(
         [
             ('0901',    '0901 – Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes containing coffee'),
@@ -131,12 +212,50 @@ class EUDRDeclaration(models.Model):
     producer_name = fields.Char(string="Producer name")
     coffee_species  = fields.Many2one('coffee.species', string="Product")
     area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
+=======
+    hs_code = fields.Selection(EUDR_HS_SELECTION, string="HS Code", default="090111", required=True)
+    product_id  = fields.Many2one('product.product', string="Product template")
+    product_description = fields.Char(string="Description of raw materials or products", required=True)
+    net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3), required=True)
+    common_name = fields.Char(string="Common name")
+    producer_name = fields.Char(string="Producer name")
+    lot_name = fields.Char(string="Lot info")
+    supplier_id = fields.Many2one('res.partner', string="Producer/Supplier")
+    coffee_species  = fields.Many2one('coffee.species', string="Product", required=True)
+    area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
+    commodity_ids = fields.One2many("eudr.commodity.line", "declaration_id", string="Commodities")
+    associated_statement_ids = fields.One2many("eudr.associated.statement", "declaration_id", string="Associated statements")
+
+    # Mirrors from company settings (for XML attrs)
+    eudr_company_type_rel = fields.Selection(related="company_id.eudr_company_type", store=False, readonly=True)
+    eudr_is_sme_rel = fields.Boolean(related="company_id.eudr_is_sme", store=False, readonly=True)
+    eudr_tp_has_mandate_rel = fields.Boolean(related="company_id.eudr_third_party_has_mandate", store=False, readonly=True)
+    eudr_tp_in_eu_rel = fields.Boolean(related="company_id.eudr_third_party_established_in_eu", store=False, readonly=True)
+
+    @api.onchange('eudr_company_type_rel', 'eudr_is_sme_rel', 'eudr_type_override')
+    def _onchange_eudr_context_cleanup(self):
+        for r in self:
+            # l’override ha senso solo per Mixed
+            if r.eudr_company_type_rel != 'mixed':
+                r.eudr_type_override = False
+            # se non third party nascondiamo eventuale client_id
+            if r.eudr_company_type_rel != 'third_party_trader':
+                r.eudr_third_party_client_id = False
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     @api.depends('area_ha')
     def _compute_area_ha_display(self):
         for rec in self:
             rec.area_ha_display = formatLang(self.env, rec.area_ha or 0.0, digits=4)
 
+<<<<<<< HEAD
+=======
+    @api.onchange('product_id')
+    def _onchange_product_id_set_description(self):
+        for rec in self:
+            rec.product_description = rec.product_id.name or False
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     # ---------------------- helpers ----------------------
 
     @staticmethod
@@ -332,6 +451,11 @@ class EUDRDeclaration(models.Model):
 
     @api.depends(
         "line_ids", "line_ids.geometry", "line_ids.geo_type",
+<<<<<<< HEAD
+=======
+        "commodity_ids.producer_ids.plot_ids.geometry",
+        "commodity_ids.producer_ids.plot_ids.area_ha",
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     )
     def _compute_area_ha(self):
         ICP = self.env['ir.config_parameter'].sudo()
@@ -341,10 +465,25 @@ class EUDRDeclaration(models.Model):
 
         for rec in self:
             total_area_m2 = 0.0
+<<<<<<< HEAD
             for line in rec.line_ids:
                 gobj = self._safe_json_load(getattr(line, "geometry", None))
                 if not gobj:
                     continue
+=======
+            def _float(value):
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    return None
+
+            def _accumulate_from_geojson(raw_geojson, area_hint=None):
+                gobj = self._safe_json_load(raw_geojson)
+                if not gobj:
+                    if area_hint and area_hint > 0:
+                        return area_hint * 10000.0
+                    return 0.0
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
                 polygons, point_count = [], 0
                 for geom in self._iter_geojson_geometries(gobj):
@@ -362,14 +501,36 @@ class EUDRDeclaration(models.Model):
                                 point_count += 1
 
                 if polygons:
+<<<<<<< HEAD
                     total_area_m2 += rec._polygon_area_m2(polygons)
                 elif point_count:
                     total_area_m2 += point_count * fallback_m2_per_point
+=======
+                    return rec._polygon_area_m2(polygons)
+                if point_count:
+                    return point_count * fallback_m2_per_point
+                if area_hint and area_hint > 0:
+                    return area_hint * 10000.0
+                return 0.0
+
+            for line in rec.line_ids:
+                total_area_m2 += _accumulate_from_geojson(
+                    getattr(line, "geometry", None),
+                    _float(getattr(line, "area_ha", None)),
+                )
+
+            for plot in rec.mapped("commodity_ids.producer_ids.plot_ids"):
+                total_area_m2 += _accumulate_from_geojson(
+                    getattr(plot, "geometry", None),
+                    _float(getattr(plot, "area_ha", None)),
+                )
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
             rec.area_ha = (total_area_m2 / 10000.0) if total_area_m2 > 0.0 else 0.0
 
     @api.model
     def create(self, vals):
+<<<<<<< HEAD
         # assegna stage di default se non specificato
         default_stage_id = self._default_stage_id()
 
@@ -384,6 +545,36 @@ class EUDRDeclaration(models.Model):
 
         result = super(EUDRDeclaration, self).create(vals)
         return result
+=======
+        # pick default stage
+        default_stage_id = self._default_stage_id()
+
+        # ensure company context is correct before drawing the sequence
+        target_company = vals.get('company_id') or self.env.company.id
+        env_in_company = self.with_company(target_company)
+
+        # choose the sequence date (use provided datestamp or now)
+        seq_dt = vals.get('datestamp') or fields.Datetime.now()
+        ctx = dict(env_in_company.env.context, ir_sequence_date=seq_dt)
+
+        if not vals.get('name'):
+            vals['name'] = env_in_company.with_context(ctx).env['ir.sequence'].next_by_code('eudr.declaration') or _('New')
+
+        if not vals.get('stage_id'):
+            vals['stage_id'] = default_stage_id
+        if 'net_mass_kg' not in vals:
+            vals['net_mass_kg'] = 0.0
+
+        # try once, and if a rare race triggers the unique constraint, regenerate and retry
+        try:
+            return super(EUDRDeclaration, self).create(vals)
+        except Exception as e:
+            # Only retry on unique violation on our constraint
+            if hasattr(e, 'pgerror') and 'name_company_uniq' in getattr(e, 'pgerror', ''):
+                vals['name'] = env_in_company.with_context(ctx).env['ir.sequence'].next_by_code('eudr.declaration') or _('New')
+                return super(EUDRDeclaration, self).create(vals)
+            raise
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     def action_open_excel_import_wizard(self):
         self.ensure_one()
@@ -427,6 +618,55 @@ class EUDRDeclaration(models.Model):
             "target": "new",
         }
 
+<<<<<<< HEAD
+=======
+    def action_download_external_ok_json(self):
+        """Download JSON data for lines flagged as externally validated."""
+
+        self.ensure_one()
+
+        ok_lines = self.line_ids.filtered(lambda line: line.external_ok)
+        if not ok_lines:
+            raise UserError(_("No lines marked as OK are available for download."))
+
+        payload = []
+        for line in ok_lines:
+            line_payload = {
+                "id": line.id,
+                "name": line.name,
+                "farmer_id_code": line.farmer_id_code,
+                "farmer_name": line.farmer_name,
+                "farm_name": line.farm_name,
+                "country": line.country,
+                "region": line.region,
+                "municipality": line.municipality,
+                "area_ha": line.area_ha,
+                "geo_type": line.geo_type,
+            }
+
+            if line.geometry:
+                try:
+                    line_payload["geometry"] = json.loads(line.geometry)
+                except Exception:
+                    line_payload["geometry"] = line.geometry
+
+            if line.external_properties_json:
+                try:
+                    line_payload["external_properties"] = json.loads(line.external_properties_json)
+                except Exception:
+                    line_payload["external_properties_raw"] = line.external_properties_json
+
+            payload.append(line_payload)
+
+        data = json.dumps({"lines": payload}, ensure_ascii=False, indent=2)
+
+        return {
+            "type": "ir.actions.act_url",
+            "url": "data:application/json," + urllib.parse.quote(data),
+            "target": "new",
+        }
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     def action_create_geojson(self):
         from ..services.eudr_adapter_odoo import attach_dds_geojson, build_dds_geojson
 
@@ -436,7 +676,11 @@ class EUDRDeclaration(models.Model):
             record.message_post(
                 body=_("GeoJSON creato e salvato come <b>%s</b>.") % attachment.name
             )
+<<<<<<< HEAD
         return True
+=======
+        return {"type": "ir.actions.client", "tag": "reload"}
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     def open_otp_wizard(self):
         self.ensure_one()
@@ -464,6 +708,14 @@ class EUDRDeclaration(models.Model):
 
     def action_open_import_wizard(self):
         self.ensure_one()
+<<<<<<< HEAD
+=======
+        template = None
+        try:
+            template = self.env.ref('planetio.tmpl_eudr_declaration')
+        except ValueError:
+            template = self.env['excel.import.template'].search([], limit=1)
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'excel.import.wizard',
@@ -472,6 +724,11 @@ class EUDRDeclaration(models.Model):
             'context': {
                 'active_model': 'eudr.declaration',
                 'active_id': self.id,
+<<<<<<< HEAD
+=======
+                'default_declaration_id': self.id,
+                'default_template_id': template.id if template else False,
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             }
         }
 
@@ -491,6 +748,55 @@ class EUDRDeclarationLine(models.Model):
     farmer_id_code = fields.Char()
     tax_code = fields.Char()
     country = fields.Char()
+<<<<<<< HEAD
+=======
+    country_id = fields.Many2one('res.country', string='Country (M2O)')
+
+    country_flag_bin = fields.Binary(
+        string="Flag",
+        compute="_compute_country_flag_bin",
+        store=False,
+    )
+
+    @api.depends('country', 'country_id')
+    def _compute_country_flag_bin(self):
+        """Carica il file bandiera da base/static in base al codice ISO a due lettere."""
+        for rec in self:
+            rec.country_flag_bin = False
+            # 1) prova con M2O se presente
+            iso_code = False
+            if rec.country_id and rec.country_id.code:
+                iso_code = rec.country_id.code
+            else:
+                # 2) fallback: se hai solo il Char, prova a risalire al paese per nome o codice
+                if rec.country:
+                    # cerca prima per codice (es. "IT"), poi per nome (es. "Italy")
+                    Country = self.env['res.country'].sudo()
+                    country_rec = Country.search([
+                        '|',
+                        ('code', '=ilike', rec.country.strip()),
+                        ('name', '=ilike', rec.country.strip()),
+                    ], limit=1)
+                    if country_rec:
+                        iso_code = country_rec.code
+
+            if not iso_code:
+                continue
+
+            fname = f"{iso_code.lower()}.png"
+            # path tipici delle bandiere core (variano per build)
+            path = get_module_resource('base', 'static/img/country_flags', fname)
+            if not path:
+                path = get_module_resource('base', 'static/img/flags', fname)
+
+            if path:
+                try:
+                    with open(path, 'rb') as f:
+                        rec.country_flag_bin = base64.b64encode(f.read())
+                except Exception:
+                    rec.country_flag_bin = False
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     region = fields.Char()
     municipality = fields.Char()
     farm_name = fields.Char()
@@ -514,6 +820,101 @@ class EUDRDeclarationLine(models.Model):
         string="OK",
         readonly=True,
     )
+<<<<<<< HEAD
+=======
+    area_ha_float = fields.Float(string="Area (ha)", compute="_compute_area_ha_float", store=True)
+
+    @api.onchange('area_ha_float')
+    def _sync_area_char(self):
+        for rec in self:
+            if rec.area_ha_float and rec.area_ha_float > 0:
+                rec.area_ha = f"{rec.area_ha_float:.4f}"
+            else:
+                rec.area_ha = "0.0000"
+
+    @api.depends('geometry','farmer_id_code')
+    def _compute_area_ha_float(self):
+        geod = Geod(ellps="WGS84") if Geod else None
+
+        for rec in self:
+            rec.area_ha_float = 0.0
+            if not rec.geometry:
+                continue
+            try:
+                gobj = json.loads(rec.geometry)
+            except Exception:
+                continue
+            if not shape:
+                continue
+
+            def _collect_polygons(payload):
+                """Return a list of shapely Polygons from a GeoJSON payload."""
+                if not isinstance(payload, dict):
+                    return []
+                gtype = payload.get("type")
+                if gtype == "Feature":
+                    return _collect_polygons(payload.get("geometry"))
+                if gtype == "FeatureCollection":
+                    polygons = []
+                    for feature in payload.get("features") or []:
+                        polygons.extend(_collect_polygons((feature or {}).get("geometry")))
+                    return polygons
+                try:
+                    geom = shape(payload)
+                except Exception:
+                    return []
+                if transform:
+                    minx, miny, maxx, maxy = geom.bounds
+                    if maxy > 90 or miny < -90 or maxx > 180 or minx < -180:
+                        try:
+                            swapped = transform(lambda x, y, z=None: (y, x), geom)
+                        except Exception:
+                            swapped = None
+                        if swapped is not None and not swapped.is_empty:
+                            s_minx, s_miny, s_maxx, s_maxy = swapped.bounds
+                            if (
+                                -180 <= s_minx <= 180
+                                and -180 <= s_maxx <= 180
+                                and -90 <= s_miny <= 90
+                                and -90 <= s_maxy <= 90
+                            ):
+                                geom = swapped
+                if geom.is_empty:
+                    return []
+                if geom.geom_type == "Polygon":
+                    return [geom]
+                if geom.geom_type == "MultiPolygon":
+                    return list(geom.geoms)
+                return []
+
+            polygons = _collect_polygons(gobj)
+            if not polygons:
+                continue
+
+            area_m2 = 0.0
+            if geod:
+                for poly in polygons:
+                    try:
+                        area, _ = geod.geometry_area_perimeter(poly)
+                    except Exception:
+                        continue
+                    area_m2 += abs(area)
+            elif Transformer and CRS and transform:
+                for poly in polygons:
+                    try:
+                        lon, lat = poly.representative_point().coords[0]
+                        zone = int((lon + 180) // 6) + 1
+                        epsg = 32600 + zone if lat >= 0 else 32700 + zone
+                        transformer = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg}", always_xy=True)
+                        projected = transform(transformer.transform, poly)
+                    except Exception:
+                        continue
+                    area_m2 += abs(projected.area)
+
+            if area_m2:
+                rec.area_ha_float = area_m2 / 10000.0
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     def action_visualize_area_on_map(self):
         """
@@ -625,3 +1026,65 @@ class EUDRDeclarationLine(models.Model):
             'target': 'new',
         }
 
+<<<<<<< HEAD
+=======
+
+class EUDRCommodityLine(models.Model):
+    _name = "eudr.commodity.line"
+    _description = "EUDR Commodity"
+
+    declaration_id = fields.Many2one("eudr.declaration", ondelete="cascade", required=True)
+    hs_heading = fields.Selection(EUDR_HS_SELECTION, string="HS heading", default="090111")
+    description_of_goods = fields.Char(string="Description of goods")
+    net_weight_kg = fields.Float(string="Net weight (kg)", digits=(16, 3))
+    producer_ids = fields.One2many("eudr.producer", "commodity_id", string="Producers")
+
+
+class EUDRProducer(models.Model):
+    _name = "eudr.producer"
+    _description = "EUDR Producer"
+
+    commodity_id = fields.Many2one("eudr.commodity.line", ondelete="cascade", required=True)
+    name = fields.Char(string="Name", required=True)
+    country = fields.Char(string="Country (ISO2)")
+    plot_ids = fields.One2many("eudr.plot", "producer_id", string="Plots")
+
+
+class EUDRPlot(models.Model):
+    _name = "eudr.plot"
+    _description = "EUDR Plot"
+
+    producer_id = fields.Many2one("eudr.producer", ondelete="cascade", required=True)
+    plot_id = fields.Char(string="Plot ID")
+    country_of_production = fields.Char(string="Country of production")
+    geometry = fields.Text(string="Geometry (GeoJSON)")
+    area_ha = fields.Float(string="Area (ha)")
+
+    def action_open_geojson(self):
+        self.ensure_one()
+        if not self.geometry:
+            raise UserError(_('GeoJSON geometry missing on plot.'))
+        try:
+            geo_data = json.loads(self.geometry)
+        except json.JSONDecodeError:
+            raise UserError(_('Invalid GeoJSON payload on plot.'))
+        encoded_geojson = urllib.parse.quote(json.dumps(geo_data))
+        url = f"https://geojson.io/#data=data:application/json,{encoded_geojson}"
+        return {
+            'type': 'ir.actions.act_url',
+            'name': _('Plot geometry'),
+            'target': 'new',
+            'url': url,
+        }
+
+
+class EUDRAssociatedStatement(models.Model):
+    _name = "eudr.associated.statement"
+    _description = "EUDR Associated Statement"
+
+    declaration_id = fields.Many2one("eudr.declaration", ondelete="cascade", required=True)
+    upstream_reference_number = fields.Char(string="Upstream reference number")
+    upstream_dds_identifier = fields.Char(string="Upstream DDS identifier")
+    note = fields.Char(string="Note")
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

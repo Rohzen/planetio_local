@@ -8,6 +8,11 @@
         'views/eudr_declaration_views.xml',
         'views/survey_user_input_views.xml',
         'data/survey_data.xml',
+<<<<<<< HEAD
+=======
+        'views/res_partner_view.xml',
+        'views/res_config_settings_view.xml',
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     ],
     'installable': True,
     'application': False,

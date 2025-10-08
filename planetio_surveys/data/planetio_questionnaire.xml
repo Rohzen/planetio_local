@@ -1,0 +1,624 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="planetio_survey_eudr" model="survey.survey">
+        <field name="title">EUDR Due Diligence Questionnaire</field>
+    </record>
+
+    <record id="planetio_survey_eudr_page_general_information" model="survey.page">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="title">GENERAL INFORMATION ABOUT THE SUPPLIER</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="planetio_survey_eudr_page_traceability" model="survey.page">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="title">TRACEABILITY AND GEOLOCATION</field>
+        <field name="sequence">2</field>
+    </record>
+    <record id="planetio_survey_eudr_page_compliance" model="survey.page">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="title">EUDR COMPLIANCE AND LOCAL LEGISLATION</field>
+        <field name="sequence">3</field>
+    </record>
+    <record id="planetio_survey_eudr_page_supply_chain" model="survey.page">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="title">SUPPLY CHAIN AND INTERMEDIARIES</field>
+        <field name="sequence">4</field>
+    </record>
+    <record id="planetio_survey_eudr_page_certifications" model="survey.page">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="title">CERTIFICATIONS AND SUSTAINABILITY</field>
+        <field name="sequence">5</field>
+    </record>
+    <record id="planetio_survey_eudr_page_indigenous_rights" model="survey.page">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="title">RESPECT FOR INDIGENOUS PEOPLES' RIGHTS</field>
+        <field name="sequence">6</field>
+    </record>
+    <record id="planetio_survey_eudr_page_risk_management" model="survey.page">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="title">RISK MANAGEMENT AND DOCUMENTATION</field>
+        <field name="sequence">7</field>
+    </record>
+
+    <!-- Section 1 -->
+    <record id="planetio_survey_eudr_question_1" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_general_information"/>
+        <field name="sequence">1</field>
+        <field name="title">Is your company registered and legally recognized in the country of origin?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_1_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_1"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">5</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_1_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_1"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_2" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_general_information"/>
+        <field name="sequence">2</field>
+        <field name="title">Does your company have an EORI (Economic Operators Registration and Identification) code?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_2_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_2"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">3</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_2_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_2"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_3" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_general_information"/>
+        <field name="sequence">3</field>
+        <field name="title">Does your company have previous experience in exporting raw materials to the EU?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_3_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_3"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">3</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_3_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_3"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <!-- Section 2 -->
+    <record id="planetio_survey_eudr_question_4" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_traceability"/>
+        <field name="sequence">4</field>
+        <field name="title">Can you provide precise geolocation (GPS coordinates) of the plots producing the raw material?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_4_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_4"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">5</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_4_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_4"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_5" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_traceability"/>
+        <field name="sequence">5</field>
+        <field name="title">Does the supplied raw material come exclusively from registered and traceable plots?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_5_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_5"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">5</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_5_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_5"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_6" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_traceability"/>
+        <field name="sequence">6</field>
+        <field name="title">Do you have a documented system to ensure full traceability of the supply chain?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_6_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_6"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_6_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_6"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_7" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_traceability"/>
+        <field name="sequence">7</field>
+        <field name="title">Can you provide a GeoJSON file or another accepted format for geolocating production areas?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_7_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_7"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_7_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_7"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <!-- Section 3 -->
+    <record id="planetio_survey_eudr_question_8" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_compliance"/>
+        <field name="sequence">8</field>
+        <field name="title">Does your company guarantee that the supplied raw material does not come from deforested land after December 31, 2020?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_8_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_8"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_8_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_8"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_9" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_compliance"/>
+        <field name="sequence">9</field>
+        <field name="title">Was the raw material produced in compliance with the national laws of the country of origin?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_9_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_9"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_9_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_9"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_10" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_compliance"/>
+        <field name="sequence">10</field>
+        <field name="title">Is your company able to provide official documentation to demonstrate compliance with EUDR requirements?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_10_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_10"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_10_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_10"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <!-- Section 4 -->
+    <record id="planetio_survey_eudr_question_11" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_supply_chain"/>
+        <field name="sequence">11</field>
+        <field name="title">Does the supplied raw material come exclusively from direct producers and not from intermediaries?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_11_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_11"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">3</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_11_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_11"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_12" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_supply_chain"/>
+        <field name="sequence">12</field>
+        <field name="title">If the raw material passes through intermediaries, can you guarantee that each step of the supply chain is traceable?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_12_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_12"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">3</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_12_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_12"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_13" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_supply_chain"/>
+        <field name="sequence">13</field>
+        <field name="title">Do the involved intermediaries comply with the same traceability and compliance standards required by EUDR?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_13_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_13"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">3</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_13_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_13"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <!-- Section 5 -->
+    <record id="planetio_survey_eudr_question_14" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_certifications"/>
+        <field name="sequence">14</field>
+        <field name="title">Does your company hold recognized sustainability certifications (e.g., Rainforest Alliance, UTZ, Fairtrade, FSC, PEFC)?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_14_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_14"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_14_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_14"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_15" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_certifications"/>
+        <field name="sequence">15</field>
+        <field name="title">Is your company willing to undergo independent audits or third-party inspections to verify EUDR compliance?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_15_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_15"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_15_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_15"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_16" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_certifications"/>
+        <field name="sequence">16</field>
+        <field name="title">Have policies been adopted to ensure the protection of workers' rights and local communities involved in production?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_16_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_16"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">3</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_16_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_16"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <!-- Section 6 -->
+    <record id="planetio_survey_eudr_question_17" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_indigenous_rights"/>
+        <field name="sequence">17</field>
+        <field name="title">Is the raw material produced on land traditionally occupied or used by indigenous communities?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_17_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_17"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_17_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_17"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_18" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_indigenous_rights"/>
+        <field name="sequence">18</field>
+        <field name="title">If yes, have formal agreements been established with indigenous communities for the use of these lands?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_18_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_18"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">3</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_18_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_18"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_19" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_indigenous_rights"/>
+        <field name="sequence">19</field>
+        <field name="title">Do these agreements fully respect the rights of indigenous communities as established by local and international legislation?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_19_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_19"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">5</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_19_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_19"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_20" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_indigenous_rights"/>
+        <field name="sequence">20</field>
+        <field name="title">Has your company implemented measures to ensure the free, prior, and informed consent of indigenous communities involved?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_20_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_20"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">5</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_20_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_20"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_21" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_indigenous_rights"/>
+        <field name="sequence">21</field>
+        <field name="title">Are there procedures in place to monitor and resolve potential conflicts with indigenous communities regarding land use?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_21_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_21"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_21_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_21"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <!-- Section 7 -->
+    <record id="planetio_survey_eudr_question_22" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_risk_management"/>
+        <field name="sequence">22</field>
+        <field name="title">Does your company have an internal protocol to assess the risk of deforestation and forest degradation?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_22_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_22"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_22_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_22"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_23" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_risk_management"/>
+        <field name="sequence">23</field>
+        <field name="title">If yes, can you provide documentation or internal reports in support?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_23_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_23"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_23_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_23"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_24" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_risk_management"/>
+        <field name="sequence">24</field>
+        <field name="title">Has your company ever received reports of non-compliance related to deforestation or forest degradation?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_24_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_24"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_24_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_24"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+
+    <record id="planetio_survey_eudr_question_25" model="survey.question">
+        <field name="survey_id" ref="planetio_todo.planetio_survey_eudr"/>
+        <field name="page_id" ref="planetio_todo.planetio_survey_eudr_page_risk_management"/>
+        <field name="sequence">25</field>
+        <field name="title">If yes, have corrective measures been documented and implemented?</field>
+        <field name="question_type">simple_choice</field>
+        <field name="constr_mandatory">True</field>
+        <field name="scoring_type">scoring_with_answers</field>
+    </record>
+    <record id="planetio_survey_eudr_question_25_answer_yes" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_25"/>
+        <field name="value">Yes</field>
+        <field name="sequence">1</field>
+        <field name="answer_score">4</field>
+        <field name="is_correct_answer">True</field>
+    </record>
+    <record id="planetio_survey_eudr_question_25_answer_no" model="survey.question.answer">
+        <field name="question_id" ref="planetio_todo.planetio_survey_eudr_question_25"/>
+        <field name="value">No</field>
+        <field name="sequence">2</field>
+        <field name="answer_score">0</field>
+    </record>
+</odoo>

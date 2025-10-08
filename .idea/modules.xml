@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../encodata/14/.idea/14.iml" filepath="$PROJECT_DIR$/../encodata/14/.idea/14.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../encodata/14/analytic/.idea/analytic.iml" filepath="$PROJECT_DIR$/../encodata/14/analytic/.idea/analytic.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/planetio.iml" filepath="$PROJECT_DIR$/.idea/planetio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../encodata/14/modules/planetio_todo/.idea/planetio_todo.iml" filepath="$PROJECT_DIR$/../encodata/14/modules/planetio_todo/.idea/planetio_todo.iml" />
+    </modules>
+  </component>
+</project>

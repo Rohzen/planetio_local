@@ -168,3 +168,17 @@ msgstr "Affidabilit\u00e0"
 #: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:0
 msgid "Intensity"
 msgstr "Intensit\u00e0"
+<<<<<<< HEAD
+=======
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:876
+msgid "Detected alerts"
+msgstr "Allerte rilevate"
+
+#. module: planetio_ai
+#: code:addons/planetio_ai/wizard/summarize_documents_wizard.py:877
+msgid "Suggested corrective actions"
+msgstr "Azioni correttive suggerite"
+
+>>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

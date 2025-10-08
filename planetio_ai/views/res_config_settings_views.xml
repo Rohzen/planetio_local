@@ -1,0 +1,32 @@
+<odoo>
+  <record id="planetio_ai_res_config_settings_view" model="ir.ui.view">
+    <field name="name">planetio.ai.res.config.settings.view.form</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//div[@class='app_settings_block' and @data-key='ai_gateway']" position="inside">
+          <h2>Planetio AI</h2>
+          <div class="row mt16 o_settings_container" name="planetio_ai_prompts">
+            <div class="col-12 col-lg-12 o_setting_box">
+              <div class="o_setting_left_pane"/>
+              <div class="o_setting_right_pane">
+                <span class="o_form_label">Deforestation critical issues prompt</span>
+                <div class="text-muted">
+                  <field name="ai_prompt_deforestation_critical_issues" placeholder="Istruzioni per l'analisi della deforestazione"/>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-12 o_setting_box">
+              <div class="o_setting_left_pane"/>
+              <div class="o_setting_right_pane">
+                <span class="o_form_label">Corrective actions prompt</span>
+                <div class="text-muted">
+                  <field name="ai_prompt_corrective_actions" placeholder="Istruzioni per suggerire azioni correttive"/>
+                </div>
+              </div>
+            </div>
+          </div>
+      </xpath>
+    </field>
+  </record>
+</odoo>
