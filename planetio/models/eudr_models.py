@@ -240,8 +240,7 @@ class EUDRDeclaration(models.Model):
 
             if template and template.product_species_ids:
                 rec.product_species_ids = [(6, 0, template.product_species_ids.ids)]
-            else:
-                rec.product_species_ids = [(5, 0, 0)]
+            # Do not clear product_species_ids if template has no species.
 
     @api.model_create_multi
     def create(self, vals_list):
