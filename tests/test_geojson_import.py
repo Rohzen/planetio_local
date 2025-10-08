@@ -41,6 +41,22 @@ def test_extract_geojson_features():
     assert feats[0][1]["name"] == "A"
 
 
+def test_iter_geojson_features_lazy_iteration():
+    data = {
+        "type": "FeatureCollection",
+        "features": [
+            {"type": "Feature", "geometry": {"type": "Point", "coordinates": [0, 0]}, "properties": {"name": "A"}},
+            {"type": "Feature", "geometry": {"type": "Point", "coordinates": [1, 1]}, "properties": {"name": "B"}},
+        ],
+    }
+    iterator = mod.iter_geojson_features(data)
+    first = next(iterator)
+    assert first[0]["type"] == "Point"
+    assert first[1]["name"] == "A"
+    second = next(iterator)
+    assert second[1]["name"] == "B"
+
+
 def test_detect_geojson_without_extension():
     data = {
         "type": "FeatureCollection",
