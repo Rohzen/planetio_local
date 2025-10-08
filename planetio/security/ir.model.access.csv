@@ -7,4 +7,8 @@ access_planetio_excel_import_wizard_user,access_planetio_excel_import_wizard_use
 access_deforestation_geometry_wizard_user,access_deforestation_geometry_wizard_user,model_deforestation_geometry_wizard,,1,1,1,1
 access_excel_import_template_user,access_excel_import_template_user,model_excel_import_template,,1,1,1,1
 access_excel_import_template_field_user,access_excel_import_template_field_user,model_excel_import_template_field,,1,1,1,1
+access_eudr_commodity_line,eudr_commodity_line,model_eudr_commodity_line,base.group_user,1,1,1,1
+access_eudr_producer,eudr_producer,model_eudr_producer,base.group_user,1,1,1,1
+access_eudr_plot,eudr_plot,model_eudr_plot,base.group_user,1,1,1,1
+access_eudr_associated_statement,eudr_associated_statement,model_eudr_associated_statement,base.group_user,1,1,1,1
 
