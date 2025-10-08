@@ -24,26 +24,11 @@
             <!-- STEP: UPLOAD -->
             <field name="step" invisible="1"/>
             <field name="debug_import" invisible="1"/>
-<<<<<<< HEAD
-            <group attrs="{'invisible':[('step','!=','upload')]}" >
-              <field name="template_id" required="1"/>
-              <field name="file_name" readonly="1"/>
-              <field name="file_data" filename="file_name"/>
-            </group>
-=======
-            <field name="declaration_id" invisible="1"/>
             <group attrs="{'invisible':[('step','!=','upload')]}" >
               <field name="template_id" required="1" invisible="1"/>
               <field name="file_name" readonly="1"/>
               <field name="file_data" filename="file_name"/>
             </group>
-            <group attrs="{'invisible':[('declaration_id.dds_mode','!=','single_multi')]}" string="Multi-commodity options">
-              <field name="import_mode"/>
-              <field name="target_commodity_id" attrs="{'required': [('import_mode','=','attach')]}">
-              </field>
-              <field name="single_producer"/>
-            </group>
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
             <!-- STEP: MAP -->
             <group attrs="{'invisible':['|',('step','!=','map'),('debug_import','!=',True)]}">
@@ -78,11 +63,7 @@
                   attrs="{'invisible':['|',('step','!=','map'),('debug_import','!=',True)]}"/>
 
           <button name="action_confirm"
-<<<<<<< HEAD
-                  string="Create Records"
-=======
                   string="Add"
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
                   type="object"
                   class="btn-primary"
                   />

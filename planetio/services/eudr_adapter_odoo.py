@@ -1,19 +1,13 @@
 # -*- coding: utf-8 -*-
 import base64, json
-<<<<<<< HEAD
-=======
 import xml.etree.ElementTree as ET
 import requests
 from requests.auth import HTTPBasicAuth
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 from odoo import _, fields
 from odoo.exceptions import UserError
 from .eudr_client import EUDRClient, build_geojson_b64
 from .eudr_client_retrieve import EUDRRetrievalClient
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-<<<<<<< HEAD
-=======
-from types import SimpleNamespace
 
 
 class _SafeFormatDict(dict):
@@ -106,7 +100,6 @@ def _download_and_attach_dds_pdf(record, reference_number: str, username: str, a
         body=_('PDF DDS scaricato e allegato come <b>%s</b>.') % attachment.name,
         attachment_ids=attachment.ids,
     )
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 
 def _place_description(line, record, idx):
@@ -140,187 +133,6 @@ def _safe_float(value):
         return None
 
 
-<<<<<<< HEAD
-=======
-def _format_weight_value(raw):
-    try:
-        kg = Decimal(str(raw))
-    except (InvalidOperation, TypeError):
-        raise UserError(_("net_weight must be a valid number (kg)"))
-    if kg <= 0:
-        raise UserError(_("net_weight must be > 0 kg"))
-    kg_int = max(1, int(kg.to_integral_value(rounding=ROUND_HALF_UP)))
-    return str(kg_int)
-
-
-def _species_info_xml(record):
-    coffee = getattr(record, "coffee_species", False)
-    scientific = (coffee and getattr(coffee, "scientific_name", None)) or getattr(record, "scientific_name", None)
-    common = getattr(record, "common_name", None) or (coffee and getattr(coffee, "name", None))
-    if scientific or common:
-        xml = ['<model:speciesInfo>']
-        if scientific:
-            xml.append(f'<model:scientificName>{scientific}</model:scientificName>')
-        if common:
-            xml.append(f'<model:commonName>{common}</model:commonName>')
-        xml.append('</model:speciesInfo>')
-        return ''.join(xml)
-    return ''
-
-
-def _build_producer_feature_collection(record, producer, ha_per_point):
-    features = []
-    ha_per_point = ha_per_point or 4.0
-    for idx, plot in enumerate(producer.plot_ids, start=1):
-        geom = _safe_json_loads(getattr(plot, "geometry", None))
-        if not isinstance(geom, dict) or not geom.get("type"):
-            continue
-
-        producer_name = producer.name or (_("Producer %s") % idx)
-        producer_country = (plot.country_of_production or producer.country or getattr(record.partner_id.country_id, 'code', '') or getattr(record.supplier_id.country_id, 'code', '') or 'XX').upper()
-        line_stub = SimpleNamespace(
-            farm_name=None,
-            municipality=None,
-            region=None,
-            country=plot.country_of_production or producer.country,
-            farmer_id_code=plot.plot_id,
-            name=plot.plot_id,
-        )
-        production_place = _place_description(line_stub, record, idx)
-
-        props = {
-            "ProducerName": producer_name,
-            "ProducerCountry": producer_country,
-            "PlotId": plot.plot_id or f"plot-{idx}",
-        }
-        if production_place:
-            props["ProductionPlace"] = production_place
-
-        geom_type = geom.get("type", "")
-        if geom_type == "Point":
-            area_val = plot.area_ha if plot.area_ha not in (None, "") else ha_per_point
-            try:
-                props["Area"] = float(area_val)
-            except (TypeError, ValueError):
-                props["Area"] = float(ha_per_point)
-
-        features.append({"type": "Feature", "properties": props, "geometry": geom})
-
-    if not features:
-        raise UserError(_("Producer %s has no valid plot geometries.") % (producer.name or producer.id))
-
-    return {"type": "FeatureCollection", "features": features}
-
-
-def _build_multi_commodities_xml(record, species_block, ha_per_point):
-    default_desc = record.product_description or getattr(record.product_id, "display_name", None) or record.name or ""
-    default_weight = record.net_mass_kg
-    default_hs = record.hs_code or "090111"
-    blocks = []
-
-    for position, commodity in enumerate(record.commodity_ids, start=1):
-        if not commodity.producer_ids:
-            raise UserError(_("Commodity %s has no producers.") % position)
-
-        description = commodity.description_of_goods or default_desc
-        weight_raw = commodity.net_weight_kg or default_weight
-        net_weight = _format_weight_value(weight_raw)
-        hs_heading = commodity.hs_heading or default_hs
-
-        block = [
-            '<model:commodities>',
-            f'<model:position>{position}</model:position>',
-            '<model:descriptors>',
-            f'<model:descriptionOfGoods>{description}</model:descriptionOfGoods>',
-            '<model:goodsMeasure>',
-            f'<model:netWeight>{net_weight}</model:netWeight>',
-            '</model:goodsMeasure>',
-            '</model:descriptors>',
-            f'<model:hsHeading>{hs_heading}</model:hsHeading>',
-        ]
-        if species_block:
-            block.append(species_block)
-
-        for idx, producer in enumerate(commodity.producer_ids, start=1):
-            if not producer.plot_ids:
-                raise UserError(
-                    _("Producer %(producer)s in commodity %(commodity)s has no plots.") % {
-                        "producer": producer.name or idx,
-                        "commodity": position,
-                    }
-                )
-            collection = _build_producer_feature_collection(record, producer, ha_per_point)
-            geojson_b64 = build_geojson_b64(collection)
-            producer_country = (producer.country or getattr(record.partner_id.country_id, 'code', '') or getattr(record.supplier_id.country_id, 'code', '') or 'XX').upper()
-            block.extend([
-                '<model:producers>',
-                f'<model:position>{idx}</model:position>',
-                f'<model:country>{producer_country}</model:country>',
-                f'<model:name>{producer.name or (_("Producer %s") % idx)}</model:name>',
-                f'<model:geometryGeojson>{geojson_b64}</model:geometryGeojson>',
-                '</model:producers>',
-            ])
-
-        block.append('</model:commodities>')
-        blocks.append(''.join(block))
-
-    return ''.join(blocks)
-
-
-def _build_associated_statements_xml(statements):
-    if not statements:
-        return ''
-    parts = ['<model:associatedStatements>']
-    for idx, stmt in enumerate(statements, start=1):
-        parts.append('<model:statements>')
-        parts.append(f'<model:position>{idx}</model:position>')
-        ref = (stmt.upstream_reference_number or "").strip()
-        if ref:
-            parts.append(f'<model:referenceNumber>{ref}</model:referenceNumber>')
-        dds = (stmt.upstream_dds_identifier or "").strip()
-        if dds:
-            parts.append(f'<model:ddsIdentifier>{dds}</model:ddsIdentifier>')
-        parts.append('</model:statements>')
-    parts.append('</model:associatedStatements>')
-    return ''.join(parts)
-
-
-def _build_statement_xml_common(base_vals, comment_text, associated_xml='', commodities_xml=''):
-    xml = [
-        '<eudr:SubmitStatementRequest '
-        'xmlns:eudr="http://ec.europa.eu/tracesnt/certificate/eudr/submission/v1" '
-        'xmlns:model="http://ec.europa.eu/tracesnt/certificate/eudr/model/v1" '
-        'xmlns:base="http://ec.europa.eu/sanco/tracesnt/base/v4">',
-        f'<eudr:operatorType>{base_vals["operator_type"]}</eudr:operatorType>',
-        '<eudr:statement>',
-        f'<model:internalReferenceNumber>{base_vals["internal_ref"]}</model:internalReferenceNumber>',
-        f'<model:activityType>{base_vals["activity_type"]}</model:activityType>',
-        '<model:operator>',
-        '<model:referenceNumber>',
-        '<model:identifierType>eori</model:identifierType>',
-        f'<model:identifierValue>{base_vals["eori_value"]}</model:identifierValue>',
-        '</model:referenceNumber>',
-        '<model:nameAndAddress>',
-        f'<base:name>{base_vals["company_name"]}</base:name>',
-        f'<base:country>{base_vals["company_country"]}</base:country>',
-        f'<base:address>{base_vals["company_address"]}</base:address>',
-        '</model:nameAndAddress>',
-        '</model:operator>',
-        f'<model:countryOfActivity>{base_vals["country_of_activity"]}</model:countryOfActivity>',
-        f'<model:borderCrossCountry>{base_vals["border_cross_country"]}</model:borderCrossCountry>',
-        f'<model:comment>{comment_text}</model:comment>',
-    ]
-    if associated_xml:
-        xml.append(associated_xml)
-    if commodities_xml:
-        xml.append(commodities_xml)
-    xml.append('<model:geoLocationConfidential>false</model:geoLocationConfidential>')
-    xml.append('</eudr:statement>')
-    xml.append('</eudr:SubmitStatementRequest>')
-    return ''.join(xml)
-
-
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 def _get_line_geometry(line):
     geom = None
     if hasattr(line, "_line_geometry"):
@@ -452,10 +264,7 @@ def _attach_geojson(record, geojson_dict, filename):
         "res_id": record.id,
         "mimetype": "application/geo+json",
         "type": "binary",
-<<<<<<< HEAD
-=======
         "eudr_document_visible": False,
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         "datas": base64.b64encode(
             json.dumps(geojson_dict, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         ),
@@ -500,13 +309,9 @@ def submit_dds_for_batch(record):
     if not username or not apikey:
         raise UserError(_('Credenziali EUDR mancanti: imposta planetio.eudr_user e planetio.eudr_apikey.'))
 
-<<<<<<< HEAD
-    company = record.env.company
-=======
     company = record.company_id or record.env.company
     if record.eudr_company_type_rel == 'third_party_trader':
         company = record.partner_id
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     addr_parts = [company.street or "", company.zip or "", company.city or "", company.country_id.code or ""]
     company_address = ", ".join([p for p in addr_parts if p]).strip()
     company_country = (company.country_id.code or 'IT').upper()
@@ -517,7 +322,6 @@ def submit_dds_for_batch(record):
     if not eori_value or len(eori_value) < 6:
         raise UserError(_("EORI mancante/non valido. Imposta planetio.eudr_eori nelle configurazioni."))
 
-<<<<<<< HEAD
     geojson_dict = build_dds_geojson(record)
     attach_dds_geojson(record, geojson_dict)
     geojson_b64 = build_geojson_b64(geojson_dict)
@@ -541,141 +345,40 @@ def submit_dds_for_batch(record):
     comment_text = ((getattr(record, 'x_eudr_comment', None) or getattr(record, 'note', None) or '').strip())
 
     if not comment_text:
-        comment_text = _('Submission for %s on %s by %s') % (
-        (record.name or f'Batch-{record.id}'), fields.Date.today(),record.env.company.name,
+        comment_text = _('Submission for %s on %s by %s for lot %s') % (
+        (record.name or f'Batch-{record.id}'), fields.Date.today(),company.name,record.lot_name or 'N/A'
         )
+
+    # Take the first line with geometry to determine producer country
+    line = next((l for l in record.line_ids if l.geometry), None)
+    if line and line.country:
+        producer_country = (line.country[:2] or 'PE').upper()
+    elif record.supplier_id.country_id.code:
+        producer_country = (record.supplier_id.country_id.code or 'PE').upper()
+    else:
+        raise UserError(_('Nazione produttore mancante: imposta la nazione sul fornitore o sulle linee.'))
 
     submit_xml = client.build_statement_xml(
         internal_ref=record.name or f'Batch-{record.id}',
+        operator_type=record.eudr_type_override or 'TRADER',
         activity_type=record.activity_type.upper(),
-        company_name=record.partner_id.name or 'Company',
-        company_country=record.partner_id.country_id.code or 'IT',
+        company_name=company or 'Company',
         company_address=company_address or 'Unknown Address',
-        eori_value=record.partner_id.vat,
+        company_country=company_country or 'IT',
+        eori_value=company.vat,
         hs_heading=record.hs_code or '090111',
         description_of_goods=(
             record.coffee_species.name if record.coffee_species else (record.product_id.display_name or '')),
-        net_weight_kg=weight,
-        producer_country=(record.partner_id.country_id.code or 'BR').upper(),
-        producer_name=record.producer_name or 'Unknown Producer',
-        geojson_b64=geojson_b64,
-        operator_type=record.eudr_type_override or 'TRADER',
-        country_of_activity=company_country,
-        border_cross_country=company_country,
-        comment=comment_text,
         scientific_name=getattr(record.coffee_species, 'scientific_name', None),
         common_name=getattr(record.coffee_species, 'name', None),
+        net_weight_kg=weight,
+        producer_country=(record.supplier_id.country_id.code or 'BR').upper(),
+        producer_name=record.supplier_id.name or 'Unknown Producer',
+        country_of_activity=company_country,
+        border_cross_country=company_country,
+        geojson_b64=geojson_b64,
+        comment=comment_text
     )
-=======
-    client = EUDRClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
-    comment_text = ((getattr(record, 'x_eudr_comment', None) or getattr(record, 'note', None) or '').strip())
-    if not comment_text:
-        comment_text = _('Submission for %s on %s by %s for lot %s') % (
-            (record.name or f'Batch-{record.id}'),
-            fields.Date.today(),
-            company.name,
-            record.lot_name or 'N/A',
-        )
-
-    address_source = company if hasattr(company, '_display_address') else record.partner_id
-    company_address = (address_source and address_source._display_address(without_company=True)) or ''
-    company_address = (company_address or '').replace('\n', ' ') or 'Unknown Address'
-
-    dds_mode = getattr(record, 'dds_mode', 'single_one') or 'single_one'
-
-    base_vals = {
-        "internal_ref": record.name or f'Batch-{record.id}',
-        "operator_type": (record.eudr_type_override or 'TRADER'),
-        "activity_type": (record.activity_type or 'import').upper(),
-        "company_name": company.name or 'Company',
-        "company_country": company_country or 'IT',
-        "company_address": company_address,
-        "eori_value": eori_value,
-        "country_of_activity": company_country,
-        "border_cross_country": company_country,
-    }
-
-    submit_xml = None
-
-    if dds_mode == 'single_one':
-        geojson_dict = build_dds_geojson(record)
-        attach_dds_geojson(record, geojson_dict)
-        geojson_b64 = build_geojson_b64(geojson_dict)
-        weight = _format_weight_value(record.net_mass_kg)
-
-        line = next((l for l in record.line_ids if l.geometry), None)
-        if line and line.country:
-            producer_country = (line.country[:2] or 'PE').upper()
-        elif record.supplier_id.country_id.code:
-            producer_country = (record.supplier_id.country_id.code or 'PE').upper()
-        else:
-            raise UserError(_('Nazione produttore mancante: imposta la nazione sul fornitore o sulle linee.'))
-
-        submit_xml = client.build_statement_xml(
-            internal_ref=base_vals['internal_ref'],
-            operator_type=base_vals['operator_type'],
-            activity_type=base_vals['activity_type'],
-            company_name=base_vals['company_name'],
-            company_address=base_vals['company_address'],
-            company_country=base_vals['company_country'],
-            eori_value=eori_value,
-            hs_heading=record.hs_code or '090111',
-            description_of_goods=(
-                record.coffee_species.name if record.coffee_species else (record.product_id.display_name or '')
-            ),
-            scientific_name=getattr(record.coffee_species, 'scientific_name', None),
-            common_name=getattr(record.coffee_species, 'name', None) or getattr(record, 'common_name', None),
-            net_weight_kg=weight,
-            producer_country=producer_country,
-            producer_name=record.supplier_id.name or 'Unknown Producer',
-            country_of_activity=base_vals['country_of_activity'],
-            border_cross_country=base_vals['border_cross_country'],
-            geojson_b64=geojson_b64,
-            comment=comment_text,
-        )
-    elif dds_mode == 'single_multi':
-        if not record.commodity_ids:
-            raise UserError(_('Add at least one commodity before submitting in Multiple commodities mode.'))
-        ha_per_point = float(record.env['ir.config_parameter'].sudo().get_param('planetio.eudr_point_area_ha', '4'))
-        species_block = _species_info_xml(record)
-        commodities_xml = _build_multi_commodities_xml(record, species_block, ha_per_point)
-        if not commodities_xml:
-            raise UserError(_('Unable to build commodities payload for DDS submission.'))
-        submit_xml = _build_statement_xml_common(base_vals, comment_text, commodities_xml=commodities_xml)
-    elif dds_mode == 'trader_refs':
-        if not record.associated_statement_ids:
-            raise UserError(_('Add at least one associated statement before submitting.'))
-        associated_xml = _build_associated_statements_xml(record.associated_statement_ids)
-        submit_xml = _build_statement_xml_common(base_vals, comment_text, associated_xml=associated_xml)
-    else:
-        # Fallback to legacy behaviour
-        geojson_dict = build_dds_geojson(record)
-        attach_dds_geojson(record, geojson_dict)
-        geojson_b64 = build_geojson_b64(geojson_dict)
-        weight = _format_weight_value(record.net_mass_kg)
-        submit_xml = client.build_statement_xml(
-            internal_ref=base_vals['internal_ref'],
-            operator_type=base_vals['operator_type'],
-            activity_type=base_vals['activity_type'],
-            company_name=base_vals['company_name'],
-            company_address=base_vals['company_address'],
-            company_country=base_vals['company_country'],
-            eori_value=eori_value,
-            hs_heading=record.hs_code or '090111',
-            description_of_goods=(
-                record.coffee_species.name if record.coffee_species else (record.product_id.display_name or '')
-            ),
-            scientific_name=getattr(record.coffee_species, 'scientific_name', None),
-            common_name=getattr(record.coffee_species, 'name', None) or getattr(record, 'common_name', None),
-            net_weight_kg=weight,
-            producer_country=(record.supplier_id.country_id.code or 'BR').upper(),
-            producer_name=record.supplier_id.name or 'Unknown Producer',
-            country_of_activity=base_vals['country_of_activity'],
-            border_cross_country=base_vals['border_cross_country'],
-            geojson_b64=geojson_b64,
-            comment=comment_text,
-        )
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     envelope = client.build_envelope(submit_xml)
 
@@ -686,10 +389,7 @@ def submit_dds_for_batch(record):
         'res_id': record.id,
         'mimetype': 'text/xml',
         'type': 'binary',
-<<<<<<< HEAD
-=======
         'eudr_document_visible': False,
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         'datas': base64.b64encode(envelope.encode('utf-8')),
     })
 
@@ -702,10 +402,7 @@ def submit_dds_for_batch(record):
         'res_id': record.id,
         'mimetype': 'text/xml',
         'type': 'binary',
-<<<<<<< HEAD
-=======
         'eudr_document_visible': False,
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         'datas': base64.b64encode((text or '').encode('utf-8')),
     })
 
@@ -744,11 +441,7 @@ def submit_dds_for_batch(record):
             if wsid:
                 msg += _('\n\nWS_REQUEST_ID: %s') % wsid
             record.message_post(body=msg.replace("\n", "<br/>"))
-<<<<<<< HEAD
-            raise UserError(msg)
-=======
             # raise UserError(msg)
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         else:
             wsid_only = client.parse_ws_request_id(text)
             base = _('Errore EUDR (%s): %s') % (status, (text or '')[:800])
@@ -756,9 +449,6 @@ def submit_dds_for_batch(record):
                 base += _('\n\nWS_REQUEST_ID: %s') % wsid_only
             record.message_post(
                 body=("Fault grezzo (parsing fallito):<br/><pre>%s</pre>" % (text or "")).replace("\n", "<br/>"))
-<<<<<<< HEAD
-            raise UserError(base)
-=======
             # raise UserError(base)
 
 def _extract_fault_messages(payload: str):
@@ -787,7 +477,6 @@ def _extract_fault_messages(payload: str):
 
     return messages
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 def action_retrieve_dds_numbers(record):
     """Given record.dds_identifier, call Retrieval SOAP and fill eudr_id (and others if present)."""
@@ -808,9 +497,6 @@ def action_retrieve_dds_numbers(record):
     if not dds_uuid:
         raise UserError(_('Nessun DDS Identifier (UUID) presente sul record.'))
 
-<<<<<<< HEAD
-    client = EUDRRetrievalClient(endpoint, username, apikey, wsse_mode, webservice_client_id=wsclient)
-=======
     root_tag = ICP.get_param('planetio.eudr_retrieval_root_tag')
 
     client = EUDRRetrievalClient(
@@ -821,7 +507,6 @@ def action_retrieve_dds_numbers(record):
         webservice_client_id=wsclient,
         retrieval_root_tag=root_tag,
     )
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     # build + attach request for audit
     retrieval_xml = client.build_retrieval_xml(dds_uuid)
@@ -832,10 +517,7 @@ def action_retrieve_dds_numbers(record):
         'res_id': record.id,
         'mimetype': 'text/xml',
         'type': 'binary',
-<<<<<<< HEAD
-=======
         'eudr_document_visible': False,
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         'datas': base64.b64encode(envelope.encode('utf-8')),
     })
 
@@ -848,26 +530,11 @@ def action_retrieve_dds_numbers(record):
         'res_id': record.id,
         'mimetype': 'text/xml',
         'type': 'binary',
-<<<<<<< HEAD
-=======
         'eudr_document_visible': False,
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         'datas': base64.b64encode((text or '').encode('utf-8')),
     })
 
     if status != 200:
-<<<<<<< HEAD
-        wsid = client.parse_ws_request_id(text)
-        msg = _('Errore Retrieval EUDR (%s)') % status
-        if wsid:
-            msg += _('\n\nWS_REQUEST_ID: %s') % wsid
-        raise UserError(msg)
-
-    entries = client.parse_retrieval_result(text) or []
-    hit = next((e for e in entries if e.get('uuid') == dds_uuid), None) or (entries[0] if entries else None)
-    if not hit:
-        record.message_post(body=_('Retrieve OK ma nessuna voce restituita per il UUID.'))
-=======
         wsid, errs = client.parse_business_errors(text)
         parts = [_('Errore Retrieval EUDR (%s)') % status]
         if wsid:
@@ -905,7 +572,6 @@ def action_retrieve_dds_numbers(record):
         if available:
             msg += _(' UUID disponibili: %s') % available
         record.message_post(body=msg)
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         return False
 
     refno = hit.get('referenceNumber')
@@ -930,12 +596,8 @@ def action_retrieve_dds_numbers(record):
             (', Verification=<b>%s</b>' % verno) if verno else '',
         )
     ))
-<<<<<<< HEAD
-    return True
-=======
 
     if refno:
         _download_and_attach_dds_pdf(record, refno, username, apikey)
 
     return True
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

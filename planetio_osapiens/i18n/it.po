@@ -90,8 +90,6 @@ msgstr "SSL"
 #: model_terms:ir.ui.view,arch_db:planetio_osapiens.view_purchase_order_form_osapiens
 msgid "oSapiens"
 msgstr "oSapiens"
-<<<<<<< HEAD
-=======
 
 #. module: planetio_osapiens
 #: code:addons/planetio_osapiens/models/eudr_declaration.py:31
@@ -174,4 +172,3 @@ msgstr "Lot oSapiens non presente sull'ordine."
 msgid "Inserisci un DDS Reference."
 msgstr "Inserisci un DDS Reference."
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

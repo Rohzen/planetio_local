@@ -805,8 +805,6 @@ msgstr "File GeoJSON non valido: %s"
 #: code:addons/planetio/wizards/import_wizard.py:0
 msgid "Invalid GeoJSON file"
 msgstr "File GeoJSON non valido"
-<<<<<<< HEAD
-=======
 
 #. module: planetio
 #: code:addons/planetio/models/eudr_deforestation.py:244
@@ -1205,4 +1203,3 @@ msgstr "Geometria procedura guidata"
 msgid "Uploaded document"
 msgstr "Documento caricato"
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

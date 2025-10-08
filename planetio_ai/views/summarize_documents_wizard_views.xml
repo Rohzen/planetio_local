@@ -26,8 +26,6 @@
                 class="oe_highlight btn-info"
                 icon="fa-magic"/>
       </xpath>
-<<<<<<< HEAD
-=======
       <xpath expr="//notebook" position="inside">
         <page string="Allerte generate">
           <field name="ai_alert_ids" context="{'default_declaration_id': active_id}">
@@ -74,7 +72,6 @@
           </field>
         </page>
       </xpath>
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     </field>
   </record>
 </odoo>

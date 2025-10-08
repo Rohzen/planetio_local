@@ -1,24 +1,16 @@
 # -*- coding: utf-8 -*-
 import json
 import math
-<<<<<<< HEAD
-import requests
-import traceback
-from datetime import date, timedelta
-=======
 import re
 import requests
 import traceback
 from datetime import date, datetime, timedelta
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 from collections import defaultdict
 
 from odoo import models, fields, api, _, tools
 from odoo.exceptions import UserError
 
 
-<<<<<<< HEAD
-=======
 def _coerce_int(value):
     if value in (None, ""):
         return None
@@ -340,7 +332,6 @@ class EUDRDeclarationLineAlert(models.Model):
     payload_json = fields.Text(string="Raw Payload", readonly=True)
 
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 class EUDRDeclarationLineDeforestation(models.Model):
     _inherit = "eudr.declaration.line"
 
@@ -348,15 +339,12 @@ class EUDRDeclarationLineDeforestation(models.Model):
     defor_alerts = fields.Integer(string="Deforestation Alerts", readonly=True)
     defor_area_ha = fields.Float(string="Deforestation Area (ha)", readonly=True)
     defor_details_json = fields.Text(string="Deforestation Details (JSON)", readonly=True)
-<<<<<<< HEAD
-=======
     alert_ids = fields.One2many(
         "eudr.declaration.line.alert",
         "line_id",
         string="Deforestation Alerts",
         readonly=True,
     )
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     # ---------- Geometry helpers ----------
     def _line_geometry(self):
@@ -439,12 +427,6 @@ class EUDRDeclarationLineDeforestation(models.Model):
         if not api_key:
             raise UserError(_('Configura planetio.gfw_api_key'))
         origin = (ICP.get_param('planetio.gfw_api_origin') or 'http://localhost').strip()
-<<<<<<< HEAD
-        try:
-            days_back = int(ICP.get_param('planetio.gfw_days_back') or 365)
-        except Exception:
-            days_back = 365
-=======
         raw_years = ICP.get_param('planetio.gfw_alert_years')
         try:
             years_back = int(raw_years) if raw_years else 0
@@ -459,7 +441,6 @@ class EUDRDeclarationLineDeforestation(models.Model):
             years_back = max(1, int(math.ceil(days_val / 365.0)))
         years_back = max(1, min(5, years_back))
         days_back = years_back * 365
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         date_from = (date.today() - timedelta(days=days_back)).isoformat()
 
         geom = self._line_geometry()
@@ -530,98 +511,6 @@ class EUDRDeclarationLineDeforestation(models.Model):
             'meta': {'provider': 'gfw', 'date_from': date_from, 'step': step},
         }
 
-<<<<<<< HEAD
-    # ---------- Public: invoked by button on line ----------
-    def action_analyze_deforestation(self):
-        # self can be either lines or declarations; normalize to lines
-        lines = self
-        if self._name == 'eudr.declaration':
-            lines = self.mapped('line_ids')
-
-        # run analyses and collect results grouped by declaration
-        grouped = defaultdict(list)
-
-        for line in lines:
-            try:
-                svc = line.env.get('planetio.deforestation.service') or line.env.get('deforestation.service')
-                if svc and hasattr(svc, 'analyze_line'):
-                    status = svc.analyze_line(line)
-                elif svc and hasattr(svc, 'analyze_geojson'):
-                    status = svc.analyze_geojson(line._line_geometry() or {})
-                else:
-                    status = line._gfw_analyze_fallback()
-
-                # write computed fields if present
-                if isinstance(status, dict):
-                    metrics = status.get('metrics') or {}
-                    vals = {}
-                    if 'defor_provider' in line._fields:
-                        vals['defor_provider'] = (status.get('meta') or {}).get('provider', 'gfw')
-                    if 'defor_alerts' in line._fields and 'alert_count' in metrics:
-                        vals['defor_alerts'] = metrics.get('alert_count') or 0
-                    if 'defor_area_ha' in line._fields and 'area_ha_total' in metrics:
-                        vals['defor_area_ha'] = metrics.get('area_ha_total') or 0.0
-                    if 'defor_details_json' in line._fields:
-                        try:
-                            vals['defor_details_json'] = json.dumps(status, ensure_ascii=False)
-                        except Exception:
-                            vals['defor_details_json'] = tools.ustr(status)
-                    if 'external_ok' in line._fields and metrics.get('alert_count', 0) > 0:
-                        vals['external_ok'] = False
-                    else:
-                        vals['external_ok'] = True
-                    if vals:
-                        line.write(vals)
-
-                # friendly, short per-line snippet for later batching
-                if isinstance(status, dict):
-                    msg = status.get('message') or tools.ustr(status)
-                else:
-                    msg = tools.ustr(status)
-
-                grouped[line.declaration_id.id].append({
-                    'line': line,
-                    'ok': True,
-                    'msg': msg,
-                })
-
-            except Exception as e:
-                last = ''.join(traceback.format_exception_only(type(e), e)).strip()
-                grouped[line.declaration_id.id].append({
-                    'line': line,
-                    'ok': False,
-                    'msg': _("Analisi deforestazione fallita sulla riga %(name)s: %(err)s") % {
-                        'name': (getattr(line, 'display_name', None) or line.id),
-                        'err': tools.ustr(last or e),
-                    }
-                })
-                # keep going
-
-        # post one message per declaration
-        Declaration = lines.env['eudr.declaration']
-        for decl_id, items in grouped.items():
-            decl = Declaration.browse(decl_id)
-            # build an HTML body with line links for easier navigation
-            lis = []
-            for it in items:
-                line = it['line']
-                anchor = "/web#id=%s&model=%s&view_type=form" % (line.id, line._name)
-                prefix = "OK" if it['ok'] else "ERRORE"
-                # escape user-facing text
-                line_name = tools.html_escape(getattr(line, 'display_name', str(line.id)))
-                msg_txt = tools.html_escape(it['msg'])
-                lis.append(
-                    '<li>[%s] <a href="%s">%s</a>: %s</li>' % (prefix, anchor, line_name, msg_txt)
-                )
-            body = "<p>Risultati analisi deforestazione</p><ul>%s</ul>" % ''.join(lis)
-
-            # one chatter message on the parent
-            decl.message_post(
-                body=body,
-                message_type='comment',
-                subtype_xmlid='mail.mt_note',
-            )
-=======
     def _get_deforestation_service(self):
         self.ensure_one()
         ICP = self.env['ir.config_parameter'].sudo()
@@ -814,14 +703,11 @@ class EUDRDeclarationLineDeforestation(models.Model):
             body = "<p>%s</p><ul>%s</ul>" % (tools.html_escape(summary), ''.join(lis))
             decl.message_post(body=body, message_type='comment', subtype_xmlid='mail.mt_note')
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         declarations = lines.mapped('declaration_id')
         if declarations:
             declarations._set_stage_from_xmlid('planetio.eudr_stage_validated')
         return True
 
-<<<<<<< HEAD
-=======
     # ---------- Alerts helpers ----------
     def _sync_alert_records_from_status(self, status):
         if not isinstance(status, dict):
@@ -1289,34 +1175,15 @@ class EUDRDeclarationLineDeforestation(models.Model):
             return None, raw
         return None, None
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 class EUDRDeclarationDeforestation(models.Model):
     _inherit = "eudr.declaration"
 
     def action_analyze_deforestation(self):
-<<<<<<< HEAD
-        for decl in self:
-            lines = decl.mapped('line_ids') if hasattr(decl, 'line_ids') else self.env['eudr.declaration.line'].search([('declaration_id','=',decl.id)])
-            for line in lines:
-                try:
-                    line.action_analyze_deforestation()
-                except Exception as e:
-                    last = ''.join(traceback.format_exception_only(type(e), e)).strip()
-                    try:
-                        decl.message_post(body=_("Analisi deforestazione fallita sulla riga %(name)s: %(err)s") % {
-                            'name': (getattr(line, 'display_name', None) or line.id),
-                            'err': tools.ustr(last or e),
-                        })
-                    except Exception:
-                        pass
-                    continue
-=======
         for decl in self.web_progress_iter(self, msg="Message"):
             lines = decl.mapped('line_ids')
             if lines:
                 lines.action_analyze_deforestation()
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         return True
 
     def action_create_deforestation_geojson(self):
@@ -1334,8 +1201,4 @@ class EUDRDeclarationDeforestation(models.Model):
                 )
                 % attachment.name
             )
-<<<<<<< HEAD
-        return True
-=======
         return {"type": "ir.actions.client", "tag": "reload"}
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

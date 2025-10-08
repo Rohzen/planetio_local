@@ -1,17 +1,4 @@
 <odoo>
-<<<<<<< HEAD
-  <record id="seq_eudr_declaration" model="ir.sequence">
-    <field name="name">EUDR Declaration</field>
-    <field name="code">eudr.declaration</field>
-    <field name="implementation">no_gap</field>
-    <field name="active">True</field>
-    <field name="prefix">EUDR/%(year)s/</field>
-    <field name="padding">5</field>
-    <field name="number_next">1</field>
-    <field name="number_increment">1</field>
-    <field name="company_id" eval="False"/>
-  </record>
-=======
   <data noupdate="1">
     <record id="seq_eudr_declaration" model="ir.sequence">
       <field name="name">EUDR Declaration</field>
@@ -25,5 +12,4 @@
       <field name="company_id" eval="False"/>
     </record>
   </data>
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 </odoo>

@@ -1,10 +1,7 @@
 from odoo import models, _
 from odoo.exceptions import UserError
 import logging
-<<<<<<< HEAD
-=======
 import json
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 _logger = logging.getLogger(__name__)
 
 class DeforestationService(models.AbstractModel):
@@ -17,9 +14,6 @@ class DeforestationService(models.AbstractModel):
     }
 
     def get_enabled_providers(self):
-<<<<<<< HEAD
-        ICP = self.env['ir.config_parameter'].sudo()
-=======
         ctx_override = self.env.context.get('deforestation_providers_override')
         if ctx_override:
             if isinstance(ctx_override, str):
@@ -38,7 +32,6 @@ class DeforestationService(models.AbstractModel):
         if selected and selected in self._REGISTRY:
             return [selected]
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         raw = (ICP.get_param('deforestation.providers') or '').strip()
         if not raw:
             return ['gfw']  # default e preferito
@@ -49,8 +42,6 @@ class DeforestationService(models.AbstractModel):
             items = ['gfw'] + [p for p in items if p != 'gfw']
         return items or ['gfw']
 
-<<<<<<< HEAD
-=======
     def analyze_line(self, line):
         providers = self.get_enabled_providers()
         if not providers:
@@ -84,7 +75,6 @@ class DeforestationService(models.AbstractModel):
             raise UserError(_('Analisi deforestazione non riuscita: %s') % '; '.join(errors))
         raise UserError(_("Analisi deforestazione non riuscita: nessun provider disponibile."))
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     def analyze_records(self, eudr_import_rec, providers):
         errors, details = [], []
         lines = getattr(eudr_import_rec, 'line_ids', False)
@@ -102,12 +92,9 @@ class DeforestationService(models.AbstractModel):
             for line in lines:
                 try:
                     res = provider.analyze_line(line)
-<<<<<<< HEAD
-=======
                     if isinstance(res, dict):
                         meta = res.setdefault('meta', {})
                         meta.setdefault('provider', provider_code)
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
                     line.external_message = res.get('message') or _("OK")
                     details.append({'provider':provider_code,'line_id':line.id,'result':res})
                 except UserError as ue:
@@ -118,9 +105,6 @@ class DeforestationService(models.AbstractModel):
                     line.external_message = _("Errore inatteso dal provider %(p)s: %(m)s", {'p': provider_code, 'm': str(ex)})
                     errors.append({'level':'error','provider':provider_code,'line_id':line.id,'message':str(ex)})
 
-<<<<<<< HEAD
-        return {'errors': errors, 'details': details}
-=======
         return {'errors': errors, 'details': details}
 
     # ----- GeoJSON utility -----
@@ -210,4 +194,3 @@ class DeforestationService(models.AbstractModel):
         if errors:
             raise UserError(_('Analisi deforestazione non riuscita: %s') % '; '.join(errors))
         raise UserError(_("Analisi deforestazione non riuscita: nessun provider disponibile."))
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

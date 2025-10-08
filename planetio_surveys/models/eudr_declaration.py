@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-from odoo import fields, models
-
-=======
 from odoo import fields, models, api, _
 from dateutil.relativedelta import relativedelta
 from odoo.exceptions import UserError
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 class EudrDeclaration(models.Model):
     _inherit = 'eudr.declaration'
@@ -20,14 +15,11 @@ class EudrDeclaration(models.Model):
         compute='_compute_survey_user_input_count',
     )
 
-<<<<<<< HEAD
-=======
     questionnaire_input_id = fields.Many2one('survey.user_input', string="Questionnaire (Survey Response)", readonly=True, copy=False)
     questionnaire_valid = fields.Boolean(compute="_compute_questionnaire_status", store=False)
     questionnaire_valid_until = fields.Date(compute="_compute_questionnaire_status", store=False)
     questionnaire_alert_message = fields.Char(compute="_compute_questionnaire_status", store=False)
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     def _compute_survey_user_input_count(self):
         if not self:
             return
@@ -46,8 +38,6 @@ class EudrDeclaration(models.Model):
         action['domain'] = [('declaration_id', '=', self.id)]
         action['context'] = dict(self.env.context, default_declaration_id=self.id)
         return action
-<<<<<<< HEAD
-=======
     
     def _get_planetio_survey(self):
         ICP = self.env['ir.config_parameter'].sudo()
@@ -160,4 +150,3 @@ class EudrDeclaration(models.Model):
                 raise UserError(_("Questionario Producer/Supplier mancante o scaduto, risolvi prima di trasmettere la DDS."))
         return super().action_transmit_dds()
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

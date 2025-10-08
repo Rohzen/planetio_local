@@ -11,10 +11,6 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(repo_root))
 
 
-<<<<<<< HEAD
-module_path = repo_root / 'planetio' / 'models' / 'eudr_models.py'
-spec = importlib.util.spec_from_file_location('eudr_models', module_path)
-=======
 # Provide a minimal package structure so that relative imports succeed.
 planetio_pkg = sys.modules.setdefault('planetio', types.ModuleType('planetio'))
 setattr(planetio_pkg, '__path__', [str(repo_root / 'planetio')])
@@ -101,7 +97,6 @@ class FakeConfigParameter:
 
 module_path = repo_root / 'planetio' / 'models' / 'eudr_models.py'
 spec = importlib.util.spec_from_file_location('planetio.models.eudr_models', module_path)
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
@@ -117,10 +112,7 @@ def _make_record(lines):
     rec = EUDRDeclaration()
     rec.line_ids = lines
     rec.area_ha = 0.0
-<<<<<<< HEAD
-=======
     rec.env = {'ir.config_parameter': FakeConfigParameter()}
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     return rec
 
 

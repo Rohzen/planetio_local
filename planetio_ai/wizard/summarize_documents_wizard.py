@@ -1,16 +1,10 @@
 from odoo import _, fields, models
-<<<<<<< HEAD
-=======
 import ast
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 import base64
 import io
 import json
 import logging
-<<<<<<< HEAD
-=======
 import re
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 try:  # pragma: no cover - optional dependency
     from reportlab.lib import colors
@@ -35,8 +29,6 @@ except Exception:  # pragma: no cover - handled gracefully at runtime
 _logger = logging.getLogger(__name__)
 
 
-<<<<<<< HEAD
-=======
 DEFAULT_DEFORESTATION_PROMPT = (
     "Analizza tutti i documenti allegati relativi alla dichiarazione EUDR e "
     "riassumi le informazioni utili a valutare lo stato della deforestazione. "
@@ -60,7 +52,6 @@ STRUCTURED_RESPONSE_INSTRUCTION = (
 )
 
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 class PlanetioSummarizeWizard(models.Model):
     _inherit = "eudr.declaration"
 
@@ -353,8 +344,6 @@ class PlanetioSummarizeWizard(models.Model):
         return True
 
     @staticmethod
-<<<<<<< HEAD
-=======
     def _strip_ai_markup(text):
         """Remove simple Markdown markers used by the AI provider."""
 
@@ -388,7 +377,6 @@ class PlanetioSummarizeWizard(models.Model):
         return cleaned.strip()
 
     @staticmethod
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     def _is_header_line(line):
         """Return ``True`` when a line should be styled as a header."""
 
@@ -405,8 +393,6 @@ class PlanetioSummarizeWizard(models.Model):
                 return True
         return False
 
-<<<<<<< HEAD
-=======
     _STRUCTURED_SECTION_KEY_ALIASES = {
         "alerts": {
             "alerts",
@@ -912,7 +898,6 @@ class PlanetioSummarizeWizard(models.Model):
 
         return "\n\n".join(section for section in sections if section).strip()
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     def _prepare_deforestation_feedback(self, record):
         """Collect deforestation alerts linked to the declaration ``record``."""
 
@@ -1189,16 +1174,6 @@ class PlanetioSummarizeWizard(models.Model):
         """
 
         AiRequest = self.env["ai.request"]
-<<<<<<< HEAD
-        default_provider = (
-            self.env["ir.config_parameter"].sudo().get_param(
-                "ai_gateway.default_provider", "gemini"
-            )
-            or "gemini"
-        )
-        for rec in self:
-            if not rec.attachment_ids:
-=======
         icp = self.env["ir.config_parameter"].sudo()
         default_provider = (
             icp.get_param("ai_gateway.default_provider", "gemini") or "gemini"
@@ -1227,7 +1202,6 @@ class PlanetioSummarizeWizard(models.Model):
         for rec in self.web_progress_iter(self, msg="Message"):
             attachment_ids = self._get_visible_attachment_ids(rec.attachment_ids)
             if not attachment_ids:
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
                 continue
 
             req = AiRequest.create(
@@ -1235,21 +1209,9 @@ class PlanetioSummarizeWizard(models.Model):
                     "name": f"AI Summary for {rec.id}",
                     "provider": default_provider,
                     "task_type": "summarize",
-<<<<<<< HEAD
-                    "attachment_ids": [(6, 0, rec.attachment_ids.ids)],
-                    "model_ref": f"{rec._name},{rec.id}",
-                    "payload": (
-                        "Analizza tutti i documenti allegati relativi alla dichiarazione EUDR e "
-                        "riassumi le informazioni utili a valutare lo stato della deforestazione. "
-                        "La risposta finale deve includere bullet point chiari, lo stato della "
-                        "deforestazione, eventuali rischi o anomalie e, se disponibili dati "
-                        "numerici, una tabella in formato testo con gli indicatori principali."
-                    ),
-=======
                     "attachment_ids": [(6, 0, attachment_ids)],
                     "model_ref": f"{rec._name},{rec.id}",
                     "payload": payload_text,
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
                 }
             )
 
@@ -1259,21 +1221,6 @@ class PlanetioSummarizeWizard(models.Model):
                 continue
 
             summary = req.response_text or ""
-<<<<<<< HEAD
-            if not summary:
-                continue
-
-            pdf_bytes, mimetype = self._summary_to_pdf(summary, rec)
-
-            self.env["ir.attachment"].create(
-                {
-                    "name": "ai_summary.pdf" if mimetype == "application/pdf" else "ai_summary.txt",
-                    "type": "binary",
-                    "datas": base64.b64encode(pdf_bytes),
-                    "mimetype": mimetype,
-                    "res_model": rec._name,
-                    "res_id": rec.id,
-=======
             structured = self._parse_ai_structured_response(summary)
             alerts = structured.get("alerts") or []
             actions = structured.get("actions") or []
@@ -1307,13 +1254,10 @@ class PlanetioSummarizeWizard(models.Model):
                     "res_model": rec._name,
                     "res_id": rec.id,
                     "eudr_document_visible": False,
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
                 }
             )
 
         return True
-<<<<<<< HEAD
-=======
 
     @staticmethod
     def _get_visible_attachment_ids(attachments):
@@ -1341,4 +1285,3 @@ class PlanetioSummarizeWizard(models.Model):
             for attachment in attachments
             if getattr(attachment, "eudr_document_visible", False)
         ]
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

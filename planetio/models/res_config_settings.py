@@ -1,29 +1,20 @@
-<<<<<<< HEAD
-from odoo import fields, models, _
-=======
 from odoo import fields, models, api, _
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 from odoo.exceptions import UserError
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     debug_import = fields.Boolean(string="Debug Excel Import", config_parameter='planetio.debug_import')
-<<<<<<< HEAD
-=======
     eudr_company_type = fields.Selection(related="company_id.eudr_company_type", readonly=False)
     eudr_is_sme = fields.Boolean(related="company_id.eudr_is_sme", readonly=False)
     eudr_third_party_has_mandate = fields.Boolean(related="company_id.eudr_third_party_has_mandate", readonly=False)
     eudr_third_party_established_in_eu = fields.Boolean(related="company_id.eudr_third_party_established_in_eu", readonly=False)
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     gfw_email = fields.Char(string="GFW Email", config_parameter='planetio.gfw_email')
     gfw_password = fields.Char(string="GFW Password", config_parameter='planetio.gfw_password')
     gfw_org = fields.Char(string="GFW Organization", config_parameter='planetio.gfw_org', default='Planetio')
     gfw_alias = fields.Char(string="GFW API Alias", config_parameter='planetio.gfw_alias', default='planetio-dev')
     gfw_api_key = fields.Char(string="GFW API Key", config_parameter='planetio.gfw_api_key', readonly=False)
-<<<<<<< HEAD
-=======
     gfw_alert_years = fields.Selection(
         selection=[(str(i), _("%s year(s)") % i) for i in range(1, 6)],
         string="GFW Alert Lookback",
@@ -67,7 +58,6 @@ class ResConfigSettings(models.TransientModel):
         readonly=False,
         default='https://farm.tracer.eco',
     )
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     eudr_endpoint = fields.Char(string="EUDR Endpoint", config_parameter='planetio.eudr_endpoint', readonly=False,
                                 placeholder="https://acceptance.eudr.webcloud.ec.europa.eu/tracesnt/ws/EUDRSubmissionServiceV1",
@@ -77,8 +67,6 @@ class ResConfigSettings(models.TransientModel):
     eudr_apikey = fields.Char(string="api-key", config_parameter='planetio.eudr_apikey', readonly=False)
     eudr_wsse_mode = fields.Char(string="WSSE mode", config_parameter='planetio.eudr_wsse_mode', readonly=False, default="digest")
     eudr_webservice_client_id = fields.Char(string="Client ID", config_parameter='planetio.eudr_webservice_client_id', readonly=False, default="eudr-test")
-<<<<<<< HEAD
-=======
     eudr_pdf_url_template = fields.Char(
         string="DDS PDF URL Template",
         config_parameter='planetio.eudr_pdf_url_template',
@@ -93,7 +81,6 @@ class ResConfigSettings(models.TransientModel):
         default='X-API-Key',
         help="HTTP header name that carries the API key when downloading the DDS PDF.",
     )
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
     def action_generate_gfw_api_key(self):
         self.ensure_one()
@@ -112,11 +99,7 @@ class ResConfigSettings(models.TransientModel):
         domain = (parsed.netloc or '').split(':')[0] if parsed else ''
         allowed_domains = [domain] if domain else ['localhost']
 
-<<<<<<< HEAD
-        from ..services.gfw_client import get_access_token, create_or_get_api_key
-=======
         from ..services.api.gfw_client import get_access_token, create_or_get_api_key
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
         token = get_access_token(email, password)
         api_key = create_or_get_api_key(
@@ -124,8 +107,6 @@ class ResConfigSettings(models.TransientModel):
         )
         icp.set_param('planetio.gfw_api_key', api_key)
         self.gfw_api_key = api_key
-<<<<<<< HEAD
-=======
 
     @api.model
     def get_values(self):
@@ -162,4 +143,3 @@ class ResConfigSettings(models.TransientModel):
         if policy not in ('buffer', 'strict'):
             policy = 'buffer'
         icp.set_param('planetio.gfw_area_policy', policy)
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

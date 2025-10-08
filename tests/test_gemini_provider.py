@@ -1,8 +1,5 @@
 import importlib.util
-<<<<<<< HEAD
-=======
 import json
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 import sys
 import types
 from pathlib import Path
@@ -113,8 +110,6 @@ def test_tuned_models_prefix_preserved():
         assert captured["model_name"] == "tunedModels/my-model"
     finally:
         _cleanup_google_modules()
-<<<<<<< HEAD
-=======
 
 
 def test_rest_generate_retries_with_versioned_model():
@@ -247,4 +242,3 @@ def test_rest_generate_falls_back_from_prefixed_model():
         assert provider.model_name == "gemini-1.5-flash"
     finally:
         _cleanup_google_modules()
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

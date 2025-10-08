@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import json
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 import sys
 import types
 import importlib.util
@@ -23,23 +20,6 @@ spec = importlib.util.spec_from_file_location('summ_wizard', module_path)
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
-<<<<<<< HEAD
-class DummyAttachments:
-    def __init__(self, ids):
-        self.ids = ids
-
-class FakeAiRequest:
-    def __init__(self):
-        self.status = 'error'
-        self.error_message = 'boom'
-        self.response_text = ''
-    def run_now(self):
-        pass
-
-class FakeAiRequestModel:
-    def create(self, vals):
-        return FakeAiRequest()
-=======
 
 class DummyAttachment:
     def __init__(self, attachment_id, visible):
@@ -90,29 +70,10 @@ class FakeAiRequestModel:
             error_message=self.error_message,
         )
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 class FakeEnv(dict):
     pass
 
-<<<<<<< HEAD
-class FakeAttachmentModel:
-    def create(self, vals):
-        return vals
-
-class FakeDeclaration(mod.PlanetioSummarizeWizard):
-    def __init__(self):
-        self.env = FakeEnv({'ai.request': FakeAiRequestModel(), 'ir.attachment': FakeAttachmentModel()})
-        self.attachment_ids = DummyAttachments([1])
-        self._name = 'eudr.declaration'
-        self.id = 1
-        self.messages = []
-    def __iter__(self):
-        yield self
-    def message_post(self, body=None, subtype_xmlid=None):
-        self.messages.append(body)
-
-=======
 
 class FakeAttachmentModel:
     def __init__(self):
@@ -207,14 +168,11 @@ class FakeDeclaration(mod.PlanetioSummarizeWizard):
     def _summary_to_pdf(self, text, record):
         return (text or '').encode('utf-8'), 'text/plain'
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 
 def test_error_message_posted():
     rec = FakeDeclaration()
     rec.action_ai_analyze()
     assert any('boom' in m for m in rec.messages)
-<<<<<<< HEAD
-=======
 
 
 def test_structured_response_creates_records():
@@ -367,4 +325,3 @@ def test_corrective_actions_key_is_used_when_actions_missing():
         rec.ai_action_ids[0]['description']
         == 'Implement buffer zones along the river banks.'
     )
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2

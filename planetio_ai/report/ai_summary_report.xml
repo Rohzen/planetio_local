@@ -146,17 +146,6 @@
         </t>
     </template>
 
-<<<<<<< HEAD
-    <report
-        id="action_report_ai_summary"
-        model="eudr.declaration"
-        string="AI Summary"
-        report_type="qweb-pdf"
-        name="planetio_ai.report_ai_summary"
-        file="planetio_ai.report_ai_summary"
-        print_report_name="'AI Summary - %s' % (object.display_name or object.id)"
-    />
-=======
 <!--    <report-->
 <!--        id="action_report_ai_summary"-->
 <!--        model="eudr.declaration"-->
@@ -166,5 +155,4 @@
 <!--        file="planetio_ai.report_ai_summary"-->
 <!--        print_report_name="'AI Summary - %s' % (object.display_name or object.id)"-->
 <!--    />-->
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
 </odoo>

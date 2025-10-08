@@ -20,8 +20,6 @@ class EUDRRetrievalClient(EUDRClient):
     # SOAPAction del metodo retrieveDdsNumber
     RETR_SOAP_ACTION = "http://ec.europa.eu/tracesnt/certificate/eudr/retrieval/retrieveDdsNumber"
 
-<<<<<<< HEAD
-=======
     DEFAULT_ROOT_TAG = "retrieveDdsNumberRequest"
 
     def __init__(
@@ -63,7 +61,6 @@ class EUDRRetrievalClient(EUDRClient):
 
         return cleaned
 
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
     def build_retrieval_xml(self, uuids: Union[str, List[str]]) -> str:
         """
         Costruisce il body XML (senza envelope) per RetrieveDdsNumberRequest.
@@ -75,10 +72,6 @@ class EUDRRetrievalClient(EUDRClient):
         if not uuids:
             raise ValueError("At least one DDS UUID is required")
 
-<<<<<<< HEAD
-        return (
-            '<retr:RetrieveDdsNumberRequest '
-=======
         # Alcuni ambienti (es. Acceptance) validano l'XML rispetto allo schema e
         # richiedono che l'elemento radice sia "retrieveDdsNumberRequest" oppure
         # "RetrieveDdsNumberRequest" (la validazione cambia tra ambienti). Il
@@ -88,18 +81,12 @@ class EUDRRetrievalClient(EUDRClient):
 
         return (
             f'<retr:{root_tag} '
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             'xmlns:retr="http://ec.europa.eu/tracesnt/certificate/eudr/retrieval/v1" '
             'xmlns:base="http://ec.europa.eu/sanco/tracesnt/base/v4">'
             '<retr:uuids>'
             + "".join(f"<retr:uuid>{u}</retr:uuid>" for u in uuids) +
-<<<<<<< HEAD
-            "</retr:uuids>"
-            "</retr:RetrieveDdsNumberRequest>"
-=======
             '</retr:uuids>'
             f'</retr:{root_tag}>'
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         )
 
     def build_retrieval_envelope(self, retrieval_xml: str) -> str:
@@ -158,15 +145,10 @@ class EUDRRetrievalClient(EUDRClient):
     @staticmethod
     def parse_retrieval_result(response_text: str) -> List[Dict[str, Optional[str]]]:
         """
-<<<<<<< HEAD
-        Estrae una lista di record con chiavi: uuid, status, referenceNumber, verificationNumber.
-        È tollerante a leggere local-name diversi (accettance/prod possono variare).
-=======
         Estrae una lista di record con chiavi: uuid, status, referenceNumber,
         verificationNumber, internalReferenceNumber, date, updatedBy.
         È tollerante a leggere local-name diversi (acceptance/prod possono
         variare).
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
         """
         try:
             root = ET.fromstring(response_text)
@@ -186,9 +168,6 @@ class EUDRRetrievalClient(EUDRClient):
 
         # Se non troviamo blocchi principali, proviamo a costruire dai singoli campi dispersi
         if not candidate_blocks:
-<<<<<<< HEAD
-            rec = {"uuid": None, "status": None, "referenceNumber": None, "verificationNumber": None}
-=======
             rec = {
                 "uuid": None,
                 "status": None,
@@ -198,7 +177,6 @@ class EUDRRetrievalClient(EUDRClient):
                 "date": None,
                 "updatedBy": None,
             }
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             for el in root.iter():
                 n = L(el.tag)
                 if n in {"uuid", "ddsIdentifier"} and el.text:
@@ -209,12 +187,6 @@ class EUDRRetrievalClient(EUDRClient):
                     rec["referenceNumber"] = el.text.strip()
                 elif n == "verificationNumber" and el.text:
                     rec["verificationNumber"] = el.text.strip()
-<<<<<<< HEAD
-            return [rec] if rec.get("uuid") else []
-
-        for node in candidate_blocks:
-            rec = {"uuid": None, "status": None, "referenceNumber": None, "verificationNumber": None}
-=======
                 elif n in {"internalReferenceNumber", "internalReference"} and el.text:
                     rec["internalReferenceNumber"] = el.text.strip()
                 elif n in {"date", "statusDate", "lastUpdateDate", "updatedOn"} and el.text:
@@ -233,7 +205,6 @@ class EUDRRetrievalClient(EUDRClient):
                 "date": None,
                 "updatedBy": None,
             }
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             # Scansione profonda per local-names comuni
             for ch in node.iter():
                 n = L(ch.tag)
@@ -245,15 +216,12 @@ class EUDRRetrievalClient(EUDRClient):
                     rec["referenceNumber"] = ch.text.strip()
                 elif n == "verificationNumber" and ch.text:
                     rec["verificationNumber"] = ch.text.strip()
-<<<<<<< HEAD
-=======
                 elif n in {"internalReferenceNumber", "internalReference"} and ch.text:
                     rec["internalReferenceNumber"] = ch.text.strip()
                 elif n in {"date", "statusDate", "lastUpdateDate", "updatedOn"} and ch.text:
                     rec["date"] = ch.text.strip()
                 elif n in {"updatedBy", "lastUpdatedBy"} and ch.text:
                     rec["updatedBy"] = ch.text.strip()
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             if rec.get("uuid"):
                 out.append(rec)
 
@@ -277,12 +245,9 @@ class EUDRRetrievalClient(EUDRClient):
             "status": None,
             "referenceNumber": None,
             "verificationNumber": None,
-<<<<<<< HEAD
-=======
             "internalReferenceNumber": None,
             "date": None,
             "updatedBy": None,
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             "httpStatus": status,
             "wsRequestId": self.parse_ws_request_id(text) if text else None,
             "raw": text,
@@ -297,11 +262,8 @@ class EUDRRetrievalClient(EUDRClient):
                 "status": hit.get("status"),
                 "referenceNumber": hit.get("referenceNumber"),
                 "verificationNumber": hit.get("verificationNumber"),
-<<<<<<< HEAD
-=======
                 "internalReferenceNumber": hit.get("internalReferenceNumber"),
                 "date": hit.get("date"),
                 "updatedBy": hit.get("updatedBy"),
->>>>>>> 823bb1258a0473c1135fe37802bcf0567c9472f2
             })
         return result
