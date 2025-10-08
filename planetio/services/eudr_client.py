@@ -69,7 +69,7 @@ class EUDRClient:
                             producer_country: str, producer_name: str, geojson_b64: str,
                             operator_type: str = "OPERATOR",
                             country_of_activity: str, border_cross_country: str, comment: str,
-                            scientific_name: str = None, common_name: str = None) -> str:
+                            scientific_name: str = None, common_name: str = None, species_list: list = None) -> str:
         if not geojson_b64:
             raise ValueError("geojson_b64 is required")
 
@@ -109,32 +109,28 @@ class EUDRClient:
         )
 
         # --- SPECIES (no <model:species> wrapper) ---
-        if scientific_name or common_name:
+        species_list = species_list or []
+        if species_list:
+            xml += '<model:speciesList>'
+            for sp in species_list:
+                sci = (sp.get('scientificName') or '').strip() if isinstance(sp, dict) else ''
+                com = (sp.get('commonName') or '').strip() if isinstance(sp, dict) else ''
+                if not sci and not com:
+                    continue
+                xml += '<model:species>'
+                if sci:
+                    xml += f'<model:scientificName>{sci}</model:scientificName>'
+                if com:
+                    xml += f'<model:commonName>{com}</model:commonName>'
+                xml += '</model:species>'
+            xml += '</model:speciesList>'
+        elif scientific_name or common_name:
             xml += '<model:speciesInfo>'
             if scientific_name:
                 xml += f'<model:scientificName>{scientific_name}</model:scientificName>'
             if common_name:
                 xml += f'<model:commonName>{common_name}</model:commonName>'
             xml += '</model:speciesInfo>'
-
-        # --- SPECIES LIST (opzionale, formato multiplo, da implementare per più coffee species) ---
-        # if species_list:
-        #     xml += '<model:speciesList>'
-        #     for sp in species_list:
-        #         sci = (sp.get("scientificName") or "").strip()
-        #         com = (sp.get("commonName") or "").strip()
-        #         xml += '<model:species>'
-        #         if sci: xml += f'<model:scientificName>{sci}</model:scientificName>'
-        #         if com: xml += f'<model:commonName>{com}</model:commonName>'
-        #         xml += '</model:species>'
-        #     xml += '</model:speciesList>'
-        # elif scientific_name or common_name:
-        #     xml += '<model:speciesInformation>'
-        #     if scientific_name:
-        #         xml += f'<model:scientificName>{scientific_name}</model:scientificName>'
-        #     if common_name:
-        #         xml += f'<model:commonName>{common_name}</model:commonName>'
-        #     xml += '</model:speciesInformation>'
 
         # Chiusura con producers e resto
         xml += (

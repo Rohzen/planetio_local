@@ -186,7 +186,25 @@
                     </tr>
                     <tr>
                       <th>HS Code</th>
-                      <td><span t-esc="doc.hs_code or '-'"/></td>
+                      <td><span t-esc="doc.hs_code_id.code or '-'"/></td>
+                    </tr>
+                    <tr>
+                      <th>Product Species</th>
+                      <td>
+                        <t t-if="doc.product_species_ids">
+                          <ul class="list-unstyled mb-0">
+                            <li t-foreach="doc.product_species_ids" t-as="species">
+                              <span t-esc="species.name"/>
+                              <t t-if="species.scientific_name">
+                                (<span t-esc="species.scientific_name"/>)
+                              </t>
+                            </li>
+                          </ul>
+                        </t>
+                        <t t-else="">
+                          <span>-</span>
+                        </t>
+                      </td>
                     </tr>
                     <tr>
                       <th>Net Mass (Kg)</th>

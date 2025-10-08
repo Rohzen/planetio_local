@@ -162,7 +162,7 @@ msgid "Additional info"
 msgstr "Informazioni aggiuntive"
 
 #. module: planetio
-#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__hs_code
+#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__hs_code_id
 msgid "HS Code"
 msgstr "Codice HS"
 
@@ -190,11 +190,6 @@ msgstr "Nome comune"
 #: model:ir.model.fields,field_description:planetio.field_eudr_declaration__producer_name
 msgid "Producer name"
 msgstr "Nome del produttore"
-
-#. module: planetio
-#: model:ir.model.fields,field_description:planetio.field_eudr_declaration__coffee_species
-msgid "Product"
-msgstr "Prodotto"
 
 #. module: planetio
 #: model:ir.model.fields,field_description:planetio.field_eudr_declaration_line__defor_provider
@@ -330,36 +325,6 @@ msgstr "Esportazione"
 #: selection:eudr.declaration,activity_type
 msgid "Domestic"
 msgstr "Mercato interno"
-
-#. module: planetio
-#: selection:eudr.declaration,hs_code
-msgid "0901 \u2013 Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes containing coffee"
-msgstr "0901 \u2013 Caff\u00e8, tostato o meno, decaffeinato o meno; cascami e bucce di caff\u00e8; surrogati contenenti caff\u00e8"
-
-#. module: planetio
-#: selection:eudr.declaration,hs_code
-msgid "0901 11 \u2013 non-decaffeinated"
-msgstr "0901 11 \u2013 non decaffeinato"
-
-#. module: planetio
-#: selection:eudr.declaration,hs_code
-msgid "0901 12 \u2013 decaffeinated"
-msgstr "0901 12 \u2013 decaffeinato"
-
-#. module: planetio
-#: selection:eudr.declaration,hs_code
-msgid "0901 21 \u2013 non-decaffeinated"
-msgstr "0901 21 \u2013 non decaffeinato"
-
-#. module: planetio
-#: selection:eudr.declaration,hs_code
-msgid "0901 22 \u2013 decaffeinated"
-msgstr "0901 22 \u2013 decaffeinato"
-
-#. module: planetio
-#: selection:eudr.declaration,hs_code
-msgid "0901 90 \u2013 others"
-msgstr "0901 90 \u2013 altri"
 
 #. module: planetio
 #: selection:eudr.declaration.line,geo_type

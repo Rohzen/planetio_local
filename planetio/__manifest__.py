@@ -3,7 +3,7 @@
     'version': '14.0.1.0.6',
     'author': 'Alessandro Vasi / Roberto Zanardo / Encodata S.r.l.',
     'summary': 'Modulo per la compilazione della due-diligence sulla normativa della deforestazione',
-    'depends': ['base', 'mail', 'web', 'coffee_species', 'web_progress'],
+    'depends': ['base', 'mail', 'web', 'hs_codes', 'web_progress'],
     'data': [
         'security/ir.model.access.csv',
         'views/eudr_views.xml',

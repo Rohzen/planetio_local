@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="action_hs_code" model="ir.actions.act_window">
+            <field name="name">HS Codes</field>
+            <field name="res_model">hs.code</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p>Maintain HS (Harmonized System) codes and their reference species.</p>
+            </field>
+        </record>
+
+        <menuitem id="menu_hs_code"
+                  name="HS Codes"
+                  parent="sale.product_menu_catalog"
+                  action="action_hs_code"
+                  sequence="95"/>
+
+        <record id="view_hs_code_tree" model="ir.ui.view">
+            <field name="name">hs.code.tree</field>
+            <field name="model">hs.code</field>
+            <field name="arch" type="xml">
+                <tree string="HS Codes">
+                    <field name="code"/>
+                    <field name="description"/>
+                    <field name="commodity"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_hs_code_form" model="ir.ui.view">
+            <field name="name">hs.code.form</field>
+            <field name="model">hs.code</field>
+            <field name="arch" type="xml">
+                <form string="HS Code">
+                    <sheet>
+                        <h1>
+                            <field name="code"/>
+                        </h1>
+                        <group>
+                            <group>
+                                <field name="description" required="1"/>
+                                <field name="commodity"/>
+                                <field name="active"/>
+                            </group>
+                            <group>
+                                <field name="notes" nolabel="1" placeholder="Internal notes"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Species">
+                                <field name="reference_species_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/>
+                                        <field name="scientific_name"/>
+                                        <field name="is_primary"/>
+                                        <field name="region"/>
+                                        <field name="active"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_hs_code_species_tree" model="ir.ui.view">
+            <field name="name">hs.code.species.tree</field>
+            <field name="model">hs.code.species</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="hs_code_id"/>
+                    <field name="name"/>
+                    <field name="scientific_name"/>
+                    <field name="synonyms"/>
+                    <field name="is_primary"/>
+                    <field name="region"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_hs_code_species_form" model="ir.ui.view">
+            <field name="name">hs.code.species.form</field>
+            <field name="model">hs.code.species</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="hs_code_id" required="1"/>
+                                <field name="name" required="1"/>
+                                <field name="scientific_name" required="1"/>
+                                <field name="synonyms"/>
+                                <field name="is_primary"/>
+                            </group>
+                            <group>
+                                <field name="region"/>
+                                <field name="notes"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="view_product_species_tree" model="ir.ui.view">
+            <field name="name">product.species.tree</field>
+            <field name="model">product.species</field>
+            <field name="arch" type="xml">
+                <tree string="Product species">
+                    <field name="sequence"/>
+                    <field name="product_tmpl_id"/>
+                    <field name="hs_code_id"/>
+                    <field name="hs_code_species_id"/>
+                    <field name="name"/>
+                    <field name="scientific_name"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_product_species_form" model="ir.ui.view">
+            <field name="name">product.species.form</field>
+            <field name="model">product.species</field>
+            <field name="arch" type="xml">
+                <form string="Product species">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="product_tmpl_id"/>
+                                <field name="sequence"/>
+                                <field name="hs_code_id"/>
+                                <field name="hs_code_species_id"/>
+                            </group>
+                            <group>
+                                <field name="name" required="1"/>
+                                <field name="scientific_name" required="1"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <field name="notes" nolabel="1"/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_product_template_form_hs_codes" model="ir.ui.view">
+            <field name="name">product.template.hs.codes.form</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet/notebook" position="inside">
+                    <page string="HS Classification">
+                        <group>
+                            <field name="hs_code_id" options="{'no_create': False}"/>
+                        </group>
+                        <field name="product_species_ids">
+                            <tree editable="bottom">
+                                <field name="sequence"/>
+                                <field name="hs_code_id" options="{'no_open': True}"/>
+                                <field name="hs_code_species_id"/>
+                                <field name="name"/>
+                                <field name="scientific_name"/>
+                                <field name="active"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
