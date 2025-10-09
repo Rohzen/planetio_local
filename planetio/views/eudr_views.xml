@@ -115,7 +115,7 @@
             <field name="partner_id" attrs="{'invisible': [('eudr_company_type_rel','!=','third_party_trader')], 'required':  [('eudr_company_type_rel','=','third_party_trader')]}"/>
             <field name="source_attachment_id" readonly="1" invisible="1"/>
             <field name="activity_type" string="Attività"/>
-            <field name="hs_code"/>
+            <field name="hs_code_id"/>
             <field name="eudr_id" string="EUDR Reference number" readonly="0" invisible="0"/>
 
               <div class="o_row bg-light p-2 rounded mb-2">
@@ -134,7 +134,7 @@
             <!-- Colonna destra -->
             <group>
               <field name="product_id" string="Selezione prodotto" invisible="0"/>
-              <field name="coffee_species" invisible="0"/>
+              <field name="product_species_ids" widget="many2many_tags" options="{'no_create': True}"/>
               <field name="product_description" invisible="1"/>
               <field name="net_mass_kg" invisible="0"/>
               <field name="area_ha_display" string="Area Ha" readonly="1"/>

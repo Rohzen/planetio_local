@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hs_code_user,access.hs.code.user,model_hs_code,base.group_user,1,1,1,1
+access_hs_code_species_user,access.hs.code.species.user,model_hs_code_species,base.group_user,1,1,1,1
+access_product_species_user,access.product.species.user,model_product_species,base.group_user,1,1,1,1

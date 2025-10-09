@@ -358,6 +358,22 @@ def submit_dds_for_batch(record):
     else:
         raise UserError(_('Nazione produttore mancante: imposta la nazione sul fornitore o sulle linee.'))
 
+    species_payload = [
+        {
+            'scientificName': (sp.scientific_name or '').strip(),
+            'commonName': (sp.name or '').strip(),
+        }
+        for sp in record.product_species_ids
+        if sp
+    ]
+    primary_species = species_payload[0] if species_payload else {}
+    description = (
+        record.product_description
+        or (record.product_id.display_name if record.product_id else None)
+        or primary_species.get('commonName')
+        or ''
+    )
+
     submit_xml = client.build_statement_xml(
         internal_ref=record.name or f'Batch-{record.id}',
         operator_type=record.eudr_type_override or 'TRADER',
@@ -366,11 +382,11 @@ def submit_dds_for_batch(record):
         company_address=company_address or 'Unknown Address',
         company_country=company_country or 'IT',
         eori_value=company.vat,
-        hs_heading=record.hs_code or '090111',
-        description_of_goods=(
-            record.coffee_species.name if record.coffee_species else (record.product_id.display_name or '')),
-        scientific_name=getattr(record.coffee_species, 'scientific_name', None),
-        common_name=getattr(record.coffee_species, 'name', None),
+        hs_heading=getattr(record.hs_code_id, 'code', None) or '090111',
+        description_of_goods=description,
+        scientific_name=(primary_species.get('scientificName') or None),
+        common_name=(primary_species.get('commonName') or (record.common_name or None)),
+        species_list=species_payload,
         net_weight_kg=weight,
         producer_country=(record.supplier_id.country_id.code or 'BR').upper(),
         producer_name=record.supplier_id.name or 'Unknown Producer',

@@ -10,12 +10,15 @@ import urllib.parse
 from odoo.modules.module import get_module_resource
 
 EUDR_HS_SELECTION = [
-    ('0901',    '0901 – Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes containing coffee'),
-    ('090111',  '0901 11 – non-decaffeinated'),
-    ('090112',  '0901 12 – decaffeinated'),
-    ('090121',  '0901 21 – non-decaffeinated'),
-    ('090122',  '0901 22 – decaffeinated'),
-    ('090190',  '0901 90 – others'),
+    ('0901', '0901 – Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes'),
+    ('090111', '0901 11 – Coffee, not roasted, not decaffeinated'),
+    ('1801', '1801 – Cocoa beans, whole or broken, raw or roasted'),
+    ('1201', '1201 – Soya beans, whether or not broken'),
+    ('1511', '1511 – Palm oil and its fractions, whether or not refined'),
+    ('4001', '4001 – Natural rubber, balata, gutta-percha, guayule, chicle and similar natural gums'),
+    ('0201', '0201 – Meat of bovine animals, fresh or chilled'),
+    ('4403', '4403 – Wood in the rough, whether or not stripped of bark or sapwood'),
+    ('4407', '4407 – Wood sawn or chipped lengthwise, sliced or peeled'),
 ]
 
 
@@ -163,23 +166,34 @@ class EUDRDeclaration(models.Model):
         ], string="Activity", default='import')
     operator_name = fields.Char(string="Operator")
     extra_info = fields.Text(string="Additional info")
-    hs_code = fields.Selection(
-        [
-            ('0901',    '0901 – Coffee, whether or not roasted or decaffeinated; coffee husks and skins; coffee substitutes containing coffee'),
-            ('090111',  '0901 11 – non-decaffeinated'),
-            ('090112',  '0901 12 – decaffeinated'),
-            ('090121',  '0901 21 – non-decaffeinated'),
-            ('090122',  '0901 22 – decaffeinated'),
-            ('090190',  '0901 90 – others'),
-        ], string="HS Code", default="090111", required=True)
-    product_id  = fields.Many2one('product.product', string="Product template")
+
+    def _default_hs_code_id(self):
+        try:
+            return self.env.ref('hs_codes.hs_code_090111').id
+        except Exception:
+            return False
+
+    hs_code_id = fields.Many2one(
+        'hs.code',
+        string="HS Code",
+        default=_default_hs_code_id,
+        required=True,
+        help="HS heading associated with this declaration.",
+    )
+    product_id = fields.Many2one('product.product', string="Product")
     product_description = fields.Char(string="Description of raw materials or products", required=True)
     net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3), required=True)
     common_name = fields.Char(string="Common name")
     producer_name = fields.Char(string="Producer name")
     lot_name = fields.Char(string="Lot info")
     supplier_id = fields.Many2one('res.partner', string="Producer/Supplier")
-    coffee_species  = fields.Many2one('coffee.species', string="Product", required=True)
+    product_species_ids = fields.Many2many(
+        'product.species',
+        'eudr_declaration_product_species_rel',
+        'declaration_id',
+        'product_species_id',
+        string="Product species"
+    )
     area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
     commodity_ids = fields.One2many("eudr.commodity.line", "declaration_id", string="Commodities")
     associated_statement_ids = fields.One2many("eudr.associated.statement", "declaration_id", string="Associated statements")
@@ -208,7 +222,79 @@ class EUDRDeclaration(models.Model):
     @api.onchange('product_id')
     def _onchange_product_id_set_description(self):
         for rec in self:
-            rec.product_description = rec.product_id.name or False
+            product = rec.product_id
+            rec.product_description = product.name or False
+            rec._apply_product_classification()
+
+# 1) Use default_get to set both hs_code_id and product_species_ids on new records
+@api.model
+def default_get(self, fields):
+    res = super().default_get(fields)
+    # default HS code
+    if 'hs_code_id' in fields and not res.get('hs_code_id'):
+        res['hs_code_id'] = self._default_hs_code_id()
+    # default species from product.template
+    if res.get('product_id') and 'product_species_ids' in fields:
+        prod = self.env['product.product'].browse(res['product_id'])
+        res['product_species_ids'] = [(6, 0, prod.product_tmpl_id.product_species_ids.ids)]
+    return res
+
+# 2) Collapse create/write overrides to a single call to your helper
+@api.model_create_multi
+def create(self, vals_list):
+    records = super().create(vals_list)
+    # apply classification (HS & species) in one go
+    records._apply_product_classification()
+    return records
+
+def write(self, vals):
+    res = super().write(vals)
+    # only re-classify when product changes or species wasn't explicitly set
+    if 'product_id' in vals or 'product_species_ids' not in vals:
+        self._apply_product_classification()
+    return res
+
+# 3) Simplify your onchange to call the same helper
+@api.onchange('product_id')
+def _onchange_product_id(self):
+    self._apply_product_classification()
+        for rec in self:
+            product = rec.product_id
+            template = product.product_tmpl_id if product else False
+            if template and template.hs_code_id:
+                rec.hs_code_id = template.hs_code_id
+            elif not rec.hs_code_id:
+                rec.hs_code_id = rec._default_hs_code_id()
+
+            if not update_species:
+                continue
+
+            if template and template.product_species_ids:
+                rec.product_species_ids = [(6, 0, template.product_species_ids.ids)]
+            # Do not clear product_species_ids if template has no species.
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for record, vals in zip(records, vals_list):
+            product_in_vals = vals.get('product_id')
+            species_in_vals = 'product_species_ids' in vals
+            hs_in_vals = 'hs_code_id' in vals
+            if product_in_vals:
+                record._apply_product_classification(update_species=not species_in_vals)
+            elif not hs_in_vals and not record.hs_code_id:
+                record.hs_code_id = record._default_hs_code_id()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'product_id' in vals:
+            update_species = 'product_species_ids' not in vals
+            self._apply_product_classification(update_species=update_species)
+        elif 'product_species_ids' not in vals:
+            for rec in self.filtered(lambda r: not r.hs_code_id):
+                rec.hs_code_id = rec._default_hs_code_id()
+        return res
 
     # ---------------------- helpers ----------------------
 

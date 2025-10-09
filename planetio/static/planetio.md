@@ -8,7 +8,7 @@ flowchart TD
   end
 
   S["EUDR Lot Staging<br/>(model: eudr.lot)"]
-  N_S["Campi chiave:<br/>- origin_country (ISO2)<br/>- hs_code, net_mass_kg<br/>- producer_name/country (se noti)<br/>- plots (GeoJSON features)<br/>- upstream dds_reference / dds_identifier (se presenti)"]
+  N_S["Campi chiave:<br/>- origin_country (ISO2)<br/>- HS code, net_mass_kg<br/>- producer_name/country (se noti)<br/>- plots (GeoJSON features)<br/>- upstream dds_reference / dds_identifier (se presenti)"]
   S -.-> N_S
 
   S --> B["Build EUDR Declaration<br/>(seleziona lotti, valida, consolida)"]

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="hs_code_0901" model="hs.code">
+        <field name="code">0901</field>
+        <field name="description">Coffee, whether or not roasted or decaffeinated; husks and skins; coffee substitutes</field>
+        <field name="commodity">Coffee</field>
+        <field name="notes">HS heading covering green, roasted and decaffeinated coffee and related substitutes.</field>
+    </record>
+    <record id="hs_code_090111" model="hs.code">
+        <field name="code">090111</field>
+        <field name="description">Coffee, not roasted, not decaffeinated</field>
+        <field name="commodity">Coffee</field>
+        <field name="notes">Green coffee beans.</field>
+    </record>
+    <record id="hs_code_1801" model="hs.code">
+        <field name="code">1801</field>
+        <field name="description">Cocoa beans, whole or broken, raw or roasted</field>
+        <field name="commodity">Cocoa</field>
+    </record>
+    <record id="hs_code_1201" model="hs.code">
+        <field name="code">1201</field>
+        <field name="description">Soya beans, whether or not broken</field>
+        <field name="commodity">Soy</field>
+    </record>
+    <record id="hs_code_1511" model="hs.code">
+        <field name="code">1511</field>
+        <field name="description">Palm oil and its fractions, whether or not refined</field>
+        <field name="commodity">Palm oil</field>
+    </record>
+    <record id="hs_code_4001" model="hs.code">
+        <field name="code">4001</field>
+        <field name="description">Natural rubber, balata, gutta-percha, guayule, chicle and similar natural gums</field>
+        <field name="commodity">Natural rubber</field>
+    </record>
+    <record id="hs_code_0201" model="hs.code">
+        <field name="code">0201</field>
+        <field name="description">Meat of bovine animals, fresh or chilled</field>
+        <field name="commodity">Cattle products</field>
+    </record>
+    <record id="hs_code_4403" model="hs.code">
+        <field name="code">4403</field>
+        <field name="description">Wood in the rough, whether or not stripped of bark or sapwood</field>
+        <field name="commodity">Wood</field>
+    </record>
+    <record id="hs_code_4407" model="hs.code">
+        <field name="code">4407</field>
+        <field name="description">Wood sawn or chipped lengthwise, sliced or peeled</field>
+        <field name="commodity">Wood</field>
+    </record>
+
+    <!-- Coffee species -->
+    <record id="hs_code_species_coffee_arabica" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_0901"/>
+        <field name="name">Arabica coffee</field>
+        <field name="scientific_name">Coffea arabica</field>
+        <field name="synonyms"/>
+        <field name="is_primary">True</field>
+        <field name="region">Ethiopia / Yemen (origins)</field>
+        <field name="notes">Primary commercial species known for high quality beans.</field>
+    </record>
+    <record id="hs_code_species_coffee_canephora" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_0901"/>
+        <field name="name">Robusta coffee</field>
+        <field name="scientific_name">Coffea canephora</field>
+        <field name="synonyms">Coffea robusta</field>
+        <field name="is_primary">True</field>
+        <field name="region">Central and West Africa</field>
+        <field name="notes">High caffeine content; widely used for instant coffee.</field>
+    </record>
+    <record id="hs_code_species_coffee_liberica" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_0901"/>
+        <field name="name">Liberica coffee</field>
+        <field name="scientific_name">Coffea liberica</field>
+        <field name="synonyms"/>
+        <field name="region">West and Central Africa</field>
+        <field name="notes">Minor commercial species with distinctive flavour.</field>
+    </record>
+
+    <!-- Cocoa species -->
+    <record id="hs_code_species_cocoa" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_1801"/>
+        <field name="name">Cacao</field>
+        <field name="scientific_name">Theobroma cacao</field>
+        <field name="is_primary">True</field>
+        <field name="region">Tropical Americas</field>
+    </record>
+
+    <!-- Soy species -->
+    <record id="hs_code_species_soy" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_1201"/>
+        <field name="name">Soybean</field>
+        <field name="scientific_name">Glycine max</field>
+        <field name="is_primary">True</field>
+        <field name="region">East Asia (origins)</field>
+    </record>
+
+    <!-- Palm oil species -->
+    <record id="hs_code_species_palm_oil" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_1511"/>
+        <field name="name">African oil palm</field>
+        <field name="scientific_name">Elaeis guineensis</field>
+        <field name="is_primary">True</field>
+        <field name="region">West Africa</field>
+        <field name="notes">Main source of global palm oil production.</field>
+    </record>
+
+    <!-- Natural rubber species -->
+    <record id="hs_code_species_rubber" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_4001"/>
+        <field name="name">Para rubber tree</field>
+        <field name="scientific_name">Hevea brasiliensis</field>
+        <field name="is_primary">True</field>
+        <field name="region">Amazon basin (origins)</field>
+    </record>
+
+    <!-- Cattle species -->
+    <record id="hs_code_species_bos_taurus" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_0201"/>
+        <field name="name">Cattle</field>
+        <field name="scientific_name">Bos taurus</field>
+        <field name="is_primary">True</field>
+        <field name="region">Worldwide domesticated</field>
+    </record>
+    <record id="hs_code_species_bos_indicus" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_0201"/>
+        <field name="name">Zebu cattle</field>
+        <field name="scientific_name">Bos indicus</field>
+        <field name="region">South Asia</field>
+    </record>
+
+    <!-- Wood species -->
+    <record id="hs_code_species_teak" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_4403"/>
+        <field name="name">Teak</field>
+        <field name="scientific_name">Tectona grandis</field>
+        <field name="region">South and Southeast Asia</field>
+    </record>
+    <record id="hs_code_species_mahogany" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_4403"/>
+        <field name="name">Bigleaf mahogany</field>
+        <field name="scientific_name">Swietenia macrophylla</field>
+        <field name="region">Central and South America</field>
+    </record>
+    <record id="hs_code_species_pine" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_4407"/>
+        <field name="name">Pine</field>
+        <field name="scientific_name">Pinus spp.</field>
+        <field name="region">Temperate regions</field>
+        <field name="notes">Includes commercial pine species.</field>
+    </record>
+    <record id="hs_code_species_spruce" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_4407"/>
+        <field name="name">Spruce</field>
+        <field name="scientific_name">Picea abies</field>
+        <field name="region">Northern Europe</field>
+    </record>
+</odoo>

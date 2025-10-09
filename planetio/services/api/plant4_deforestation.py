@@ -153,12 +153,16 @@ class DeforestationProviderPlant4(models.AbstractModel):
 
     def _build_payload(self, line, geometry, uid):
         declaration = getattr(line, 'declaration_id', None)
-        commodity = getattr(declaration, 'hs_code', None) or 'coffee'
-        if isinstance(commodity, (list, tuple, set)):
-            commodity_values = [ustr(v) for v in commodity if v]
+        hs_record = getattr(declaration, 'hs_code_id', None)
+        commodity_code = getattr(hs_record, 'code', None)
+        commodity_label = getattr(hs_record, 'commodity', None)
+        commodity = commodity_label or commodity_code or 'coffee'
+        commodity_values = []
+        if commodity_label and commodity_code:
+            commodity_values.extend([ustr(commodity_code), ustr(commodity_label)])
         elif commodity:
-            commodity_values = [ustr(commodity)]
-        else:
+            commodity_values.append(ustr(commodity))
+        if not commodity_values:
             commodity_values = ['coffee']
 
         feature = {

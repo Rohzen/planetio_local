@@ -82,8 +82,8 @@ the fields required to create a new partner on the fly:
 * Either `partner_id` or a `partner` block with at least the partner `name`.
 
 Optional fields map directly to the `eudr.declaration` model: `activity_type`,
-`hs_code`, `operator_type`, `producer_name`, `operator_name`,
-`common_name`, `product_description`, `coffee_species_id`, `product_id` and
+`hs_code_id` (or legacy `hs_code` code value), `operator_type`, `producer_name`, `operator_name`,
+`common_name`, `product_description`, `product_species_ids`, `product_id` and
 `third_party_client_id`.
 
 ### Line fields

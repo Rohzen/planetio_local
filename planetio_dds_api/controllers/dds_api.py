@@ -42,7 +42,7 @@ class DDSApiController(http.Controller):
                 },
                 "activity_type": "import",      # optional, defaults to "import"
                 "net_mass_kg": 12.5,             # required
-                "hs_code": "090111",            # optional, defaults to 090111
+                "hs_code": "090111",            # optional legacy code (use hs_code_id when possible)
                 "producer_name": "Farm Coop",   # optional
                 "lines": [                       # at least one geometry line is required
                     {
@@ -214,11 +214,11 @@ class DDSApiController(http.Controller):
 
         line_commands = [(0, 0, self._prepare_line_vals(line)) for line in lines_payload]
 
+
         values = {
             'partner_id': partner.id,
             'activity_type': activity_type,
             'net_mass_kg': net_mass,
-            'hs_code': payload.get('hs_code') or '090111',
             'producer_name': payload.get('producer_name'),
             'operator_name': payload.get('operator_name'),
             'extra_info': payload.get('extra_info'),
@@ -226,6 +226,18 @@ class DDSApiController(http.Controller):
             'common_name': payload.get('common_name'),
             'line_ids': line_commands,
         }
+
+        default_hs = request.env.ref('hs_codes.hs_code_090111', raise_if_not_found=False)
+        hs_code_id = payload.get('hs_code_id')
+        hs_code_code = payload.get('hs_code')
+        if hs_code_id:
+            values['hs_code_id'] = hs_code_id
+        elif hs_code_code:
+            hs_rec = request.env['hs.code'].sudo().search([('code', '=', hs_code_code)], limit=1)
+            if hs_rec:
+                values['hs_code_id'] = hs_rec.id
+        if not values.get('hs_code_id') and default_hs:
+            values['hs_code_id'] = default_hs.id
 
         if payload.get('name'):
             values['name'] = payload['name']
@@ -237,8 +249,12 @@ class DDSApiController(http.Controller):
                 raise UserError(_('operator_type must be either TRADER or OPERATOR.'))
             values['eudr_type_override'] = operator_type
 
-        if payload.get('coffee_species_id'):
-            values['coffee_species'] = payload['coffee_species_id']
+        product_species_ids = payload.get('product_species_ids')
+        if product_species_ids:
+            if not isinstance(product_species_ids, list):
+                raise UserError(_('product_species_ids must be a list of ids.'))
+            values['product_species_ids'] = [(6, 0, product_species_ids)]
+
         if payload.get('product_id'):
             values['product_id'] = payload['product_id']
         if payload.get('third_party_client_id'):
