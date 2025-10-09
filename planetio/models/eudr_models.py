@@ -226,7 +226,38 @@ class EUDRDeclaration(models.Model):
             rec.product_description = product.name or False
             rec._apply_product_classification()
 
-    def _apply_product_classification(self, update_species=True):
+# 1) Use default_get to set both hs_code_id and product_species_ids on new records
+@api.model
+def default_get(self, fields):
+    res = super().default_get(fields)
+    # default HS code
+    if 'hs_code_id' in fields and not res.get('hs_code_id'):
+        res['hs_code_id'] = self._default_hs_code_id()
+    # default species from product.template
+    if res.get('product_id') and 'product_species_ids' in fields:
+        prod = self.env['product.product'].browse(res['product_id'])
+        res['product_species_ids'] = [(6, 0, prod.product_tmpl_id.product_species_ids.ids)]
+    return res
+
+# 2) Collapse create/write overrides to a single call to your helper
+@api.model_create_multi
+def create(self, vals_list):
+    records = super().create(vals_list)
+    # apply classification (HS & species) in one go
+    records._apply_product_classification()
+    return records
+
+def write(self, vals):
+    res = super().write(vals)
+    # only re-classify when product changes or species wasn't explicitly set
+    if 'product_id' in vals or 'product_species_ids' not in vals:
+        self._apply_product_classification()
+    return res
+
+# 3) Simplify your onchange to call the same helper
+@api.onchange('product_id')
+def _onchange_product_id(self):
+    self._apply_product_classification()
         for rec in self:
             product = rec.product_id
             template = product.product_tmpl_id if product else False
