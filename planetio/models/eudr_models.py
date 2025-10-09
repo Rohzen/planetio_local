@@ -258,20 +258,20 @@ def write(self, vals):
 @api.onchange('product_id')
 def _onchange_product_id(self):
     self._apply_product_classification()
-        for rec in self:
-            product = rec.product_id
-            template = product.product_tmpl_id if product else False
-            if template and template.hs_code_id:
-                rec.hs_code_id = template.hs_code_id
-            elif not rec.hs_code_id:
-                rec.hs_code_id = rec._default_hs_code_id()
+    for rec in self:
+        product = rec.product_id
+        template = product.product_tmpl_id if product else False
+        if template and template.hs_code_id:
+            rec.hs_code_id = template.hs_code_id
+        elif not rec.hs_code_id:
+            rec.hs_code_id = rec._default_hs_code_id()
 
-            if not update_species:
-                continue
+        # if not update_species:
+        #     continue
 
-            if template and template.product_species_ids:
-                rec.product_species_ids = [(6, 0, template.product_species_ids.ids)]
-            # Do not clear product_species_ids if template has no species.
+        if template and template.product_species_ids:
+            rec.product_species_ids = [(6, 0, template.product_species_ids.ids)]
+        # Do not clear product_species_ids if template has no species.
 
     @api.model_create_multi
     def create(self, vals_list):
