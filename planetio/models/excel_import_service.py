@@ -298,36 +298,6 @@ class ExcelImportService(models.AbstractModel):
         core = ['farmer_name', 'country', 'farm_name']
         return sum(1 for c in core if mapping.get(c)) <= 1
 
-    # def _ai_enabled(self):
-    #     icp = self.env['ir.config_parameter'].sudo()
-    #     enabled = icp.get_param('planetio.enable_ai_mapping', default='True')
-    #     return str(enabled).lower() in ('1', 'true', 'yes', 'y')
-    #
-    # def _propose_mapping_with_ai(self, headers, sample_rows):
-    #     try:
-    #         import google.generativeai as genai
-    #     except Exception as e:
-    #         raise RuntimeError('Gemini SDK not installed') from e
-    #     api_key = os.getenv('GEMINI_API_KEY')
-    #     if not api_key:
-    #         raise RuntimeError('GEMINI_API_KEY not configured')
-    #     genai.configure(api_key=api_key)
-    #     system = ('You are a data-mapping assistant. Given spreadsheet headers and sample rows, '
-    #               'map each column to one of these EUDR fields when applicable: '
-    #               'name, farmer_name, farmer_id_code, tax_code, country, region, municipality, farm_name, area_ha, '
-    #               'latitude, longitude, coordinates_1..coordinates_99, geo_type_raw. '
-    #               'Return a compact JSON object mapping EUDR field names to header strings. '
-    #               'Only include fields you can map with high confidence.')
-    #     prompt = {'headers': headers, 'sample_rows': sample_rows}
-    #     model = genai.GenerativeModel('gemini-1.5-flash')
-    #     resp = model.generate_content([system, json.dumps(prompt)])
-    #     text = resp.text or ''
-    #     m = re.search(r'\{.*\}', text, re.S)
-    #     if not m:
-    #         raise RuntimeError('Gemini did not return JSON mapping')
-    #     mapping = json.loads(m.group(0))
-    #     return mapping
-
     def _normalize_row(self, row, mapping):
         vals = {}
         for k in ['name', 'farmer_name', 'farmer_id_code', 'tax_code', 'country', 'region', 'municipality',

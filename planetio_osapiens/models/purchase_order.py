@@ -30,7 +30,17 @@ class PurchaseOrder(models.Model):
                 raise UserError(_("Manca il product SKU (default_code) su %s") % product.display_name)
 
             harvest_year = fields.Date.context_today(self).year
-            plot_ids = ['PLOT-001']  # TODO: sostituire con i plot reali
+
+            # Get plot IDs from linked EUDR declaration if available
+            # Otherwise use a default placeholder plot ID
+            plot_ids = []
+            if hasattr(order, 'eudr_declaration_ids') and order.eudr_declaration_ids:
+                for declaration in order.eudr_declaration_ids:
+                    if declaration.line_ids:
+                        plot_ids.extend([f"PLOT-{line.id}" for line in declaration.line_ids])
+
+            if not plot_ids:
+                plot_ids = ['PLOT-DEFAULT']  # Fallback to default plot ID
 
             lot_resp = client.create_lot(product.default_code, harvest_year, plot_ids, extra={
                 'po_name': order.name,
