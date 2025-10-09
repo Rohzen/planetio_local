@@ -180,6 +180,13 @@ class EUDRDeclaration(models.Model):
         required=True,
         help="HS heading associated with this declaration.",
     )
+    hs_code = fields.Char(
+        string="HS Code (legacy)",
+        related="hs_code_id.code",
+        store=True,
+        readonly=True,
+        help="Deprecated field kept for backward compatibility with older views.",
+    )
     product_id = fields.Many2one('product.product', string="Product")
     product_description = fields.Char(string="Description of raw materials or products", required=True)
     net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3), required=True)
