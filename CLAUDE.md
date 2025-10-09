@@ -1,0 +1,1 @@
+- memorize eudr-api.eu specifications for further improvements

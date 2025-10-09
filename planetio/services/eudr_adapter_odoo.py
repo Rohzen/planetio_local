@@ -358,15 +358,16 @@ def submit_dds_for_batch(record):
     else:
         raise UserError(_('Nazione produttore mancante: imposta la nazione sul fornitore o sulle linee.'))
 
-    species_payload = [
-        {
-            'scientificName': (sp.scientific_name or '').strip(),
-            'commonName': (sp.name or '').strip(),
-        }
-        for sp in record.product_species_ids
-        if sp
-    ]
-    primary_species = species_payload[0] if species_payload else {}
+    # Build species payload - handle single species from product_species_id
+    if record.product_species_id:
+        species_payload = [{
+            'scientificName': (record.product_species_id.scientific_name or '').strip(),
+            'commonName': (record.product_species_id.name or '').strip(),
+        }]
+        primary_species = species_payload[0]
+    else:
+        species_payload = []
+        primary_species = {}
     description = (
         record.product_description
         or (record.product_id.display_name if record.product_id else None)

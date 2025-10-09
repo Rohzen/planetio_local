@@ -134,7 +134,7 @@
             <!-- Colonna destra -->
             <group>
               <field name="product_id" string="Selezione prodotto" invisible="0"/>
-              <field name="product_species_ids" widget="many2many_tags" options="{'no_create': True}"/>
+              <field name="product_species_id" domain="[('hs_code_id', '=', hs_code_id)]" options="{'no_create': True}"/>
               <field name="product_description" invisible="1"/>
               <field name="net_mass_kg" invisible="0"/>
               <field name="area_ha_display" string="Area Ha" readonly="1"/>

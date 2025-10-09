@@ -8,8 +8,11 @@ class ProductTemplate(models.Model):
     hs_code_id = fields.Many2one(
         "hs.code", string="HS Code", help="Primary HS code for this product"
     )
-    product_species_ids = fields.One2many(
-        "product.species", "product_tmpl_id", string="Product Species"
+    product_species_id = fields.Many2one(
+        "hs.code.species",
+        string="Product Species",
+        domain="[('hs_code_id', '=', hs_code_id)]",
+        help="Reference species for this product"
     )
 
 

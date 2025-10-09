@@ -48,32 +48,73 @@
         <field name="commodity">Wood</field>
     </record>
 
-    <!-- Coffee species -->
+    <!-- Coffee species for 090111 (not roasted, not decaffeinated) -->
+    <!-- Update existing records to point to 090111 instead of 0901 -->
     <record id="hs_code_species_coffee_arabica" model="hs.code.species">
-        <field name="hs_code_id" ref="hs_code_0901"/>
+        <field name="hs_code_id" ref="hs_code_090111"/>
         <field name="name">Arabica coffee</field>
         <field name="scientific_name">Coffea arabica</field>
         <field name="synonyms"/>
         <field name="is_primary">True</field>
         <field name="region">Ethiopia / Yemen (origins)</field>
-        <field name="notes">Primary commercial species known for high quality beans.</field>
+        <field name="notes">Primary commercial species. High quality, smooth flavor, lower caffeine. Grown at higher altitudes (600-2000m).</field>
     </record>
     <record id="hs_code_species_coffee_canephora" model="hs.code.species">
-        <field name="hs_code_id" ref="hs_code_0901"/>
+        <field name="hs_code_id" ref="hs_code_090111"/>
         <field name="name">Robusta coffee</field>
         <field name="scientific_name">Coffea canephora</field>
         <field name="synonyms">Coffea robusta</field>
         <field name="is_primary">True</field>
         <field name="region">Central and West Africa</field>
-        <field name="notes">High caffeine content; widely used for instant coffee.</field>
+        <field name="notes">Hardy species with higher caffeine content (2.2-2.7% vs 1.2-1.5% in Arabica). Disease resistant, grown at lower altitudes.</field>
     </record>
     <record id="hs_code_species_coffee_liberica" model="hs.code.species">
-        <field name="hs_code_id" ref="hs_code_0901"/>
+        <field name="hs_code_id" ref="hs_code_090111"/>
         <field name="name">Liberica coffee</field>
         <field name="scientific_name">Coffea liberica</field>
         <field name="synonyms"/>
-        <field name="region">West and Central Africa</field>
-        <field name="notes">Minor commercial species with distinctive flavour.</field>
+        <field name="region">West and Central Africa, Philippines, Malaysia</field>
+        <field name="notes">Larger beans with unique, woody-smoky flavor. Disease resistant. Limited commercial cultivation.</field>
+    </record>
+    <record id="hs_code_species_coffee_dewevrei" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_090111"/>
+        <field name="name">Excelsa coffee</field>
+        <field name="scientific_name">Coffea dewevrei</field>
+        <field name="synonyms">Coffea liberica var. dewevrei, Coffea excelsa</field>
+        <field name="region">Central Africa</field>
+        <field name="notes">Recently reclassified (2025) as distinct species from C. liberica. Tart, fruity flavor. Used in blends for complexity.</field>
+    </record>
+    <record id="hs_code_species_coffee_stenophylla" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_090111"/>
+        <field name="name">Highland coffee</field>
+        <field name="scientific_name">Coffea stenophylla</field>
+        <field name="synonyms">Sierra Leone coffee</field>
+        <field name="region">West Africa (Guinea, Sierra Leone, Ivory Coast)</field>
+        <field name="notes">Climate-resilient species. Superior taste similar to Arabica. Being considered for future cultivation due to climate change.</field>
+    </record>
+    <record id="hs_code_species_coffee_racemosa" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_090111"/>
+        <field name="name">Racemosa coffee</field>
+        <field name="scientific_name">Coffea racemosa</field>
+        <field name="synonyms"/>
+        <field name="region">Mozambique, South Africa</field>
+        <field name="notes">Small shrub species. Low caffeine content. Limited cultivation. Research interest for breeding programs.</field>
+    </record>
+    <record id="hs_code_species_coffee_eugenioides" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_090111"/>
+        <field name="name">Eugenioides coffee</field>
+        <field name="scientific_name">Coffea eugenioides</field>
+        <field name="synonyms"/>
+        <field name="region">East Africa (Kenya, Tanzania, Uganda)</field>
+        <field name="notes">One of the parent species of C. arabica. Very low caffeine (0.2%). Sweet flavor. Rare in cultivation.</field>
+    </record>
+    <record id="hs_code_species_coffee_klainei" model="hs.code.species">
+        <field name="hs_code_id" ref="hs_code_090111"/>
+        <field name="name">Klainei coffee</field>
+        <field name="scientific_name">Coffea klainei</field>
+        <field name="synonyms"/>
+        <field name="region">Central Africa</field>
+        <field name="notes">Recently reclassified (2025) from C. liberica group. Limited commercial significance.</field>
     </record>
 
     <!-- Cocoa species -->

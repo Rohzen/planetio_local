@@ -180,13 +180,7 @@ class EUDRDeclaration(models.Model):
         required=True,
         help="HS heading associated with this declaration.",
     )
-    hs_code = fields.Char(
-        string="HS Code (legacy)",
-        related="hs_code_id.code",
-        store=True,
-        readonly=True,
-        help="Deprecated field kept for backward compatibility with older views.",
-    )
+    hs_code = fields.Selection(EUDR_HS_SELECTION, string="HS Code (legacy)", help="Legacy HS code selection. New declarations should use the HS Code M2O field.")
     product_id = fields.Many2one('product.product', string="Product")
     product_description = fields.Char(string="Description of raw materials or products", required=True)
     net_mass_kg = fields.Float(string="Net weight", placeholder="Net Mass in Kg", digits=(16, 3), required=True)
@@ -194,12 +188,18 @@ class EUDRDeclaration(models.Model):
     producer_name = fields.Char(string="Producer name")
     lot_name = fields.Char(string="Lot info")
     supplier_id = fields.Many2one('res.partner', string="Producer/Supplier")
-    product_species_ids = fields.Many2many(
-        'product.species',
-        'eudr_declaration_product_species_rel',
-        'declaration_id',
-        'product_species_id',
-        string="Product species"
+    product_species_id = fields.Many2one(
+        'hs.code.species',
+        string="Product species",
+        domain="[('hs_code_id', '=', hs_code_id)]",
+        help="Species associated with this declaration"
+    )
+    lot_id = fields.Many2one(
+        'eudr.lot',
+        string="Source Lot",
+        ondelete='restrict',
+        tracking=True,
+        help="EUDR lot this declaration was created from"
     )
     area_ha_display = fields.Char(compute="_compute_area_ha_display", store=False)
     commodity_ids = fields.One2many("eudr.commodity.line", "declaration_id", string="Commodities")
@@ -234,14 +234,29 @@ class EUDRDeclaration(models.Model):
             rec.product_description = product.name or False
             if product:
                 template = product.product_tmpl_id
-                # Update HS code from template
+                # Update HS code and species from template
                 if template and template.hs_code_id:
                     rec.hs_code_id = template.hs_code_id
+                    # Update species from template
+                    if template.product_species_id:
+                        rec.product_species_id = template.product_species_id
+                    else:
+                        rec.product_species_id = False
                 elif not rec.hs_code_id:
                     rec.hs_code_id = rec._default_hs_code_id()
-                # Update species from template
-                if template and template.product_species_ids:
-                    rec.product_species_ids = [(6, 0, template.product_species_ids.ids)]
+                    rec.product_species_id = False
+            else:
+                # When product is cleared, keep current default hs_code but clear species
+                if not rec.hs_code_id:
+                    rec.hs_code_id = rec._default_hs_code_id()
+                rec.product_species_id = False
+
+    @api.onchange('hs_code_id')
+    def _onchange_hs_code_id_clear_species(self):
+        """Clear species when HS code changes if the species doesn't match the new HS code."""
+        for rec in self:
+            if rec.product_species_id and rec.product_species_id.hs_code_id != rec.hs_code_id:
+                rec.product_species_id = False
 
     # ---------------------- helpers ----------------------
 
@@ -651,6 +666,31 @@ class EUDRDeclaration(models.Model):
     def action_retrieve_dds(self):
         for rec in self:
             action_retrieve_dds_numbers(rec)
+        return True
+
+    def _create_lines_from_lot_plots(self, lot):
+        """Create declaration lines from eudr.lot plots."""
+        self.ensure_one()
+
+        line_vals_list = []
+        for plot in lot.plot_ids:
+            line_vals_list.append({
+                'declaration_id': self.id,
+                'name': plot.name,
+                'farmer_name': plot.producer_id.name,
+                'farmer_id_code': plot.producer_id.farmer_id_code or '',
+                'country': plot.country_id.code if plot.country_id else '',
+                'region': plot.region or '',
+                'municipality': plot.municipality or '',
+                'farm_name': plot.farm_name or '',
+                'geometry': plot.geometry,
+                'geo_type': plot.geo_type,
+                'area_ha': str(plot.area_ha) if plot.area_ha else '0',
+            })
+
+        if line_vals_list:
+            self.env['eudr.declaration.line'].create(line_vals_list)
+
         return True
 
 class EUDRDeclarationLine(models.Model):

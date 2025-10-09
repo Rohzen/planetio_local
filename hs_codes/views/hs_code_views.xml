@@ -108,6 +108,21 @@
             </field>
         </record>
 
+        <record id="action_hs_code_species" model="ir.actions.act_window">
+            <field name="name">HS Code Species</field>
+            <field name="res_model">hs.code.species</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p>Reference species catalog for HS codes.</p>
+            </field>
+        </record>
+
+        <menuitem id="menu_hs_code_species"
+                  name="HS Code Species"
+                  parent="sale.product_menu_catalog"
+                  action="action_hs_code_species"
+                  sequence="96"/>
+
 
         <record id="view_product_species_tree" model="ir.ui.view">
             <field name="name">product.species.tree</field>
@@ -159,17 +174,8 @@
                     <page string="HS Classification">
                         <group>
                             <field name="hs_code_id" options="{'no_create': False}"/>
+                            <field name="product_species_id" domain="[('hs_code_id', '=', hs_code_id)]" options="{'no_create': True}"/>
                         </group>
-                        <field name="product_species_ids">
-                            <tree editable="bottom">
-                                <field name="sequence"/>
-                                <field name="hs_code_id" options="{'no_open': True}"/>
-                                <field name="hs_code_species_id"/>
-                                <field name="name"/>
-                                <field name="scientific_name"/>
-                                <field name="active"/>
-                            </tree>
-                        </field>
                     </page>
                 </xpath>
             </field>

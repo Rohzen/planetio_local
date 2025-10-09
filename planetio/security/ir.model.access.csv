@@ -11,4 +11,5 @@ access_eudr_commodity_line,eudr_commodity_line,model_eudr_commodity_line,base.gr
 access_eudr_producer,eudr_producer,model_eudr_producer,base.group_user,1,1,1,1
 access_eudr_plot,eudr_plot,model_eudr_plot,base.group_user,1,1,1,1
 access_eudr_associated_statement,eudr_associated_statement,model_eudr_associated_statement,base.group_user,1,1,1,1
+access_eudr_lot,eudr_lot,model_eudr_lot,base.group_user,1,1,1,1
 
